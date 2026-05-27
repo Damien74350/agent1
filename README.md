@@ -1,80 +1,98 @@
-# Agent1
+# Calo — Coach nutrition WhatsApp
 
-Assistant général autonome propulsé par Claude Opus 4.7, avec outils fichier / shell / web search, thinking adaptatif et prompt caching.
+Coach nutritionnel par WhatsApp propulsé par Claude. L'utilisateur envoie des photos de repas, Calo identifie les aliments, estime les calories/macros, et suit la progression hebdomadaire avec photos morphologiques (avec consentement).
 
-## Caractéristiques
+## État du projet
 
-- **Modèle** Claude Opus 4.7 (adaptive thinking + effort tunable)
-- **Outils intégrés** lecture/écriture/listing de fichiers, exécution bash sandboxée, recherche web côté serveur
-- **Tool runner** boucle agentique gérée par le SDK, exécution multi-tour automatique
-- **Prompt caching** sur le system prompt pour réduire les coûts à chaque tour
-- **Conversation persistante** sauvegarde/restauration via commandes slash
-- **CLI riche** rendu Markdown, prompt couleur, affichage des appels d'outils
+**Phase 1 — Prototype technique** (présent) : backend opérationnel + intégration Twilio Sandbox WhatsApp.
 
-## Installation
-
-```bash
-git clone <repo>
-cd agent1
-cp .env.example .env          # mets ta clé Anthropic dedans
-./run.sh
-```
-
-`run.sh` crée un venv, installe les dépendances et lance l'agent. Première run = quelques secondes pour `pip install`.
-
-## Configuration (.env)
-
-| Variable | Défaut | Description |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | — | **Obligatoire.** Clé API Anthropic. |
-| `AGENT_MODEL` | `claude-opus-4-7` | ID du modèle Claude. |
-| `AGENT_EFFORT` | `high` | `low` \| `medium` \| `high` \| `xhigh` \| `max` |
-| `AGENT_MAX_TOKENS` | `32000` | Budget de sortie par tour. |
-| `AGENT_WORKSPACE` | `./workspace` | Dossier sandbox où les outils opèrent. |
-
-## Commandes interactives
-
-| Commande | Action |
-|---|---|
-| `/help` | Liste les commandes |
-| `/clear` | Réinitialise l'historique de conversation |
-| `/save [nom]` | Sauvegarde la conversation (nom auto si omis) |
-| `/load <nom>` | Recharge une conversation sauvée |
-| `/quit` ou `/exit` | Quitte |
+Roadmap : voir [SETUP.md](./SETUP.md#prochaines-étapes-phase-2).
 
 ## Architecture
 
 ```
-agent/
-├── config.py    # Chargement .env + sandbox workspace
-├── tools.py     # 4 outils custom (read_file, write_file, list_dir, run_bash)
-├── core.py      # Boucle agentique + sérialisation messages
-├── ui.py        # Rendu rich (markdown, panels, prompts)
-└── main.py      # CLI + dispatch slash commands
+agent1/
+├── agent/           # Agent CLI générique (assistant tout-terrain, hérité)
+├── calo/            # Produit Calo (logique métier)
+│   ├── config.py    # Chargement .env
+│   ├── nutrition.py # BMR / TDEE / cibles macro (Mifflin-St Jeor)
+│   ├── db.py        # SQLite (users / meals / weights / photos / messages)
+│   ├── storage.py   # Chiffrement Fernet des photos
+│   ├── prompts.py   # System prompt + messages de rappel
+│   ├── tools.py     # 6 outils Claude (complete_profile, log_meal, ...)
+│   ├── coach.py     # Boucle agent — handle_turn(text, photo) → reply
+│   └── cli.py       # Chat local pour itérer sans Twilio
+└── api/             # Backend FastAPI
+    ├── main.py      # App + webhook Twilio
+    └── twilio_client.py  # Envoi messages + téléchargement médias
 ```
 
-L'agent utilise le tool runner du SDK Anthropic (`client.beta.messages.tool_runner`) qui :
+## Démarrage rapide
 
-1. Envoie un message + définitions d'outils à Claude
-2. Itère automatiquement : appel outil → résultat → appel outil → …
-3. Termine quand `stop_reason == "end_turn"`
+### Setup distant (production)
 
-Le system prompt est marqué `cache_control: ephemeral` — à partir du 2ᵉ tour, il est lu depuis le cache (~0.1× coût input).
+Lis [SETUP.md](./SETUP.md). Tu créeras des comptes Anthropic / Twilio / Railway, tu connecteras 9 variables d'environnement, et tu auras un bot WhatsApp fonctionnel en ~45 min.
 
-## Sandbox
+### Setup local (développement)
 
-Tous les outils fichier valident que le chemin reste sous `AGENT_WORKSPACE`. `run_bash` s'exécute avec `cwd=workspace` et timeout 60 s par défaut.
-
-## Exemple d'usage
-
+```bash
+git clone <repo>
+cd agent1
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edite .env : au minimum ANTHROPIC_API_KEY et CALO_PHOTO_ENCRYPTION_KEY
 ```
-you ❯ crée un script Python qui calcule la suite de Fibonacci jusqu'à 100, sauvegarde-le, puis exécute-le
-⚙  write_file(path='fib.py', content='def fib(n):...')
-⚙  run_bash(command='python fib.py')
 
-J'ai créé `fib.py` et exécuté le script. Voici la suite jusqu'à 100 :
-0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89
+**Chat avec Calo en local (sans Twilio) :**
 
-you ❯ /save fibonacci_demo
-ℹ  saved to /home/user/agent1/conversations/fibonacci_demo.json
+```bash
+python -m calo.cli
 ```
+
+Tu peux envoyer une photo via : `photo:/chemin/vers/image.jpg Voici mon déjeuner`.
+
+**Lancer le backend FastAPI en local :**
+
+```bash
+uvicorn api.main:app --reload
+```
+
+Pour tester le webhook localement, utilise ngrok :
+
+```bash
+ngrok http 8000
+# → copie l'URL https dans CALO_PUBLIC_URL et dans la config webhook Twilio
+```
+
+## Modèles utilisés
+
+- **Claude Sonnet 4.6** (`CALO_MODEL`) — vision de qualité Opus à 1/3 du prix. Suffisant pour identifier des aliments sur photo.
+- Adaptive thinking + effort=`medium` par défaut — bon compromis qualité/coût.
+
+Bascule sur Opus 4.7 (`CALO_MODEL=claude-opus-4-7`) si tu veux du raisonnement plus poussé (ex: plans alimentaires hebdo personnalisés en Phase 4).
+
+## Sécurité & RGPD
+
+- Photos chiffrées sur disque via Fernet (clé symétrique). Sans la clé, les fichiers `.enc` sont illisibles.
+- Validation cryptographique de la signature Twilio sur le webhook (anti-spoofing).
+- Pas de stockage des photos en clair, jamais.
+- En Phase 4 : politique de confidentialité, droit à l'effacement (1 message = tout supprimé), CGU.
+
+## Agent CLI générique (legacy)
+
+Le package `agent/` est l'assistant générique créé en amont — assistant tout-terrain avec outils fichier/bash/web search. Pas utilisé par Calo, conservé pour référence et tests :
+
+```bash
+./run.sh
+```
+
+## Coûts opérationnels (Phase 1)
+
+Estimations pour 1 utilisateur (toi) sur 1 mois :
+- Anthropic Sonnet 4.6 : ~$10-20 (10 messages/jour, dont la moitié avec photo)
+- Twilio Sandbox : gratuit
+- Railway : gratuit (free tier)
+
+**Total estimé : <$25/mois en test.** Multiplie par N utilisateurs au scale.

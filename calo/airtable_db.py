@@ -1,0 +1,343 @@
+"""Airtable-backed storage for Calo (users, meals, weights, body photos,
+foods, knowledge base).
+
+Conversation history stays in SQLite (high frequency, low admin value).
+Everything else lives in Airtable so the operator can audit, edit, and enrich
+it through the Airtable UI.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from typing import Any
+
+from pyairtable import Api
+
+from .airtable_ids import (
+    BASE_ID,
+    BODY_PHOTOS_FIELDS,
+    BODY_PHOTOS_TABLE,
+    FOODS_FIELDS,
+    FOODS_TABLE,
+    KNOWLEDGE_FIELDS,
+    KNOWLEDGE_TABLE,
+    MEALS_FIELDS,
+    MEALS_TABLE,
+    USERS_FIELDS,
+    USERS_TABLE,
+    WEIGHT_LOGS_FIELDS,
+    WEIGHT_LOGS_TABLE,
+)
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+class AirtableDB:
+    def __init__(self, pat: str):
+        if not pat:
+            raise RuntimeError("AirtableDB requires an Airtable PAT.")
+        self.api = Api(pat)
+        self.users = self.api.table(BASE_ID, USERS_TABLE)
+        self.foods = self.api.table(BASE_ID, FOODS_TABLE)
+        self.knowledge = self.api.table(BASE_ID, KNOWLEDGE_TABLE)
+        self.meals = self.api.table(BASE_ID, MEALS_TABLE)
+        self.weights = self.api.table(BASE_ID, WEIGHT_LOGS_TABLE)
+        self.body_photos = self.api.table(BASE_ID, BODY_PHOTOS_TABLE)
+
+    # ------------------------------------------------------------------
+    # users
+    # ------------------------------------------------------------------
+
+    def get_or_create_user(self, whatsapp_number: str) -> dict[str, Any]:
+        rec = self.users.first(
+            formula=f"{{{USERS_FIELDS['whatsapp_number']}}} = '{_escape(whatsapp_number)}'"
+        )
+        if rec:
+            return _unwrap_user(rec)
+        rec = self.users.create(
+            {
+                USERS_FIELDS["whatsapp_number"]: whatsapp_number,
+                USERS_FIELDS["created_at"]: now_iso(),
+                USERS_FIELDS["onboarding_complete"]: False,
+                USERS_FIELDS["photo_consent"]: False,
+            },
+            typecast=True,
+        )
+        return _unwrap_user(rec)
+
+    def get_user_by_id(self, record_id: str) -> dict[str, Any]:
+        try:
+            rec = self.users.get(record_id)
+            return _unwrap_user(rec)
+        except Exception:
+            return {}
+
+    def update_user(self, record_id: str, **fields: Any) -> None:
+        if not fields:
+            return
+        mapped: dict[str, Any] = {}
+        for key, value in fields.items():
+            field_id = USERS_FIELDS.get(key)
+            if not field_id:
+                continue
+            if key in {"photo_consent", "onboarding_complete"}:
+                value = bool(value)
+            mapped[field_id] = value
+        if mapped:
+            self.users.update(record_id, mapped, typecast=True)
+
+    # ------------------------------------------------------------------
+    # meals
+    # ------------------------------------------------------------------
+
+    def add_meal(
+        self,
+        user_id: str,
+        items: list[dict[str, Any]],
+        photo_path: str | None,
+        notes: str | None = None,
+        eaten_at: str | None = None,
+        meal_type: str | None = None,
+    ) -> str:
+        total_kcal = sum(int(i.get("kcal", 0)) for i in items)
+        total_protein = sum(int(i.get("protein_g", 0)) for i in items)
+        total_carbs = sum(int(i.get("carbs_g", 0)) for i in items)
+        total_fat = sum(int(i.get("fat_g", 0)) for i in items)
+        fields = {
+            MEALS_FIELDS["eaten_at"]: eaten_at or now_iso(),
+            MEALS_FIELDS["user"]: [user_id],
+            MEALS_FIELDS["items"]: json.dumps(items, ensure_ascii=False),
+            MEALS_FIELDS["total_calories"]: total_kcal,
+            MEALS_FIELDS["total_protein_g"]: total_protein,
+            MEALS_FIELDS["total_carbs_g"]: total_carbs,
+            MEALS_FIELDS["total_fat_g"]: total_fat,
+        }
+        if notes:
+            fields[MEALS_FIELDS["notes"]] = notes
+        if meal_type:
+            fields[MEALS_FIELDS["meal_type"]] = meal_type
+        rec = self.meals.create(fields, typecast=True)
+        return rec["id"]
+
+    def meals_for_day(self, user_id: str, day_iso: str) -> list[dict[str, Any]]:
+        """`day_iso` is YYYY-MM-DD. Returns meals whose `Eaten At` starts with that date."""
+        formula = (
+            f"AND(FIND('{day_iso}', {{{MEALS_FIELDS['eaten_at']}}}) = 1, "
+            f"FIND('{user_id}', ARRAYJOIN({{{MEALS_FIELDS['user']}}})) > 0)"
+        )
+        recs = self.meals.all(formula=formula)
+        return [_unwrap_meal(r) for r in recs]
+
+    # ------------------------------------------------------------------
+    # weight logs
+    # ------------------------------------------------------------------
+
+    def add_weight(self, user_id: str, kg: float) -> None:
+        self.weights.create(
+            {
+                WEIGHT_LOGS_FIELDS["logged_at"]: now_iso(),
+                WEIGHT_LOGS_FIELDS["user"]: [user_id],
+                WEIGHT_LOGS_FIELDS["weight_kg"]: kg,
+            },
+            typecast=True,
+        )
+
+    def weights_history(self, user_id: str, limit: int = 30) -> list[dict[str, Any]]:
+        formula = (
+            f"FIND('{user_id}', ARRAYJOIN({{{WEIGHT_LOGS_FIELDS['user']}}})) > 0"
+        )
+        recs = self.weights.all(
+            formula=formula,
+            sort=[f"-{WEIGHT_LOGS_FIELDS['logged_at']}"],
+            max_records=limit,
+        )
+        return [_unwrap_weight(r) for r in recs]
+
+    # ------------------------------------------------------------------
+    # body photos
+    # ------------------------------------------------------------------
+
+    def add_body_photo(
+        self,
+        user_id: str,
+        encrypted_ref: str,
+        week_number: int | None,
+        analysis: str | None,
+        angle: str = "face",
+    ) -> str:
+        rec = self.body_photos.create(
+            {
+                BODY_PHOTOS_FIELDS["captured_at"]: now_iso(),
+                BODY_PHOTOS_FIELDS["user"]: [user_id],
+                BODY_PHOTOS_FIELDS["week_number"]: week_number,
+                BODY_PHOTOS_FIELDS["encrypted_photo_ref"]: encrypted_ref,
+                BODY_PHOTOS_FIELDS["analysis"]: analysis,
+                BODY_PHOTOS_FIELDS["angle"]: angle,
+            },
+            typecast=True,
+        )
+        return rec["id"]
+
+    def body_photos_for_user(self, user_id: str) -> list[dict[str, Any]]:
+        formula = (
+            f"FIND('{user_id}', ARRAYJOIN({{{BODY_PHOTOS_FIELDS['user']}}})) > 0"
+        )
+        recs = self.body_photos.all(
+            formula=formula,
+            sort=[f"-{BODY_PHOTOS_FIELDS['captured_at']}"],
+        )
+        return [_unwrap_body_photo(r) for r in recs]
+
+    # ------------------------------------------------------------------
+    # knowledge base
+    # ------------------------------------------------------------------
+
+    def search_knowledge(self, query: str, max_results: int = 3) -> list[dict[str, Any]]:
+        """Keyword search over Title + Content + Tags. Only `Active = TRUE` entries.
+        Returns up to `max_results` hits."""
+        q = _escape(query.lower())
+        title = KNOWLEDGE_FIELDS["title"]
+        content = KNOWLEDGE_FIELDS["content"]
+        tags = KNOWLEDGE_FIELDS["tags"]
+        active = KNOWLEDGE_FIELDS["active"]
+        formula = (
+            f"AND({{{active}}}, OR("
+            f"FIND('{q}', LOWER({{{title}}})), "
+            f"FIND('{q}', LOWER({{{content}}})), "
+            f"FIND('{q}', LOWER(ARRAYJOIN({{{tags}}}, ',')))"
+            f"))"
+        )
+        recs = self.knowledge.all(formula=formula, max_records=max_results)
+        return [_unwrap_knowledge(r) for r in recs]
+
+    def list_knowledge_titles(self) -> list[dict[str, Any]]:
+        """Return all knowledge titles (for an index view)."""
+        recs = self.knowledge.all(
+            formula=f"{{{KNOWLEDGE_FIELDS['active']}}}",
+            fields=[KNOWLEDGE_FIELDS["title"], KNOWLEDGE_FIELDS["topic"]],
+        )
+        return [
+            {
+                "id": r["id"],
+                "title": r["fields"].get(KNOWLEDGE_FIELDS["title"]),
+                "topic": r["fields"].get(KNOWLEDGE_FIELDS["topic"]),
+            }
+            for r in recs
+        ]
+
+    # ------------------------------------------------------------------
+    # foods database
+    # ------------------------------------------------------------------
+
+    def lookup_food(self, name: str) -> dict[str, Any] | None:
+        """Try exact name match first, then substring."""
+        name_field = FOODS_FIELDS["name_fr"]
+        active = FOODS_FIELDS["active"]
+        exact = self.foods.first(
+            formula=f"AND({{{active}}}, LOWER({{{name_field}}}) = '{_escape(name.lower())}')"
+        )
+        if exact:
+            return _unwrap_food(exact)
+        fuzzy = self.foods.first(
+            formula=f"AND({{{active}}}, FIND('{_escape(name.lower())}', LOWER({{{name_field}}})))"
+        )
+        return _unwrap_food(fuzzy) if fuzzy else None
+
+    def search_foods(self, partial: str, limit: int = 10) -> list[dict[str, Any]]:
+        name_field = FOODS_FIELDS["name_fr"]
+        active = FOODS_FIELDS["active"]
+        formula = (
+            f"AND({{{active}}}, FIND('{_escape(partial.lower())}', LOWER({{{name_field}}})))"
+        )
+        recs = self.foods.all(formula=formula, max_records=limit)
+        return [_unwrap_food(r) for r in recs]
+
+
+# ----------------------------------------------------------------------
+# unwrapping helpers — turn the field-ID-keyed Airtable record into a friendly dict
+# ----------------------------------------------------------------------
+
+
+def _unwrap_user(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    out = {"id": rec["id"]}
+    for friendly, field_id in USERS_FIELDS.items():
+        out[friendly] = f.get(field_id)
+    return out
+
+
+def _unwrap_meal(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    raw_items = f.get(MEALS_FIELDS["items"]) or "[]"
+    try:
+        items = json.loads(raw_items)
+    except (ValueError, TypeError):
+        items = []
+    return {
+        "id": rec["id"],
+        "eaten_at": f.get(MEALS_FIELDS["eaten_at"]),
+        "user": f.get(MEALS_FIELDS["user"], []),
+        "items": items,
+        "total_calories": f.get(MEALS_FIELDS["total_calories"], 0),
+        "total_protein_g": f.get(MEALS_FIELDS["total_protein_g"], 0),
+        "total_carbs_g": f.get(MEALS_FIELDS["total_carbs_g"], 0),
+        "total_fat_g": f.get(MEALS_FIELDS["total_fat_g"], 0),
+        "notes": f.get(MEALS_FIELDS["notes"]),
+        "meal_type": f.get(MEALS_FIELDS["meal_type"]),
+    }
+
+
+def _unwrap_weight(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "logged_at": f.get(WEIGHT_LOGS_FIELDS["logged_at"]),
+        "weight_kg": f.get(WEIGHT_LOGS_FIELDS["weight_kg"]),
+    }
+
+
+def _unwrap_body_photo(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "captured_at": f.get(BODY_PHOTOS_FIELDS["captured_at"]),
+        "week_number": f.get(BODY_PHOTOS_FIELDS["week_number"]),
+        "encrypted_photo_ref": f.get(BODY_PHOTOS_FIELDS["encrypted_photo_ref"]),
+        "analysis": f.get(BODY_PHOTOS_FIELDS["analysis"]),
+        "angle": f.get(BODY_PHOTOS_FIELDS["angle"]),
+    }
+
+
+def _unwrap_knowledge(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "title": f.get(KNOWLEDGE_FIELDS["title"]),
+        "topic": f.get(KNOWLEDGE_FIELDS["topic"]),
+        "content": f.get(KNOWLEDGE_FIELDS["content"]),
+        "tags": f.get(KNOWLEDGE_FIELDS["tags"], []),
+    }
+
+
+def _unwrap_food(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "name": f.get(FOODS_FIELDS["name_fr"]),
+        "category": f.get(FOODS_FIELDS["category"]),
+        "kcal_per_100g": f.get(FOODS_FIELDS["kcal_per_100g"]),
+        "protein_per_100g": f.get(FOODS_FIELDS["protein_per_100g"]),
+        "carbs_per_100g": f.get(FOODS_FIELDS["carbs_per_100g"]),
+        "fat_per_100g": f.get(FOODS_FIELDS["fat_per_100g"]),
+        "fiber_per_100g": f.get(FOODS_FIELDS["fiber_per_100g"]),
+        "standard_portion_g": f.get(FOODS_FIELDS["standard_portion_g"]),
+        "source": f.get(FOODS_FIELDS["source"]),
+    }
+
+
+def _escape(value: str) -> str:
+    """Escape a value for safe inclusion in an Airtable formula string literal."""
+    return value.replace("\\", "\\\\").replace("'", "\\'")

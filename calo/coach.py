@@ -1,14 +1,20 @@
-"""Calo coach — the agent that handles one turn of the conversation."""
+"""Calo coach — the agent that handles one turn of the conversation.
+
+Storage split:
+- AirtableDB → user profile, meals, weights, body photos, foods, knowledge
+- MessageStore (SQLite) → conversation history (high frequency, low admin value)
+- PhotoStore (encrypted disk) → body photo blobs (sensitive biometric data)
+"""
 
 import base64
-import json
 from dataclasses import dataclass
 from typing import Any
 
 import anthropic
 
+from .airtable_db import AirtableDB
 from .config import CaloConfig
-from .db import Database
+from .message_store import MessageStore
 from .prompts import SYSTEM_PROMPT
 from .storage import PhotoStore
 from .tools import build_tools
@@ -16,7 +22,7 @@ from .tools import build_tools
 
 @dataclass
 class TurnInput:
-    user_id: int
+    user_id: str  # Airtable record ID
     text: str
     photo_bytes: bytes | None = None
     photo_media_type: str = "image/jpeg"
@@ -31,9 +37,11 @@ class TurnOutput:
 class CaloCoach:
     def __init__(self, config: CaloConfig):
         config.require_anthropic()
+        config.require_airtable()
         self.config = config
         self.client = anthropic.Anthropic(api_key=config.anthropic_api_key)
-        self.db = Database(config.db_path)
+        self.db = AirtableDB(config.airtable_pat)
+        self.messages = MessageStore(config.db_path)
         self.photos = (
             PhotoStore(config.photos_dir, config.photo_encryption_key)
             if config.photo_encryption_key
@@ -41,24 +49,21 @@ class CaloCoach:
         )
 
     def handle_turn(self, turn: TurnInput) -> TurnOutput:
-        """Process one inbound message + (optional) photo, persist everything,
-        return assistant text reply."""
-
         # 1. Persist incoming photo if present (encrypted).
-        photo_path: str | None = None
-        if turn.photo_bytes:
-            if not self.photos:
-                # Fail soft — agent will still try to analyze the image even without
-                # persistence — but we warn so the operator sets the key.
-                photo_path = None
-            else:
-                ext = "jpg" if turn.photo_media_type == "image/jpeg" else "png"
-                # We don't know yet if the photo is a meal or body shot; tag generically.
-                # The agent's tool call (`log_meal` vs `log_body_photo`) records the
-                # semantic category in the right table.
-                photo_path = self.photos.save(
-                    turn.photo_bytes, kind="meal", user_id=turn.user_id, ext=ext
+        photo_ref: str | None = None
+        if turn.photo_bytes and self.photos:
+            ext = "jpg" if "jpeg" in turn.photo_media_type else "png"
+            # We don't know yet if it's a meal or body photo; tag generically.
+            # The agent's tool call selects the semantic category.
+            try:
+                photo_ref = self.photos.save(
+                    turn.photo_bytes,
+                    kind="meal",
+                    user_id=hash(turn.user_id) & 0xFFFFFF,
+                    ext=ext,
                 )
+            except Exception:
+                photo_ref = None
 
         # 2. Build the user content block list.
         user_content: list[dict[str, Any]] = []
@@ -79,14 +84,14 @@ class CaloCoach:
             user_content.append({"type": "text", "text": "(message vide)"})
 
         # 3. Append to history + reload last N turns.
-        self.db.add_message(turn.user_id, "user", user_content)
-        history = self.db.recent_messages(turn.user_id, limit=40)
+        self.messages.add(turn.user_id, "user", user_content)
+        history = self.messages.recent(turn.user_id, limit=40)
 
         # 4. Bind tools for this turn.
-        tools = build_tools(self.db, turn.user_id, photo_path)
+        tools = build_tools(self.db, turn.user_id, photo_ref)
 
         # 5. Inject user state context as a system reminder so the agent knows
-        #    where the user is at without us re-prompting the cached system text.
+        #    where the user is at without invalidating the cached system prompt.
         user = self.db.get_user_by_id(turn.user_id)
         state_summary = _summarize_user_state(user)
         history = _inject_state_reminder(history, state_summary)
@@ -116,9 +121,11 @@ class CaloCoach:
                 elif block.type == "tool_use":
                     tool_calls_taken.append(block.name)
 
-        # 7. Persist the full assistant trajectory (text + tool_use/tool_result blocks).
-        assistant_content = _serialize(runner.messages[-1].content) if runner.messages else []
-        self.db.add_message(turn.user_id, "assistant", assistant_content)
+        # 7. Persist the full assistant trajectory (text + tool_use blocks).
+        assistant_content = (
+            _serialize(runner.messages[-1].content) if runner.messages else []
+        )
+        self.messages.add(turn.user_id, "assistant", assistant_content)
 
         return TurnOutput(reply_text=final_text or "…", tool_calls=tool_calls_taken)
 
@@ -134,15 +141,31 @@ def _serialize(blocks) -> list[dict[str, Any]]:
 
 
 def _summarize_user_state(user: dict[str, Any]) -> str:
-    if not user.get("onboarding_complete"):
-        collected = []
-        for field in ("name", "sex", "age", "height_cm", "weight_kg",
-                      "activity_level", "goal", "photo_consent"):
-            if user.get(field) not in (None, ""):
-                collected.append(field)
+    if not user or not user.get("onboarding_complete"):
+        collected = [
+            f
+            for f in (
+                "name",
+                "sex",
+                "age",
+                "height_cm",
+                "current_weight_kg",
+                "activity_level",
+                "goal",
+            )
+            if user.get(f) not in (None, "")
+        ]
         missing = [
-            f for f in ("name", "sex", "age", "height_cm", "weight_kg",
-                        "activity_level", "goal")
+            f
+            for f in (
+                "name",
+                "sex",
+                "age",
+                "height_cm",
+                "current_weight_kg",
+                "activity_level",
+                "goal",
+            )
             if not user.get(f)
         ]
         return (
@@ -153,7 +176,7 @@ def _summarize_user_state(user: dict[str, Any]) -> str:
         )
     return (
         f"User: {user.get('name')} ({user.get('sex')}, {user.get('age')}y, "
-        f"{user.get('height_cm')}cm, {user.get('weight_kg')}kg). "
+        f"{user.get('height_cm')}cm, {user.get('current_weight_kg')}kg). "
         f"Goal: {user.get('goal')} (target: {user.get('target_weight_kg')}kg). "
         f"Daily targets: {user.get('daily_calories')} kcal / "
         f"P:{user.get('daily_protein_g')}g C:{user.get('daily_carbs_g')}g "
@@ -174,5 +197,8 @@ def _inject_state_reminder(history: list[dict], state: str) -> list[dict]:
     content = last["content"]
     if isinstance(content, str):
         content = [{"type": "text", "text": content}]
-    reminder = {"type": "text", "text": f"<state_reminder>\n{state}\n</state_reminder>"}
+    reminder = {
+        "type": "text",
+        "text": f"<state_reminder>\n{state}\n</state_reminder>",
+    }
     return history[:-1] + [{"role": "user", "content": [reminder, *content]}]

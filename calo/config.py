@@ -39,6 +39,8 @@ class CaloConfig:
     public_url: str = field(default_factory=lambda: os.environ.get("CALO_PUBLIC_URL", ""))
     admin_number: str = field(default_factory=lambda: os.environ.get("CALO_ADMIN_NUMBER", ""))
 
+    airtable_pat: str = field(default_factory=lambda: os.environ.get("AIRTABLE_PAT", ""))
+
     def __post_init__(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.photos_dir.mkdir(parents=True, exist_ok=True)
@@ -63,6 +65,14 @@ class CaloConfig:
         ]
         if missing:
             raise RuntimeError(f"Missing Twilio env vars: {', '.join(missing)}")
+
+    def require_airtable(self) -> None:
+        if not self.airtable_pat:
+            raise RuntimeError(
+                "AIRTABLE_PAT missing. Create a personal access token at "
+                "https://airtable.com/create/tokens with scopes "
+                "data.records:read, data.records:write, schema.bases:read."
+            )
 
     def require_encryption_key(self) -> None:
         if not self.photo_encryption_key:

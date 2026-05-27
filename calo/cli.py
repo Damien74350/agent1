@@ -42,17 +42,24 @@ def main() -> int:
     user = coach.db.get_or_create_user(LOCAL_TEST_NUMBER)
 
     if args.reset:
-        with coach.db.connect() as conn:
-            conn.execute("DELETE FROM messages WHERE user_id = ?", (user["id"],))
-            conn.execute("DELETE FROM meals WHERE user_id = ?", (user["id"],))
-            conn.execute("DELETE FROM weight_logs WHERE user_id = ?", (user["id"],))
-            conn.execute("DELETE FROM body_photos WHERE user_id = ?", (user["id"],))
-            conn.execute(
-                "UPDATE users SET onboarding_complete = 0, name = NULL, age = NULL "
-                "WHERE id = ?",
-                (user["id"],),
-            )
-        console.print("[cyan]Reset done.[/cyan]")
+        coach.messages.clear(user["id"])
+        coach.db.update_user(
+            user["id"],
+            name=None,
+            age=None,
+            sex=None,
+            height_cm=None,
+            current_weight_kg=None,
+            activity_level=None,
+            goal=None,
+            target_weight_kg=None,
+            onboarding_complete=False,
+            photo_consent=False,
+        )
+        console.print(
+            "[cyan]Reset done. (Airtable profile cleared, conversation history wiped. "
+            "Meals/weights/photos in Airtable are NOT deleted — go to Airtable UI if you want.)[/cyan]"
+        )
 
     console.print("[bold cyan]Calo (local CLI)[/bold cyan] — Ctrl-C pour quitter")
     console.print(f"[dim]model: {config.model} · effort: {config.effort}[/dim]\n")

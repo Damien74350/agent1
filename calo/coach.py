@@ -121,11 +121,12 @@ class CaloCoach:
                 elif block.type == "tool_use":
                     tool_calls_taken.append(block.name)
 
-        # 7. Persist the full assistant trajectory (text + tool_use blocks).
-        assistant_content = (
-            _serialize(runner.messages[-1].content) if runner.messages else []
-        )
-        self.messages.add(turn.user_id, "assistant", assistant_content)
+        # 7. Persist the assistant's final text reply. Tool_use/tool_result blocks
+        #    are intentionally dropped from history — keeping them would require
+        #    pairing each tool_use with its matching tool_result on the next turn,
+        #    which the tool runner already resolved internally. Text-only history
+        #    keeps the next turn simple and correct.
+        self.messages.add(turn.user_id, "assistant", final_text or "…")
 
         return TurnOutput(reply_text=final_text or "…", tool_calls=tool_calls_taken)
 

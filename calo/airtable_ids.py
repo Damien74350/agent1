@@ -14,6 +14,7 @@ KNOWLEDGE_TABLE = "tblXA4qxZbqw4v4xD"
 MEALS_TABLE = "tblmw9BuImOaEkk8B"
 WEIGHT_LOGS_TABLE = "tblOrpeTZf2cN770r"
 BODY_PHOTOS_TABLE = "tblCmbR8w7BrLErqZ"
+MEMORIES_TABLE = "tblSoqBsOGeUL20gd"
 
 # --- field IDs ---
 # Using field IDs rather than names insulates Calo from renames in the Airtable UI.
@@ -89,4 +90,14 @@ BODY_PHOTOS_FIELDS = {
     "encrypted_photo_ref": "fld0njqLVjIuoxUKD",
     "analysis": "fldut7Wpri3HRGMPS",
     "angle": "fldZWz3UAkfKvSTgQ",
+}
+
+MEMORIES_FIELDS = {
+    "created_at": "fldj0nTX4YV0lDm4t",
+    "user": "fldholfHLm6jMlSy2",
+    "memory": "fldZ6CoPSSdvDlVs5",
+    "category": "fld6QXWShaiBWIzVt",
+    "importance": "fldlWyX7O2qKbmsk6",
+    "active": "fld2YR3W4OdURVxGU",
+    "admin_notes": "fld6jbIhdEegNL0Pk",
 }

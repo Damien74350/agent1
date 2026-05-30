@@ -206,6 +206,33 @@ Args:
         )
 
     @beta_tool
+    def remember(memory: str, category: str = "divers", importance: int = 3) -> str:
+        """Save an important fact about the user that you want to remember for \
+future conversations. Use this PROACTIVELY whenever the user shares something \
+that would help you serve them better next time.
+
+When to call this tool (be generous, save liberally):
+- Preferences: 'I hate fish', 'I love spicy food', 'I'm vegetarian on Mondays'
+- Health: injuries, allergies, conditions, medications
+- Sport: schedule, gym, sports practiced, frequency
+- Personal life: family, work, kids, life events ('moving in June', 'wedding next month')
+- Professional: job, business projects, current challenges
+- Recurring events: 'Tuesday is always cheat day', 'I drink wine on Fridays'
+- Goals beyond the basic profile: 'wants to run a marathon in October'
+- Quirks/habits: 'doesn't eat breakfast', 'always trains at 6am'
+
+Args:
+    memory: The fact to remember, written in 3rd person, concise. \
+        Ex: 'Déteste le poisson', 'Bléssé au ménisque gauche depuis 2024', \
+        'Coach sportif avec 25 clients', 'Court le marathon de Paris en avril'.
+    category: One of 'préférence' | 'objectif' | 'santé' | 'sport' | \
+        'vie pro' | 'vie perso' | 'événement' | 'divers'.
+    importance: 1 (anecdote) to 5 (critical, never forget). Default 3.
+"""
+        memory_id = db.add_memory(user_id, memory, category, importance)
+        return f"Memory saved [{category}, importance={importance}]: {memory[:80]}"
+
+    @beta_tool
     def search_knowledge(query: str) -> str:
         """Search Calo's knowledge base for relevant guidance. Call this when the \
 user mentions a topic like 'plateau', 'restaurant', 'sommeil', 'cycle', \
@@ -233,4 +260,5 @@ Args:
         get_daily_summary,
         get_weekly_progress,
         search_knowledge,
+        remember,
     ]

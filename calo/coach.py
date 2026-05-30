@@ -93,7 +93,8 @@ class CaloCoach:
         # 5. Inject user state context as a system reminder so the agent knows
         #    where the user is at without invalidating the cached system prompt.
         user = self.db.get_user_by_id(turn.user_id)
-        state_summary = _summarize_user_state(user)
+        memories = self.db.memories_for_user(turn.user_id, limit=30)
+        state_summary = _summarize_user_state(user, memories)
         history = _inject_state_reminder(history, state_summary)
 
         # 6. Run the tool runner loop.
@@ -141,7 +142,10 @@ def _serialize(blocks) -> list[dict[str, Any]]:
     return out
 
 
-def _summarize_user_state(user: dict[str, Any]) -> str:
+def _summarize_user_state(
+    user: dict[str, Any], memories: list[dict[str, Any]] | None = None
+) -> str:
+    memories = memories or []
     if not user or not user.get("onboarding_complete"):
         collected = [
             f
@@ -175,7 +179,7 @@ def _summarize_user_state(user: dict[str, Any]) -> str:
             f"Champs manquants : {', '.join(missing) or 'consentement photo uniquement'}. "
             "Pose la PROCHAINE question d'onboarding (UN champ à la fois, naturellement)."
         )
-    return (
+    base = (
         "ONBOARDING_STATUS = COMPLET ✅ — "
         "TU CONNAIS DÉJÀ CET UTILISATEUR. NE redemande JAMAIS son prénom, son sexe, "
         "son âge, sa taille, son poids, son objectif ou ses cibles. Ces infos sont "
@@ -193,6 +197,36 @@ def _summarize_user_state(user: dict[str, Any]) -> str:
         f"• Consentement photo morpho : {'oui' if user.get('photo_consent') else 'non'}\n"
         f"• Restrictions alimentaires : {user.get('restrictions') or 'aucune'}"
     )
+    if memories:
+        base += "\n\n# CE QUE TU AS RETENU SUR LUI/ELLE (souvenirs long terme)\n"
+        base += (
+            "Tu as enregistré ces faits au fil des conversations précédentes. "
+            "Utilise-les pour personnaliser ta réponse et montrer que tu te souviens. "
+            "Si l'utilisateur partage un NOUVEAU fait important, sauvegarde-le via "
+            "l'outil `remember`.\n"
+        )
+        # group by category
+        by_cat: dict[str, list[dict[str, Any]]] = {}
+        for m in memories:
+            by_cat.setdefault(m.get("category") or "divers", []).append(m)
+        order = [
+            "santé",
+            "sport",
+            "objectif",
+            "préférence",
+            "vie pro",
+            "vie perso",
+            "événement",
+            "divers",
+        ]
+        for cat in order:
+            if cat not in by_cat:
+                continue
+            base += f"\n## {cat}\n"
+            for m in by_cat[cat]:
+                stars = "★" * int(m.get("importance") or 3)
+                base += f"• {m.get('memory')} {stars}\n"
+    return base
 
 
 def _inject_state_reminder(history: list[dict], state: str) -> list[dict]:

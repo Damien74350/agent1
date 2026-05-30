@@ -24,6 +24,8 @@ from .airtable_ids import (
     KNOWLEDGE_TABLE,
     MEALS_FIELDS,
     MEALS_TABLE,
+    MEMORIES_FIELDS,
+    MEMORIES_TABLE,
     USERS_FIELDS,
     USERS_TABLE,
     WEIGHT_LOGS_FIELDS,
@@ -46,6 +48,7 @@ class AirtableDB:
         self.meals = self.api.table(BASE_ID, MEALS_TABLE)
         self.weights = self.api.table(BASE_ID, WEIGHT_LOGS_TABLE)
         self.body_photos = self.api.table(BASE_ID, BODY_PHOTOS_TABLE)
+        self.memories = self.api.table(BASE_ID, MEMORIES_TABLE)
 
     # ------------------------------------------------------------------
     # users
@@ -246,6 +249,49 @@ class AirtableDB:
         )
         return _unwrap_food(fuzzy) if fuzzy else None
 
+    # ------------------------------------------------------------------
+    # memories (long-term facts about the user)
+    # ------------------------------------------------------------------
+
+    def add_memory(
+        self,
+        user_id: str,
+        memory: str,
+        category: str = "divers",
+        importance: int = 3,
+    ) -> str:
+        rec = self.memories.create(
+            {
+                MEMORIES_FIELDS["created_at"]: now_iso(),
+                MEMORIES_FIELDS["user"]: [user_id],
+                MEMORIES_FIELDS["memory"]: memory,
+                MEMORIES_FIELDS["category"]: category,
+                MEMORIES_FIELDS["importance"]: max(1, min(5, int(importance))),
+                MEMORIES_FIELDS["active"]: True,
+            },
+            typecast=True,
+        )
+        return rec["id"]
+
+    def memories_for_user(
+        self, user_id: str, limit: int = 30
+    ) -> list[dict[str, Any]]:
+        """Most important / most recent active memories for a user.
+        Sort by importance desc, then created_at desc."""
+        formula = (
+            f"AND({{{MEMORIES_FIELDS['active']}}}, "
+            f"FIND('{user_id}', ARRAYJOIN({{{MEMORIES_FIELDS['user']}}})) > 0)"
+        )
+        recs = self.memories.all(
+            formula=formula,
+            sort=[
+                f"-{MEMORIES_FIELDS['importance']}",
+                f"-{MEMORIES_FIELDS['created_at']}",
+            ],
+            max_records=limit,
+        )
+        return [_unwrap_memory(r) for r in recs]
+
     def search_foods(self, partial: str, limit: int = 10) -> list[dict[str, Any]]:
         name_field = FOODS_FIELDS["name_fr"]
         active = FOODS_FIELDS["active"]
@@ -308,6 +354,17 @@ def _unwrap_body_photo(rec: dict[str, Any]) -> dict[str, Any]:
         "encrypted_photo_ref": f.get(BODY_PHOTOS_FIELDS["encrypted_photo_ref"]),
         "analysis": f.get(BODY_PHOTOS_FIELDS["analysis"]),
         "angle": f.get(BODY_PHOTOS_FIELDS["angle"]),
+    }
+
+
+def _unwrap_memory(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "created_at": f.get(MEMORIES_FIELDS["created_at"]),
+        "memory": f.get(MEMORIES_FIELDS["memory"]),
+        "category": f.get(MEMORIES_FIELDS["category"]),
+        "importance": f.get(MEMORIES_FIELDS["importance"], 3),
     }
 
 

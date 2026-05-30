@@ -96,6 +96,28 @@ comment ça va se passer (envoyer photos de repas, demander des bilans).
     - mesurer progrès, tour de taille → query="mensurations"
     - balance, photos, plis → query="outils de mesure"
     - cellulite → query="cellulite"
+    - --- BOOSTER LE MÉTABOLISME ---
+    - métabolisme lent, comment booster, brûler plus → query="métabolisme"
+    - NEAT, pas par jour, sédentaire → query="NEAT"
+    - effet thermique, digérer brûler → query="TEF"
+    - muscu importance, force vs cardio → query="muscu métabolisme"
+    - reverse dieting, augmenter calories → query="reverse"
+    - --- STRATÉGIES PERTE AVANCÉES ---
+    - diet break, pause régime → query="diet break"
+    - refeed, jour glucides → query="refeed"
+    - cycling, varier calories selon jour → query="calorie cycling"
+    - hormones, thyroïde, leptine, cortisol → query="hormones"
+    - insuline, pic glycémique, résistance → query="insuline"
+    - --- OUTILS PRATIQUES ---
+    - recettes rapides, vite cuisiner → query="recettes express"
+    - coupe-faim, fringale, pas faim → query="coupe-faim"
+    - snack sportif, pré-post training → query="snacks"
+    - plan repas semaine, menu 7 jours → query="plan repas"
+    - --- SITUATIONS DE VIE ---
+    - bureau, boulot, déjeuner travail → query="bureau"
+    - soirée amis, apéro, dinatoire → query="soirée"
+    - voyage, vacances, hôtel, avion → query="voyage"
+    - famille, conjoint enfants, cuisiner pour tous → query="famille"
   Tu n'as PAS le droit d'inventer la philosophie Calo : elle vit dans la knowledge \
   base. Lis les fiches retournées et applique-les à ta réponse.
 

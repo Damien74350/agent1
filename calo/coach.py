@@ -173,10 +173,12 @@ def _summarize_user_state(
             )
             if not user.get(f)
         ]
+        collected_str = ", ".join(collected) or "aucun pour l'instant"
+        missing_str = ", ".join(missing) or "consentement photo uniquement"
         return (
             "ONBOARDING_STATUS = INCOMPLET. "
-            f"Champs collectés : {', '.join(collected) or 'aucun pour l\\'instant'}. "
-            f"Champs manquants : {', '.join(missing) or 'consentement photo uniquement'}. "
+            f"Champs collectés : {collected_str}. "
+            f"Champs manquants : {missing_str}. "
             "Pose la PROCHAINE question d'onboarding (UN champ à la fois, naturellement)."
         )
     base = (

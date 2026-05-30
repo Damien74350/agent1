@@ -170,20 +170,28 @@ def _summarize_user_state(user: dict[str, Any]) -> str:
             if not user.get(f)
         ]
         return (
-            "ONBOARDING IN PROGRESS. "
-            f"Collected: {', '.join(collected) or 'nothing yet'}. "
-            f"Still missing: {', '.join(missing) or 'photo_consent only'}. "
-            "Ask the next missing field naturally, one at a time."
+            "ONBOARDING_STATUS = INCOMPLET. "
+            f"Champs collectés : {', '.join(collected) or 'aucun pour l\\'instant'}. "
+            f"Champs manquants : {', '.join(missing) or 'consentement photo uniquement'}. "
+            "Pose la PROCHAINE question d'onboarding (UN champ à la fois, naturellement)."
         )
     return (
-        f"User: {user.get('name')} ({user.get('sex')}, {user.get('age')}y, "
-        f"{user.get('height_cm')}cm, {user.get('current_weight_kg')}kg). "
-        f"Goal: {user.get('goal')} (target: {user.get('target_weight_kg')}kg). "
-        f"Daily targets: {user.get('daily_calories')} kcal / "
+        "ONBOARDING_STATUS = COMPLET ✅ — "
+        "TU CONNAIS DÉJÀ CET UTILISATEUR. NE redemande JAMAIS son prénom, son sexe, "
+        "son âge, sa taille, son poids, son objectif ou ses cibles. Ces infos sont "
+        "ci-dessous, utilise-les directement pour répondre.\n"
+        f"• Prénom : {user.get('name')}\n"
+        f"• Sexe : {user.get('sex')}\n"
+        f"• Âge : {user.get('age')} ans\n"
+        f"• Taille : {user.get('height_cm')} cm\n"
+        f"• Poids actuel : {user.get('current_weight_kg')} kg\n"
+        f"• Niveau d'activité : {user.get('activity_level')}\n"
+        f"• Objectif : {user.get('goal')} (cible : {user.get('target_weight_kg')} kg)\n"
+        f"• Cibles quotidiennes : {user.get('daily_calories')} kcal · "
         f"P:{user.get('daily_protein_g')}g C:{user.get('daily_carbs_g')}g "
-        f"F:{user.get('daily_fat_g')}g. "
-        f"Photo consent: {'yes' if user.get('photo_consent') else 'no'}. "
-        f"Restrictions: {user.get('restrictions') or 'none'}."
+        f"F:{user.get('daily_fat_g')}g\n"
+        f"• Consentement photo morpho : {'oui' if user.get('photo_consent') else 'non'}\n"
+        f"• Restrictions alimentaires : {user.get('restrictions') or 'aucune'}"
     )
 
 

@@ -86,7 +86,7 @@ def _process_turn(
                 photo_media_type=photo_media_type,
             )
         )
-        log.info("user=%d tools=%s reply_len=%d", user_id, out.tool_calls, len(out.reply_text))
+        log.info("user=%s tools=%s reply_len=%d", user_id, out.tool_calls, len(out.reply_text))
 
         # Send the reply back.
         twilio.send_text(sender, out.reply_text)

@@ -50,13 +50,19 @@ class AirtableDB:
         self.body_photos = self.api.table(BASE_ID, BODY_PHOTOS_TABLE)
         self.memories = self.api.table(BASE_ID, MEMORIES_TABLE)
 
+    # pyairtable returns fields keyed by NAME by default. Our schema uses
+    # field IDs everywhere (so renames in the UI don't break us), so every
+    # read MUST pass `use_field_ids=True`. Centralised here.
+    _BY_ID = {"use_field_ids": True}
+
     # ------------------------------------------------------------------
     # users
     # ------------------------------------------------------------------
 
     def get_or_create_user(self, whatsapp_number: str) -> dict[str, Any]:
         rec = self.users.first(
-            formula=f"{{{USERS_FIELDS['whatsapp_number']}}} = '{_escape(whatsapp_number)}'"
+            formula=f"{{{USERS_FIELDS['whatsapp_number']}}} = '{_escape(whatsapp_number)}'",
+            **self._BY_ID,
         )
         if rec:
             return _unwrap_user(rec)
@@ -68,12 +74,13 @@ class AirtableDB:
                 USERS_FIELDS["photo_consent"]: False,
             },
             typecast=True,
+            use_field_ids=True,
         )
         return _unwrap_user(rec)
 
     def get_user_by_id(self, record_id: str) -> dict[str, Any]:
         try:
-            rec = self.users.get(record_id)
+            rec = self.users.get(record_id, **self._BY_ID)
             return _unwrap_user(rec)
         except Exception:
             return {}
@@ -90,7 +97,7 @@ class AirtableDB:
                 value = bool(value)
             mapped[field_id] = value
         if mapped:
-            self.users.update(record_id, mapped, typecast=True)
+            self.users.update(record_id, mapped, typecast=True, use_field_ids=True)
 
     # ------------------------------------------------------------------
     # meals
@@ -122,7 +129,7 @@ class AirtableDB:
             fields[MEALS_FIELDS["notes"]] = notes
         if meal_type:
             fields[MEALS_FIELDS["meal_type"]] = meal_type
-        rec = self.meals.create(fields, typecast=True)
+        rec = self.meals.create(fields, typecast=True, use_field_ids=True)
         return rec["id"]
 
     def meals_for_day(self, user_id: str, day_iso: str) -> list[dict[str, Any]]:
@@ -131,7 +138,7 @@ class AirtableDB:
             f"AND(FIND('{day_iso}', {{{MEALS_FIELDS['eaten_at']}}}) = 1, "
             f"FIND('{user_id}', ARRAYJOIN({{{MEALS_FIELDS['user']}}})) > 0)"
         )
-        recs = self.meals.all(formula=formula)
+        recs = self.meals.all(formula=formula, **self._BY_ID)
         return [_unwrap_meal(r) for r in recs]
 
     # ------------------------------------------------------------------
@@ -146,6 +153,7 @@ class AirtableDB:
                 WEIGHT_LOGS_FIELDS["weight_kg"]: kg,
             },
             typecast=True,
+            use_field_ids=True,
         )
 
     def weights_history(self, user_id: str, limit: int = 30) -> list[dict[str, Any]]:
@@ -156,6 +164,7 @@ class AirtableDB:
             formula=formula,
             sort=[f"-{WEIGHT_LOGS_FIELDS['logged_at']}"],
             max_records=limit,
+            **self._BY_ID,
         )
         return [_unwrap_weight(r) for r in recs]
 
@@ -181,6 +190,7 @@ class AirtableDB:
                 BODY_PHOTOS_FIELDS["angle"]: angle,
             },
             typecast=True,
+            use_field_ids=True,
         )
         return rec["id"]
 
@@ -191,6 +201,7 @@ class AirtableDB:
         recs = self.body_photos.all(
             formula=formula,
             sort=[f"-{BODY_PHOTOS_FIELDS['captured_at']}"],
+            **self._BY_ID,
         )
         return [_unwrap_body_photo(r) for r in recs]
 
@@ -213,7 +224,7 @@ class AirtableDB:
             f"FIND('{q}', LOWER(ARRAYJOIN({{{tags}}}, ',')))"
             f"))"
         )
-        recs = self.knowledge.all(formula=formula, max_records=max_results)
+        recs = self.knowledge.all(formula=formula, max_records=max_results, **self._BY_ID)
         return [_unwrap_knowledge(r) for r in recs]
 
     def list_knowledge_titles(self) -> list[dict[str, Any]]:
@@ -221,6 +232,7 @@ class AirtableDB:
         recs = self.knowledge.all(
             formula=f"{{{KNOWLEDGE_FIELDS['active']}}}",
             fields=[KNOWLEDGE_FIELDS["title"], KNOWLEDGE_FIELDS["topic"]],
+            **self._BY_ID,
         )
         return [
             {
@@ -240,12 +252,14 @@ class AirtableDB:
         name_field = FOODS_FIELDS["name_fr"]
         active = FOODS_FIELDS["active"]
         exact = self.foods.first(
-            formula=f"AND({{{active}}}, LOWER({{{name_field}}}) = '{_escape(name.lower())}')"
+            formula=f"AND({{{active}}}, LOWER({{{name_field}}}) = '{_escape(name.lower())}')",
+            **self._BY_ID,
         )
         if exact:
             return _unwrap_food(exact)
         fuzzy = self.foods.first(
-            formula=f"AND({{{active}}}, FIND('{_escape(name.lower())}', LOWER({{{name_field}}})))"
+            formula=f"AND({{{active}}}, FIND('{_escape(name.lower())}', LOWER({{{name_field}}})))",
+            **self._BY_ID,
         )
         return _unwrap_food(fuzzy) if fuzzy else None
 
@@ -270,6 +284,7 @@ class AirtableDB:
                 MEMORIES_FIELDS["active"]: True,
             },
             typecast=True,
+            use_field_ids=True,
         )
         return rec["id"]
 
@@ -289,6 +304,7 @@ class AirtableDB:
                 f"-{MEMORIES_FIELDS['created_at']}",
             ],
             max_records=limit,
+            **self._BY_ID,
         )
         return [_unwrap_memory(r) for r in recs]
 
@@ -298,7 +314,7 @@ class AirtableDB:
         formula = (
             f"AND({{{active}}}, FIND('{_escape(partial.lower())}', LOWER({{{name_field}}})))"
         )
-        recs = self.foods.all(formula=formula, max_records=limit)
+        recs = self.foods.all(formula=formula, max_records=limit, **self._BY_ID)
         return [_unwrap_food(r) for r in recs]
 
 

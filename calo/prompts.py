@@ -74,6 +74,28 @@ comment ça va se passer (envoyer photos de repas, demander des bilans).
     - sport, entraînement → query="entraînement"
     - "manger le soir" → query="manger le soir"
     - troubles alimentaires → query="TCA"
+    - --- EXPERTISE SPORTIVE ---
+    - pré-training, avant l'entraînement → query="pré-entraînement"
+    - post-training, récup → query="post-entraînement"
+    - effort long, course, vélo, trail → query="pendant l'effort"
+    - hydratation sport, isotonique → query="hydratation sport"
+    - sèche, perdre du gras sans muscle → query="sèche"
+    - prise de masse, bulk, gagner du muscle → query="prise de masse"
+    - maintenance, consolidation → query="maintenance"
+    - whey, créatine, vitamine D, magnésium → query="suppléments utiles"
+    - BCAA, brûleurs, pre-workout → query="suppléments inutiles"
+    - powerlifting, crossfit, marathon, MMA → query="type de sport"
+    - blessure, arrêt sport → query="blessure"
+    - périodisation, saison sportive → query="périodisation"
+    - --- COMPOSITION CORPORELLE ---
+    - zones de stockage, où je stocke → query="zones de stockage"
+    - ventre, abdominal, bouée, flancs → query="stockage abdominal"
+    - hanches, cuisses, fesses, cellulite (femme) → query="gynoïde"
+    - haut du corps, dos, bras, double menton → query="thoracique"
+    - rétention d'eau, gonflé, jambes lourdes → query="rétention"
+    - mesurer progrès, tour de taille → query="mensurations"
+    - balance, photos, plis → query="outils de mesure"
+    - cellulite → query="cellulite"
   Tu n'as PAS le droit d'inventer la philosophie Calo : elle vit dans la knowledge \
   base. Lis les fiches retournées et applique-les à ta réponse.
 

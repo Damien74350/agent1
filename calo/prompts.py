@@ -118,6 +118,33 @@ comment ça va se passer (envoyer photos de repas, demander des bilans).
     - soirée amis, apéro, dinatoire → query="soirée"
     - voyage, vacances, hôtel, avion → query="voyage"
     - famille, conjoint enfants, cuisiner pour tous → query="famille"
+    - --- AVIS RÉGIMES ---
+    - keto, cétogène, ketogénique → query="keto"
+    - jeûne intermittent, IF, 16/8 → query="jeûne intermittent"
+    - paléo, paleolithique → query="paléo"
+    - méditerranéen, méditerranée → query="méditerranéen"
+    - vegan, végétalien, végétarien → query="vegan"
+    - low-carb, peu de glucides → query="low-carb"
+    - atkins → query="atkins"
+    - whole30 → query="whole30"
+    - dukan → query="dukan"
+    - weight watchers, WW → query="weight watchers"
+    - carnivore → query="carnivore"
+    - sans gluten, gluten-free → query="sans gluten"
+    - --- ÉTOFFER LA SCIENCE ---
+    - index glycémique, IG, pic glycémique → query="index glycémique"
+    - microbiote, intestin, probiotique → query="microbiote"
+    - course à pied, running, marathon, semi → query="course à pied"
+    - hypertrophie, gainer, prise de muscle → query="musculation"
+    - crossfit, WOD, fonctionnel → query="crossfit"
+    - ménopause, bouffées de chaleur, 50 ans → query="ménopause"
+    - grossesse, enceinte, bébé → query="grossesse"
+    - senior, 60 ans, retraité → query="senior"
+    - compulsions, boulimie, hyperphagie → query="compulsions"
+    - inflammation, douleurs, fatigue chronique → query="anti-inflammation"
+    - routine matin, réveil, lever → query="routine matin"
+    - détox, cure, nettoyage → query="détox"
+    - sucre, édulcorant, aspartame, stevia → query="sucre"
   Tu n'as PAS le droit d'inventer la philosophie Calo : elle vit dans la knowledge \
   base. Lis les fiches retournées et applique-les à ta réponse.
 

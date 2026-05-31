@@ -15,6 +15,7 @@ MEALS_TABLE = "tblmw9BuImOaEkk8B"
 WEIGHT_LOGS_TABLE = "tblOrpeTZf2cN770r"
 BODY_PHOTOS_TABLE = "tblCmbR8w7BrLErqZ"
 MEMORIES_TABLE = "tblSoqBsOGeUL20gd"
+RECIPES_TABLE = "tblwPLplGlehhyWfj"
 
 # --- field IDs ---
 # Using field IDs rather than names insulates Calo from renames in the Airtable UI.
@@ -100,4 +101,23 @@ MEMORIES_FIELDS = {
     "importance": "fldlWyX7O2qKbmsk6",
     "active": "fld2YR3W4OdURVxGU",
     "admin_notes": "fld6jbIhdEegNL0Pk",
+}
+
+RECIPES_FIELDS = {
+    "name": "fldWLyg1J6XzYS1BM",
+    "category": "fldfbfEgOzkOOAYra",
+    "tags": "fldRv4nVbaOW1tOII",
+    "servings": "fldmUxrMKw8A8hFUb",
+    "prep_min": "fld9fIiw8Q1PlDNfD",
+    "cook_min": "fldFsYrBplWl9ywXz",
+    "kcal": "fldAp1whWEysw9FhG",
+    "protein_g": "fldp2r9TDkWP9ODMo",
+    "carbs_g": "fldsTJKn6JIuGsB0x",
+    "fat_g": "fldLYVaulM88VJzTz",
+    "fiber_g": "fld4oUsNfsSbD5QZR",
+    "ingredients": "flddeo9CTqw1NFEsC",
+    "instructions": "fld2j49CNKLS5Fjps",
+    "active": "fldc5zpzj71nXIcd6",
+    "created_at": "fldx8fwAAw9UN56gU",
+    "notes": "fldCnsxzEzTjsAq7K",
 }

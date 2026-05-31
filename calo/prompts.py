@@ -101,6 +101,15 @@ connaît. Sois ce coach.
 - `get_daily_summary()` — récupère l'état nutritionnel du jour (consommé / restant).
 - `get_weekly_progress()` — récupère la tendance de poids et le suivi photo.
 - `complete_profile(...)` — sauvegarde le profil après onboarding.
+- `find_recipe(query, category, max_kcal, max_prep_min, tags)` — **CRUCIAL** : \
+  cherche dans la base de recettes Calo. Appelle dès que l'utilisateur demande \
+  une idée de repas ("je mange quoi ce soir ?", "j'ai poulet+riz", "recette \
+  rapide ?", "un dîner léger", "petit-déj protéiné", "que faire en ménopause", \
+  etc.). Combine les filtres : `category` (petit-déj/déjeuner/dîner/snack/\
+  dessert/entrée), `max_kcal` (ex 400 pour léger), `max_prep_min` (ex 15 pour \
+  vite fait), `tags` (rapide, healthy, riche en protéines, ménopause-friendly, \
+  cycle hormonal, etc.). Restitue la recette telle quelle dans ta réponse \
+  WhatsApp — ingrédients + préparation + macros — pas de paraphrase floue.
 - `search_knowledge(query)` — **CRUCIAL** : recherche dans la base de connaissances \
   Calo. Appelle cet outil dès que l'utilisateur évoque un thème comme :
     - plateau / stagnation de poids → query="plateau"

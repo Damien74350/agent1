@@ -233,6 +233,63 @@ Args:
         return f"Memory saved [{category}, importance={importance}]: {memory[:80]}"
 
     @beta_tool
+    def find_recipe(
+        query: str = "",
+        category: str = "",
+        max_kcal: int = 0,
+        max_prep_min: int = 0,
+        tags: list[str] | None = None,
+    ) -> str:
+        """Find a Calo recipe matching the user's situation. Use this when the \
+user asks for meal ideas, "qu'est-ce que je peux manger", "j'ai X et Y, je \
+fais quoi ?", "une recette rapide ?", "un dîner léger ?", etc. Combine \
+filters to narrow down. Returns up to 5 matching recipes with macros and \
+full instructions.
+
+Args:
+    query: Free-text keyword to match against the name OR ingredients \
+(e.g. 'poulet', 'avocat', 'curry'). Leave empty if the user just wants \
+inspiration without specifying.
+    category: One of 'petit-déj' | 'déjeuner' | 'dîner' | 'snack' | 'dessert' | 'entrée'.
+    max_kcal: Upper bound on calories per serving (e.g. 400 for light). 0 = no limit.
+    max_prep_min: Upper bound on prep time in minutes (e.g. 15 for quick). 0 = no limit.
+    tags: List of required tags, ANY of: 'rapide', 'batch cooking', \
+'healthy', 'comfort', 'végétarien', 'vegan', 'sans gluten', \
+'riche en protéines', 'low-carb', 'low-cal', 'post-training', \
+'pré-training', 'anti-inflammatoire', 'perte de poids', 'prise de masse', \
+'ménopause-friendly', 'cycle hormonal'.
+"""
+        recipes = db.search_recipes(
+            query=query or None,
+            category=category or None,
+            tags=tags or None,
+            max_kcal=max_kcal if max_kcal > 0 else None,
+            max_prep_min=max_prep_min if max_prep_min > 0 else None,
+            max_results=5,
+        )
+        if not recipes:
+            return (
+                "Aucune recette ne correspond à ces critères. Propose une "
+                "suggestion depuis tes connaissances et invite l'utilisateur "
+                "à essayer."
+            )
+        out = []
+        for r in recipes:
+            tags_str = " · ".join(r.get("tags") or [])
+            total_min = (r.get("prep_min") or 0) + (r.get("cook_min") or 0)
+            out.append(
+                f"## {r['name']} ({r.get('category', '?')})\n"
+                f"⏱️ {total_min} min total · 🍽️ {r.get('servings', 1)} pers\n"
+                f"📊 {r.get('kcal', 0)} kcal · P:{r.get('protein_g', 0)}g · "
+                f"C:{r.get('carbs_g', 0)}g · F:{r.get('fat_g', 0)}g · "
+                f"Fibres:{r.get('fiber_g', 0)}g\n"
+                f"🏷️ {tags_str}\n\n"
+                f"**Ingrédients :**\n{r.get('ingredients', '')}\n\n"
+                f"**Préparation :**\n{r.get('instructions', '')}"
+            )
+        return "\n\n---\n\n".join(out)
+
+    @beta_tool
     def search_knowledge(query: str) -> str:
         """Search Calo's knowledge base for relevant guidance. Call this when the \
 user mentions a topic like 'plateau', 'restaurant', 'sommeil', 'cycle', \
@@ -259,6 +316,7 @@ Args:
         log_body_photo,
         get_daily_summary,
         get_weekly_progress,
+        find_recipe,
         search_knowledge,
         remember,
     ]

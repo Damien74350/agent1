@@ -26,6 +26,8 @@ from .airtable_ids import (
     MEALS_TABLE,
     MEMORIES_FIELDS,
     MEMORIES_TABLE,
+    RECIPES_FIELDS,
+    RECIPES_TABLE,
     USERS_FIELDS,
     USERS_TABLE,
     WEIGHT_LOGS_FIELDS,
@@ -49,6 +51,7 @@ class AirtableDB:
         self.weights = self.api.table(BASE_ID, WEIGHT_LOGS_TABLE)
         self.body_photos = self.api.table(BASE_ID, BODY_PHOTOS_TABLE)
         self.memories = self.api.table(BASE_ID, MEMORIES_TABLE)
+        self.recipes = self.api.table(BASE_ID, RECIPES_TABLE)
 
     # pyairtable returns fields keyed by NAME by default. Our schema uses
     # field IDs everywhere (so renames in the UI don't break us), so every
@@ -317,6 +320,62 @@ class AirtableDB:
         recs = self.foods.all(formula=formula, max_records=limit, **self._BY_ID)
         return [_unwrap_food(r) for r in recs]
 
+    # ------------------------------------------------------------------
+    # recipes
+    # ------------------------------------------------------------------
+
+    def search_recipes(
+        self,
+        query: str | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+        max_kcal: int | None = None,
+        max_prep_min: int | None = None,
+        max_results: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Search the Recipes table with flexible filters.
+
+        - `query` matches against name OR ingredients (substring, case-insensitive)
+        - `category` exact match on category (petit-déj / déjeuner / dîner / snack / dessert / entrée)
+        - `tags` requires ALL listed tags to be present
+        - `max_kcal` / `max_prep_min` are numeric upper bounds per serving
+        """
+        conditions = [f"{{{RECIPES_FIELDS['active']}}}"]
+        if query:
+            q = _escape(query.lower())
+            conditions.append(
+                f"OR(FIND('{q}', LOWER({{{RECIPES_FIELDS['name']}}})), "
+                f"FIND('{q}', LOWER({{{RECIPES_FIELDS['ingredients']}}})))"
+            )
+        if category:
+            conditions.append(
+                f"{{{RECIPES_FIELDS['category']}}} = '{_escape(category)}'"
+            )
+        if tags:
+            for tag in tags:
+                conditions.append(
+                    f"FIND('{_escape(tag)}', ARRAYJOIN({{{RECIPES_FIELDS['tags']}}}, ',')) > 0"
+                )
+        if max_kcal is not None:
+            conditions.append(f"{{{RECIPES_FIELDS['kcal']}}} <= {int(max_kcal)}")
+        if max_prep_min is not None:
+            conditions.append(f"{{{RECIPES_FIELDS['prep_min']}}} <= {int(max_prep_min)}")
+        formula = "AND(" + ", ".join(conditions) + ")"
+        recs = self.recipes.all(
+            formula=formula,
+            max_records=max_results,
+            sort=[RECIPES_FIELDS["prep_min"]],
+            **self._BY_ID,
+        )
+        return [_unwrap_recipe(r) for r in recs]
+
+    def get_recipe_by_id(self, record_id: str) -> dict[str, Any] | None:
+        try:
+            rec = self.recipes.get(record_id, **self._BY_ID)
+            return _unwrap_recipe(rec)
+        except Exception:
+            return None
+
 
 # ----------------------------------------------------------------------
 # unwrapping helpers — turn the field-ID-keyed Airtable record into a friendly dict
@@ -381,6 +440,27 @@ def _unwrap_memory(rec: dict[str, Any]) -> dict[str, Any]:
         "memory": f.get(MEMORIES_FIELDS["memory"]),
         "category": f.get(MEMORIES_FIELDS["category"]),
         "importance": f.get(MEMORIES_FIELDS["importance"], 3),
+    }
+
+
+def _unwrap_recipe(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    tags_raw = f.get(RECIPES_FIELDS["tags"]) or []
+    return {
+        "id": rec["id"],
+        "name": f.get(RECIPES_FIELDS["name"]),
+        "category": f.get(RECIPES_FIELDS["category"]),
+        "tags": tags_raw if isinstance(tags_raw, list) else [],
+        "servings": f.get(RECIPES_FIELDS["servings"]),
+        "prep_min": f.get(RECIPES_FIELDS["prep_min"]),
+        "cook_min": f.get(RECIPES_FIELDS["cook_min"]),
+        "kcal": f.get(RECIPES_FIELDS["kcal"]),
+        "protein_g": f.get(RECIPES_FIELDS["protein_g"]),
+        "carbs_g": f.get(RECIPES_FIELDS["carbs_g"]),
+        "fat_g": f.get(RECIPES_FIELDS["fat_g"]),
+        "fiber_g": f.get(RECIPES_FIELDS["fiber_g"]),
+        "ingredients": f.get(RECIPES_FIELDS["ingredients"]),
+        "instructions": f.get(RECIPES_FIELDS["instructions"]),
     }
 
 

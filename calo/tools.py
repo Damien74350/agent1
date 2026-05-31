@@ -11,6 +11,7 @@ Available tools:
 - search_knowledge        retrieve relevant guidance from the knowledge base
 """
 
+import random
 from datetime import datetime, timezone
 from typing import Any
 
@@ -290,6 +291,113 @@ inspiration without specifying.
         return "\n\n---\n\n".join(out)
 
     @beta_tool
+    def generate_meal_plan(
+        days: int = 7,
+        focus: str = "auto",
+        vegetarian: bool = False,
+        vegan: bool = False,
+    ) -> str:
+        """Generate a personalised meal plan from Calo's recipes, tuned to the \
+user's daily kcal/macro targets. Use this when the user asks for a meal plan, \
+"un plan de repas", "menu semaine", "qu'est-ce que je mange cette semaine", \
+"prépare-moi mes repas", "menu menopause", "menu sèche", etc. The plan picks \
+1 petit-déj + 1 déjeuner + 1 dîner + 1 snack per day, trying to hit ±15% of \
+the user's daily kcal target. No recipe repeats within a 4-day window.
+
+Args:
+    days: Number of days to plan (1-14). Default 7.
+    focus: 'auto' | 'perte de poids' | 'prise de masse' | 'menopause-friendly' \
+| 'cycle hormonal' | 'anti-inflammatoire' | 'rapide' | 'batch cooking'. \
+Filters recipes by tag.
+    vegetarian: If True, only include vegetarian-tagged recipes.
+    vegan: If True, only include vegan-tagged recipes.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user or not user.get("onboarding_complete"):
+            return "Onboarding incomplet. Termine d'abord le profil avec complete_profile."
+
+        target_kcal = int(user.get("daily_calories") or 2000)
+        require_tags: list[str] = []
+        if vegan:
+            require_tags.append("vegan")
+        elif vegetarian:
+            require_tags.append("végétarien")
+        if focus and focus != "auto":
+            require_tags.append(focus)
+
+        grouped = db.recipes_for_meal_plan(require_tags=require_tags or None)
+
+        # Fallback: if a category is empty after filter, retry without tag filter
+        if any(not v for v in grouped.values()):
+            grouped = db.recipes_for_meal_plan(
+                require_tags=require_tags[:-1] if require_tags else None
+            )
+
+        days = max(1, min(14, int(days)))
+        recent: dict[str, list[str]] = {k: [] for k in grouped.keys()}
+        out_lines: list[str] = [
+            f"# Plan repas {days} jours · cible {target_kcal} kcal/j",
+            f"Profil : {user.get('name')} · {user.get('goal')} · "
+            f"P:{user.get('daily_protein_g')}g C:{user.get('daily_carbs_g')}g "
+            f"F:{user.get('daily_fat_g')}g",
+        ]
+
+        def pick(category: str, target_kcal_meal: int) -> dict[str, Any] | None:
+            pool = grouped.get(category, [])
+            if not pool:
+                return None
+            # avoid last 3 used in same category
+            blocked = set(recent[category][-3:])
+            candidates = [r for r in pool if r["id"] not in blocked]
+            if not candidates:
+                candidates = pool
+            # pick the recipe closest to target kcal
+            candidates.sort(
+                key=lambda r: abs((r.get("kcal") or 0) - target_kcal_meal)
+            )
+            top3 = candidates[: min(3, len(candidates))]
+            chosen = random.choice(top3)
+            recent[category].append(chosen["id"])
+            return chosen
+
+        # Meal kcal split: PD 25%, déj 35%, dîner 30%, snack 10%
+        for day in range(1, days + 1):
+            day_total_kcal = 0
+            day_total_p = 0.0
+            day_total_c = 0.0
+            day_total_f = 0.0
+            out_lines.append(f"\n## Jour {day}")
+            for cat, share in (
+                ("petit-déj", 0.25),
+                ("déjeuner", 0.35),
+                ("dîner", 0.30),
+                ("snack", 0.10),
+            ):
+                recipe = pick(cat, int(target_kcal * share))
+                if not recipe:
+                    out_lines.append(f"- _{cat} : aucune recette disponible_")
+                    continue
+                day_total_kcal += int(recipe.get("kcal") or 0)
+                day_total_p += float(recipe.get("protein_g") or 0)
+                day_total_c += float(recipe.get("carbs_g") or 0)
+                day_total_f += float(recipe.get("fat_g") or 0)
+                total_min = (recipe.get("prep_min") or 0) + (recipe.get("cook_min") or 0)
+                out_lines.append(
+                    f"- **{cat}** : {recipe['name']} "
+                    f"({recipe.get('kcal')} kcal · {total_min} min)"
+                )
+            out_lines.append(
+                f"  → Total jour : {day_total_kcal} kcal · "
+                f"P:{day_total_p:.0f}g C:{day_total_c:.0f}g F:{day_total_f:.0f}g"
+            )
+
+        out_lines.append(
+            "\n💡 Tu peux demander la liste de courses agrégée avec "
+            "`generate_grocery_list` une fois le plan validé."
+        )
+        return "\n".join(out_lines)
+
+    @beta_tool
     def list_challenges(
         category: str = "",
         difficulty: str = "",
@@ -421,6 +529,7 @@ Args:
         get_daily_summary,
         get_weekly_progress,
         find_recipe,
+        generate_meal_plan,
         list_challenges,
         get_challenge_details,
         start_challenge,

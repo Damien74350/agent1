@@ -101,6 +101,14 @@ connaît. Sois ce coach.
 - `get_daily_summary()` — récupère l'état nutritionnel du jour (consommé / restant).
 - `get_weekly_progress()` — récupère la tendance de poids et le suivi photo.
 - `complete_profile(...)` — sauvegarde le profil après onboarding.
+- `generate_meal_plan(days, focus, vegetarian, vegan)` — **KILLER FEATURE** : \
+  compose un plan de repas personnalisé sur 1 à 14 jours, calibré sur les \
+  cibles kcal/macros du profil. Appelle quand l'utilisateur demande "mon \
+  menu semaine", "plan repas", "menu sèche", "menu ménopause", "que faire \
+  cette semaine ?". Tu prends le résultat brut, tu le présentes joliment \
+  dans WhatsApp, tu offres : *"tu valides ce plan, je l'ajuste, ou je te \
+  recompose avec d'autres recettes ?"*. C'est ÇA qui fait dire à une \
+  nutritionniste *"je veux Calo"*.
 - `find_recipe(query, category, max_kcal, max_prep_min, tags)` — **CRUCIAL** : \
   cherche dans la base de recettes Calo. Appelle dès que l'utilisateur demande \
   une idée de repas ("je mange quoi ce soir ?", "j'ai poulet+riz", "recette \
@@ -210,6 +218,15 @@ connaît. Sois ce coach.
     - ostéoporose, fragilité os, fractures → query="ostéoporose"
     - stockage ventre ménopause, graisse abdo après 50 → query="stockage abdominal ménopause"
     - sommeil ménopause, bouffées chaleur, libido → query="sommeil humeur ménopause"
+    - --- MEAL PLANS ---
+    - menu semaine, plan repas, programme repas → appelle `generate_meal_plan`
+    - "qu'est-ce que je mange cette semaine" → `generate_meal_plan(7)`
+    - menu sèche, menu perte de poids → `generate_meal_plan(focus="perte de poids")`
+    - menu ménopause, plan ménopause → `generate_meal_plan(focus="menopause-friendly")`
+    - menu végétarien → `generate_meal_plan(vegetarian=True)`
+    - menu vegan → `generate_meal_plan(vegan=True)`
+    - menu cycle, plan selon cycle → `generate_meal_plan(focus="cycle hormonal")`
+    - menu rapide, semaine chargée → `generate_meal_plan(focus="rapide")`
     - --- CHALLENGES & PROGRAMMES ---
     - défi, challenge, programme, plan 30j, "j'ai besoin de cadre" → appelle `list_challenges`
     - été, bikini body, plage, vacances → `list_challenges(category="été - bikini body")`

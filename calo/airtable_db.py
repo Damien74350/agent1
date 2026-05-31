@@ -447,6 +447,43 @@ class AirtableDB:
         rec = self.user_challenges.first(formula=formula, **self._BY_ID)
         return _unwrap_user_challenge(rec) if rec else None
 
+    def recipes_for_meal_plan(
+        self,
+        exclude_tags: list[str] | None = None,
+        require_tags: list[str] | None = None,
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Return active recipes grouped by category for meal-plan composition.
+
+        `exclude_tags` removes recipes carrying ANY of those tags (e.g.
+        ['végétarien'] won't be excluded — it's just a tag — but if the user
+        is allergic to a category we'd pass it here).
+        `require_tags` keeps only recipes carrying ALL listed tags (e.g.
+        ['végétarien'] for a vegetarian user).
+        """
+        conditions = [f"{{{RECIPES_FIELDS['active']}}}"]
+        if require_tags:
+            for tag in require_tags:
+                conditions.append(
+                    f"FIND('{_escape(tag)}', ARRAYJOIN({{{RECIPES_FIELDS['tags']}}}, ',')) > 0"
+                )
+        formula = "AND(" + ", ".join(conditions) + ")"
+        recs = self.recipes.all(formula=formula, **self._BY_ID)
+        grouped: dict[str, list[dict[str, Any]]] = {
+            "petit-déj": [],
+            "déjeuner": [],
+            "dîner": [],
+            "snack": [],
+            "dessert": [],
+        }
+        for r in recs:
+            recipe = _unwrap_recipe(r)
+            cat = recipe.get("category") or ""
+            if exclude_tags and any(t in (recipe.get("tags") or []) for t in exclude_tags):
+                continue
+            if cat in grouped:
+                grouped[cat].append(recipe)
+        return grouped
+
 
 # ----------------------------------------------------------------------
 # unwrapping helpers — turn the field-ID-keyed Airtable record into a friendly dict

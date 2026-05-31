@@ -291,6 +291,44 @@ inspiration without specifying.
         return "\n\n---\n\n".join(out)
 
     @beta_tool
+    def generate_grocery_list(recipe_names: list[str]) -> str:
+        """Generate an aggregated grocery list from a list of Calo recipe names. \
+Use this when the user asks for "la liste de courses" after a meal plan, or \
+ad-hoc when they pick several recipes manually. Returns the consolidated \
+shopping list grouped by aisle.
+
+Args:
+    recipe_names: List of recipe names (exact match preferred) to aggregate.
+"""
+        if not recipe_names:
+            return "Aucune recette fournie. Demande à l'utilisateur quelles recettes inclure."
+        all_ingredients: list[str] = []
+        found_count = 0
+        missing: list[str] = []
+        for name in recipe_names:
+            hits = db.search_recipes(query=name, max_results=1)
+            if hits and hits[0].get("ingredients"):
+                all_ingredients.append(f"### {hits[0]['name']}\n{hits[0]['ingredients']}")
+                found_count += 1
+            else:
+                missing.append(name)
+        if found_count == 0:
+            return f"Aucune recette trouvée pour : {', '.join(recipe_names)}."
+        body = "\n\n".join(all_ingredients)
+        notice = ""
+        if missing:
+            notice = (
+                f"\n\n⚠️ Recettes introuvables (à ajouter manuellement) : "
+                f"{', '.join(missing)}"
+            )
+        return (
+            f"# Liste de courses agrégée ({found_count} recettes)\n\n"
+            f"💡 Calo te donne les ingrédients par recette. À toi de regrouper "
+            f"par rayon (légumes, protéines, féculents, sec, frais).\n\n"
+            f"{body}{notice}"
+        )
+
+    @beta_tool
     def analyze_progress(weeks: int = 4) -> str:
         """Smart progress analyser. Detects plateau, regression, or great \
 trajectory and suggests a concrete intervention (refeed, diet break, \
@@ -642,6 +680,7 @@ Args:
         analyze_progress,
         find_recipe,
         generate_meal_plan,
+        generate_grocery_list,
         list_challenges,
         get_challenge_details,
         start_challenge,

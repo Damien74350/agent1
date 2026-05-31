@@ -109,6 +109,9 @@ connaît. Sois ce coach.
   recommandation telle quelle, sans paraphraser, et engage la conversation \
   sur le choix de l'utilisateur.
 - `complete_profile(...)` — sauvegarde le profil après onboarding.
+- `generate_grocery_list(recipe_names)` — agrège les ingrédients de plusieurs \
+  recettes en une liste de courses. À utiliser après un meal plan validé ou \
+  quand l'utilisateur dit "liste de courses".
 - `generate_meal_plan(days, focus, vegetarian, vegan)` — **KILLER FEATURE** : \
   compose un plan de repas personnalisé sur 1 à 14 jours, calibré sur les \
   cibles kcal/macros du profil. Appelle quand l'utilisateur demande "mon \

@@ -21,6 +21,224 @@ from .airtable_db import AirtableDB
 from .nutrition import daily_targets
 
 
+def _build_workout_exercises(equipment: str, focus: str) -> dict[str, list[str]]:
+    """Return a session→exercise mapping based on equipment + focus."""
+    eq = (equipment or "").lower()
+
+    if "maison_basique" in eq or "aucun" in eq or "extérieur" in eq:
+        return {
+            "Full body A": [
+                "Squat sans charge 4x15",
+                "Pompes (ou genoux) 4x10-15",
+                "Fentes alternées 4x12/jambe",
+                "Rowing élastique ou table 4x12",
+                "Planche 3x45 sec",
+                "Mountain climbers 3x30 sec",
+            ],
+            "Full body B": [
+                "Squat sauté 4x12",
+                "Pompes diamant 4x8-12",
+                "Step-up sur banc 4x12/jambe",
+                "Tirage horizontal élastique 4x15",
+                "Hollow body hold 3x30 sec",
+                "Burpees 3x10",
+            ],
+            "Full body C": [
+                "Pistol squat assisté 4x6/jambe",
+                "Dips chaise 4x10",
+                "Hip thrust pieds élevés 4x15",
+                "Pike push-up 4x8",
+                "Plank side-to-side 3x40 sec",
+                "Squat jumps 3x12",
+            ],
+            "default": [
+                "Squat 4x12-15",
+                "Pompes 4x10-15",
+                "Fentes 4x12/jambe",
+                "Planche 3x45 sec",
+                "Mountain climbers 3x30 sec",
+            ],
+        }
+
+    if "maison_équipée" in eq or "haltères" in eq or "kettlebell" in eq:
+        return {
+            "Full body A": [
+                "Goblet squat 4x10",
+                "Développé couché haltères 4x10",
+                "Soulevé de terre roumain haltères 4x10",
+                "Rowing haltère unilatéral 4x10/côté",
+                "Développé militaire haltères 3x10",
+                "Planche 3x45 sec",
+            ],
+            "Full body B": [
+                "Fentes haltères 4x10/jambe",
+                "Développé incliné haltères 4x10",
+                "Hip thrust avec poids 4x12",
+                "Rowing buste penché barre 4x10",
+                "Élévations latérales 3x15",
+                "Russian twists 3x20",
+            ],
+            "Full body C": [
+                "Sumo squat haltère 4x12",
+                "Dips banc avec lest 4x10",
+                "Single leg deadlift 4x8/jambe",
+                "Curl haltères 3x12",
+                "Triceps overhead 3x12",
+                "Hollow rocks 3x30 sec",
+            ],
+            "Upper A": [
+                "Développé couché haltères 4x8-10",
+                "Rowing haltère 4x10/côté",
+                "Développé militaire haltères 4x10",
+                "Tirage poulie (élastique) 4x12",
+                "Curl haltères 3x12",
+                "Triceps extension 3x12",
+            ],
+            "Lower A": [
+                "Goblet squat 4x10",
+                "Soulevé de terre roumain 4x10",
+                "Fentes marchées 3x12/jambe",
+                "Hip thrust 4x15",
+                "Mollets debout 4x15",
+                "Planche 3x45 sec",
+            ],
+            "Upper B": [
+                "Développé incliné haltères 4x10",
+                "Rowing buste penché 4x10",
+                "Élévations latérales 4x15",
+                "Pull-ups (assistées si besoin) 3xAMRAP",
+                "Pompes prise serrée 3x10",
+                "Curl marteau 3x12",
+            ],
+            "Lower B": [
+                "Sumo squat 4x12",
+                "Single leg deadlift 4x10/jambe",
+                "Step-up lestée 4x10/jambe",
+                "Curl jambes (élastique) 3x15",
+                "Mollets assis 4x20",
+                "Hollow body hold 3x30 sec",
+            ],
+            "Push": [
+                "Développé couché haltères 4x8",
+                "Développé militaire haltères 4x10",
+                "Pompes lestées 3x10",
+                "Élévations latérales 4x15",
+                "Triceps extension 3x12",
+            ],
+            "Pull": [
+                "Tirage barre/élastique 4x10",
+                "Rowing haltère 4x10/côté",
+                "Face pulls élastique 3x15",
+                "Curl haltères 3x12",
+                "Curl marteau 3x12",
+            ],
+            "Legs": [
+                "Goblet squat 4x10",
+                "Soulevé de terre roumain 4x10",
+                "Fentes 3x12/jambe",
+                "Hip thrust 4x15",
+                "Mollets 4x15",
+            ],
+            "default": [
+                "Squat haltères 4x10",
+                "Développé couché 4x10",
+                "Rowing 4x10",
+                "Planche 3x45 sec",
+            ],
+        }
+
+    # Default: salle / gym
+    return {
+        "Full body A": [
+            "Squat barre 4x6-8",
+            "Développé couché barre 4x6-8",
+            "Soulevé de terre roumain 4x8",
+            "Tractions ou tirage vertical 4x8",
+            "Développé militaire 3x10",
+            "Gainage 3x45 sec",
+        ],
+        "Full body B": [
+            "Front squat 4x8",
+            "Développé incliné haltères 4x10",
+            "Hip thrust 4x10",
+            "Rowing barre 4x8",
+            "Élévations latérales 3x12",
+            "Russian twists 3x20",
+        ],
+        "Full body C": [
+            "Fentes bulgares 4x10/jambe",
+            "Dips lestés 4x8",
+            "Single leg deadlift 4x8/jambe",
+            "Tirage horizontal 4x10",
+            "Crunch lesté 3x15",
+            "Sprint en côte 5x20 sec",
+        ],
+        "Upper A": [
+            "Développé couché barre 4x6-8",
+            "Tractions ou tirage vertical 4x8",
+            "Développé militaire barre 4x8",
+            "Rowing buste penché 4x10",
+            "Curl barre 3x10",
+            "Dips 3xAMRAP",
+        ],
+        "Lower A": [
+            "Squat barre 4x6-8",
+            "Soulevé de terre 4x6",
+            "Fentes marchées 3x12/jambe",
+            "Hip thrust 4x10",
+            "Mollets debout 4x15",
+            "Planche pondérée 3x45 sec",
+        ],
+        "Upper B": [
+            "Développé incliné haltères 4x10",
+            "Rowing T-bar 4x10",
+            "Élévations latérales 4x15",
+            "Face pulls 4x15",
+            "Pompes lestées 3x10",
+            "Triceps poulie 3x12",
+        ],
+        "Lower B": [
+            "Front squat 4x8",
+            "Soulevé de terre roumain 4x10",
+            "Presse à cuisses 3x12",
+            "Curl ischio 3x12",
+            "Mollets assis 4x15",
+            "Hollow rocks 3x30 sec",
+        ],
+        "Push": [
+            "Développé couché barre 4x6-8",
+            "Développé militaire 4x8",
+            "Développé incliné haltères 3x10",
+            "Élévations latérales 4x15",
+            "Dips lestés 3x10",
+            "Triceps poulie 3x12",
+        ],
+        "Pull": [
+            "Tractions lestées 4xAMRAP",
+            "Rowing barre 4x8",
+            "Tirage vertical 4x10",
+            "Face pulls 3x15",
+            "Curl barre 3x10",
+            "Curl marteau 3x12",
+        ],
+        "Legs": [
+            "Squat barre 4x6-8",
+            "Soulevé de terre 4x6",
+            "Fentes marchées 3x12/jambe",
+            "Hip thrust 4x10",
+            "Curl ischio 3x12",
+            "Mollets debout 4x15",
+        ],
+        "default": [
+            "Squat barre 4x8",
+            "Développé couché 4x8",
+            "Soulevé de terre 4x6",
+            "Tirage vertical 4x10",
+            "Gainage 3x45 sec",
+        ],
+    }
+
+
 def build_tools(
     db: AirtableDB,
     user_id: str,
@@ -329,6 +547,689 @@ Args:
         )
 
     @beta_tool
+    def interpret_bloodwork(notes: str = "") -> str:
+        """User has just sent a photo of their blood test results. Use Calo's \
+vision to read the values, then call THIS tool to record the analysis as a \
+Memory + return a structured interpretation framework. Identifies likely \
+deficiencies, flags abnormal values, suggests actions, and ALWAYS reminds \
+the user to validate with their doctor.
+
+Call this whenever the user shares a 'bilan sanguin', 'prise de sang', \
+'analyses', 'NFS', 'thyroïde', 'cholestérol' photo.
+
+Args:
+    notes: Brief text summary of what you read on the photo (e.g. \
+'Vit D 18, Ferritine 22, TSH 4.5, Cholestérol 2.3 g/L, Glycémie 0.95'). \
+You read the photo with vision; this notes string is for traceability."""
+        if not notes:
+            return (
+                "Lis d'abord les valeurs visibles sur la photo et résume-les "
+                "dans 'notes' avant de rappeler cet outil. Format conseillé : "
+                "'Vit D 18, Ferritine 22, TSH 4.5...'."
+            )
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"Bilan sanguin {today} : {notes}",
+            category="santé",
+            importance=5,
+        )
+        return (
+            f"📊 **Cadre d'interprétation du bilan**\n\n"
+            f"Valeurs lues : {notes}\n\n"
+            f"⚠️ **TU N'ES PAS MÉDECIN.** Tu donnes du contexte nutritionnel, "
+            f"jamais un diagnostic. Toujours rediriger vers le médecin pour "
+            f"interprétation officielle.\n\n"
+            f"## Cibles usuelles (valeurs OPTIMALES, plus strictes que 'normales')\n\n"
+            f"**Fer & globules**\n"
+            f"- Ferritine : 50-150 ng/mL (femme), 80-200 (homme). <30 = "
+            f"déficit franc, <50 = sub-optimal\n"
+            f"- Hémoglobine : >12 g/dL femme, >13.5 homme\n"
+            f"- VGM (volume globulaire) : 82-98 fL\n\n"
+            f"**Vitamines**\n"
+            f"- Vit D (25-OH) : 40-60 ng/mL optimum, <30 = carence\n"
+            f"- B12 : >400 pg/mL (les '200 = normal' sont trop bas)\n"
+            f"- Folates : >5 ng/mL\n\n"
+            f"**Thyroïde**\n"
+            f"- TSH : 1.0-2.5 mIU/L optimum (laboratoires acceptent 0.4-4.0 "
+            f"mais 4.5+ avec symptômes = à creuser)\n"
+            f"- T4 libre, T3 libre : demander si TSH limite\n"
+            f"- Anti-TPO : si élevés → Hashimoto probable\n\n"
+            f"**Métabolisme glucidique**\n"
+            f"- Glycémie à jeun : <1.0 g/L optimum, >1.10 = pré-diabète\n"
+            f"- HbA1c : <5.6% optimum, 5.7-6.4% = pré-diabète\n"
+            f"- Insuline à jeun : <10 µUI/mL optimum, >15 = résistance probable\n\n"
+            f"**Lipides**\n"
+            f"- Cholestérol total : <2 g/L (mais le ratio importe plus)\n"
+            f"- HDL : >0.5 g/L femme, >0.4 homme (plus haut = mieux)\n"
+            f"- LDL : <1.3 g/L sans risque, <1.0 si risque cardio\n"
+            f"- Triglycérides : <1.5 g/L\n"
+            f"- Ratio TG/HDL : <2 idéal (marqueur insulino-résistance)\n\n"
+            f"**Inflammation**\n"
+            f"- CRP : <3 mg/L (<1 idéal)\n"
+            f"- Homocystéine : <10 µmol/L (si élevé → B12, folates, B6)\n\n"
+            f"## Tes consignes\n\n"
+            f"1. Identifie les valeurs HORS cibles (utilise les seuils ci-dessus)\n"
+            f"2. Pour CHAQUE valeur problématique, donne :\n"
+            f"   - Ce que ça suggère nutritionnellement\n"
+            f"   - 2-3 actions alimentaires concrètes\n"
+            f"   - Compléments à envisager (avec dosage indicatif)\n"
+            f"3. Recommande la consultation médecin pour confirmer\n"
+            f"4. Si pathologie suspectée (Hashimoto, pré-diabète, anémie) → "
+            f"insiste sur médecin AVANT changements"
+        )
+
+    @beta_tool
+    def decode_symptom(
+        symptom: str,
+        duration: str = "",
+        context: str = "",
+    ) -> str:
+        """Decode a non-medical symptom the user reports and return a \
+nutrition-angle differential + 3 concrete actions. Use when the user mentions \
+fatigue, constipation, ballonnements, brouillard mental, peau, sommeil, \
+cravings, douleurs articulaires, etc. NEVER diagnose — frame as 'pistes \
+nutritionnelles à explorer' and remind that persistent symptoms need a doctor.
+
+Args:
+    symptom: The symptom in French (fatigue, constipation, brouillard mental, \
+ballonnements, acné, eczéma, douleurs articulaires, cravings sucré, sommeil \
+fragmenté, perte de cheveux, etc.).
+    duration: How long (e.g. '2 semaines', 'depuis le confinement', 'tous les \
+J22 du cycle').
+    context: Anything that helps narrow down (e.g. 'après les repas', \
+'le matin', 'le soir uniquement', 'depuis que j'ai arrêté le sport')."""
+        sym = symptom.lower().strip()
+        report = [f"# 🔍 Décodage symptôme : {symptom}"]
+        if duration:
+            report.append(f"Durée : {duration}")
+        if context:
+            report.append(f"Contexte : {context}")
+        report.append("")
+
+        differentials: dict[str, list[tuple[str, str]]] = {
+            "fatigue": [
+                ("Carence en fer / ferritine basse", "Bilan sanguin avec ferritine. Augmenter viande rouge, foie, palourdes, lentilles + vit C."),
+                ("Carence vitamine D", "Dosage 25-OH-D3. Supplémenter 1000-2000 UI/j si <40 ng/mL."),
+                ("Sommeil dégradé", "Audit hygiène sommeil : écrans, alcool, caféine après 14h, chambre fraîche."),
+                ("Stress chronique / cortisol", "Magnésium bisglycinate 300mg soir, gestion stress, marche."),
+                ("Carence B12", "Dosage. Si végétarien/vegan → supplémenter."),
+                ("Hypothyroïdie", "Dosage TSH + T4l + anti-TPO."),
+                ("Sous-alimentation chronique", "Vérifier apport calorique réel. <1400 kcal/j chronique = épuisement."),
+            ],
+            "constipation": [
+                ("Manque de fibres", "30g/jour : légumes, fruits entiers, légumineuses, graines de lin."),
+                ("Déshydratation", "2.5L+/jour, eau au réveil 500ml."),
+                ("Manque de magnésium", "Citrate de magnésium 300mg soir (effet laxatif doux)."),
+                ("Sédentarité", "8000+ pas/jour, marche post-repas 10 min."),
+                ("Microbiote appauvri", "Probiotiques (kéfir, yaourt, choucroute), prébiotiques (oignon, ail, artichaut)."),
+                ("Réflexe gastro-colique faible", "Petit-déj solide pour stimuler le réflexe."),
+            ],
+            "ballonnement": [
+                ("FODMAP (oignon, ail, choux, légumineuses, lactose, sorbitol)", "Éliminer 2 semaines pour identifier."),
+                ("Manque enzymes / dysbiose", "Probiotiques + manger lentement + bien mâcher."),
+                ("Excès fibres", "Si transition récente, augmenter progressivement."),
+                ("SIBO suspecté", "Si chronique malgré tout → consulter gastro."),
+                ("Stress / mastication insuffisante", "Manger calmement, mâcher 20+ fois."),
+                ("Boissons gazeuses", "Limiter sodas, eaux gazeuses."),
+            ],
+            "brouillard": [
+                ("Hypoglycémie réactive", "Petit-déj protéiné, glucides complexes, éviter sucres rapides."),
+                ("Déshydratation", "Eau au réveil + 2L+/jour."),
+                ("Carence B12 / folates", "Dosage. Supplémenter si bas."),
+                ("Sommeil dégradé / apnée", "Audit sommeil, polysomnographie si suspect."),
+                ("Inflammation chronique", "Oméga 3, curcuma, anti-inflammatoires alimentaires."),
+                ("Cortisol élevé chronique", "Gestion stress, magnésium."),
+            ],
+            "peau": [
+                ("Inflammation alimentaire", "Stop sucre raffiné, alcool, lait industriel 4 semaines."),
+                ("Carence zinc", "Huîtres, viande rouge, graines de courge."),
+                ("Oméga 3 bas", "2-3g/jour."),
+                ("Hydratation insuffisante", "2L+/jour."),
+                ("Microbiote", "Probiotiques."),
+                ("Stress / sommeil", "Cortisol élevé = peau qui souffre."),
+            ],
+            "sommeil": [
+                ("Caféine résiduelle", "Stop après 14h."),
+                ("Alcool", "Saboteur n°1 du sommeil profond."),
+                ("Magnésium bas", "Bisglycinate 300mg 30 min avant coucher."),
+                ("Glycémie déréglée", "Petit-déj protéiné, pas de sucre rapide soir."),
+                ("Cortisol élevé", "Gestion stress, lumière du jour matin."),
+                ("Chambre trop chaude", "18°C optimal."),
+            ],
+            "cravings": [
+                ("Protéines insuffisantes au petit-déj", "30g+ au PD = -50% fringales en moyenne."),
+                ("Restriction trop sévère", "Vérifier déficit calorique <500."),
+                ("Sommeil court (<7h)", "Ghréline ↑, leptine ↓ = faim folle."),
+                ("Stress / émotionnel", "Identifier le trigger, alternative non-alimentaire."),
+                ("Carence magnésium", "Chocolat = signal magnésium pour le corps."),
+                ("Cycle lutéal (femme)", "Normal J22-J28, plan protéines+++."),
+            ],
+            "cheveux": [
+                ("Ferritine basse", "Bilan sanguin. Cible >70 pour cheveux."),
+                ("Protéines insuffisantes", "1.6g/kg minimum."),
+                ("Carence zinc, biotine, sélénium", "Œufs, noix du Brésil, huîtres."),
+                ("Stress / cortisol", "Le télogène effluvium est lié au stress."),
+                ("Post-partum / post-accouchement", "Normal, ferritine + zinc."),
+                ("Thyroïde", "Dosage TSH."),
+            ],
+            "articulation": [
+                ("Inflammation chronique", "Oméga 3, curcuma, légumes crucifères."),
+                ("Surpoids", "Pression mécanique."),
+                ("Carence vit D", "Dosage."),
+                ("Collagène bas", "Bouillon d'os, suppléments 10g/j."),
+                ("Déshydratation des cartilages", "Hydratation."),
+                ("Suractivité sportive", "Repos + récup."),
+            ],
+        }
+
+        # Match symptom to differential
+        matched = None
+        for key, options in differentials.items():
+            if key in sym:
+                matched = options
+                break
+
+        if matched:
+            report.append("## Pistes nutritionnelles à explorer\n")
+            for i, (cause, action) in enumerate(matched, 1):
+                report.append(f"**{i}. {cause}**\n→ {action}\n")
+            report.append(
+                "\n⚠️ Si le symptôme persiste >2 semaines, consultation médicale "
+                "indispensable. La nutrition est un levier, pas un remplacement "
+                "du médecin."
+            )
+        else:
+            report.append(
+                f"Symptôme non listé dans le décodeur ('{symptom}'). "
+                "Approche : décris le symptôme à l'utilisateur, identifie le "
+                "facteur déclenchant (timing, alimentation, stress, sommeil, "
+                "cycle), propose 2-3 hypothèses nutritionnelles, recommande "
+                "consultation médicale si persistant."
+            )
+
+        # Save as memory
+        db.add_memory(
+            user_id,
+            f"Symptôme rapporté : {symptom}"
+            + (f" ({duration})" if duration else "")
+            + (f" — contexte : {context}" if context else ""),
+            category="santé",
+            importance=3,
+        )
+
+        return "\n".join(report)
+
+    @beta_tool
+    def recommend_supplements() -> str:
+        """Generate a personalised supplement recommendation based on the user's \
+profile (sex, age, goal, activity, medical conditions, current meds, cycle, \
+ménopause status). Returns ranked recommendations with dosage, timing, and \
+when to take them. Always reminds to check with doctor if on medication."""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+
+        sex = (user.get("sex") or "").upper()
+        age = user.get("age") or 0
+        goal = user.get("goal", "maintain")
+        activity = user.get("activity_level", "moderate")
+        conditions = user.get("medical_conditions") or ""
+        meds = user.get("current_meds") or ""
+        metabolic_type = user.get("metabolic_type") or ""
+
+        recs: list[tuple[str, str, str, int]] = []  # (name, dose+timing, why, priority)
+
+        # Universal recs
+        recs.append((
+            "Vitamine D3 + K2",
+            "1000-2000 UI/jour, au repas (matin ou midi)",
+            "Déficit chez 70-80% des Européens. Os, immunité, humeur. Cible bilan : 40-60 ng/mL.",
+            5,
+        ))
+        recs.append((
+            "Magnésium bisglycinate",
+            "300-400 mg/jour, 30 min avant le coucher",
+            "Sommeil, gestion stress, crampes, métabolisme glucidique. Forme bisglycinate = mieux absorbée que citrate.",
+            5,
+        ))
+        recs.append((
+            "Oméga 3 (EPA + DHA)",
+            "1-3 g/jour EPA+DHA, au repas",
+            "Anti-inflammatoire, santé cardiovasculaire, cerveau, peau. Cible 2g/j si tu ne manges pas 3 poissons gras/sem.",
+            4,
+        ))
+
+        if sex == "F":
+            if age and age >= 40:
+                recs.append((
+                    "Calcium (alimentaire en priorité)",
+                    "1000-1200 mg/jour via laitages + sardines + amandes",
+                    "Pré-ménopause + ménopause = perte osseuse. Sup seulement si apport alimentaire insuffisant.",
+                    4,
+                ))
+                recs.append((
+                    "Phyto-œstrogènes (graines de lin)",
+                    "1-2 cs graines de lin moulues/jour",
+                    "Bouffées de chaleur, transit, anti-inflammatoire.",
+                    3,
+                ))
+            recs.append((
+                "Fer (uniquement si ferritine <50)",
+                "Bisglycinate de fer 25 mg/jour avec vit C, à distance des laitages et thé",
+                "Femme menstruée perd ~1mg fer/cycle. NE PAS supplémenter sans dosage ferritine (excès toxique).",
+                4,
+            ))
+
+        if "muscu" in activity or "sportif" in activity or "intense" in activity:
+            recs.append((
+                "Créatine monohydrate",
+                "5 g/jour, peu importe le timing, tous les jours",
+                "Le complément le plus étudié au monde. +5-10% force, +1-2 kg muscle, cognition. Sûr.",
+                5,
+            ))
+            recs.append((
+                "Whey protein",
+                "20-30g post-training si apport prot alim insuffisant",
+                "Pratique pour atteindre 1.8-2g/kg/j si difficile via alimentation.",
+                3,
+            ))
+
+        if "végétarien" in (user.get("restrictions") or "").lower() or "vegan" in (user.get("restrictions") or "").lower():
+            recs.append((
+                "Vitamine B12",
+                "1000 µg cyanocobalamine 1x/sem OU 250 µg/jour",
+                "Indispensable si vegan, recommandé si végétarien strict. Carence = fatigue, neuropathies.",
+                5,
+            ))
+            recs.append((
+                "Zinc",
+                "15 mg/jour, à distance du fer",
+                "Souvent bas chez végé/vegan.",
+                3,
+            ))
+
+        if "ménopause" in metabolic_type.lower() or "menopause" in conditions.lower():
+            recs.append((
+                "Collagène hydrolysé type I & III",
+                "10-15 g/jour avec vit C",
+                "Peau, articulations, os. Particulièrement utile en ménopause.",
+                3,
+            ))
+
+        if "hashimoto" in conditions.lower() or "thyroïde" in conditions.lower():
+            recs.append((
+                "Sélénium",
+                "100-200 µg/jour (1-2 noix du Brésil)",
+                "Soutien thyroïdien, anti-anti-TPO. Pas plus, toxique à haute dose.",
+                4,
+            ))
+
+        if "sopk" in conditions.lower():
+            recs.append((
+                "Inositol (myo + d-chiro 40:1)",
+                "2-4 g/jour répartis",
+                "Améliore insulino-sensibilité et restaure ovulation chez SOPK.",
+                5,
+            ))
+
+        if "résistance insuline" in metabolic_type.lower() or "résistance insuline" in conditions.lower():
+            recs.append((
+                "Berbérine",
+                "500 mg x 3/jour aux repas",
+                "Efficacité comparable à la metformine sur la glycémie. À discuter avec médecin si antidiabétique en cours.",
+                3,
+            ))
+
+        if "stress" in conditions.lower() or (user.get("stress_level") or 0) >= 4:
+            recs.append((
+                "Ashwagandha KSM-66",
+                "300-600 mg/jour le soir",
+                "Adaptogène, baisse cortisol, améliore sommeil et résistance au stress.",
+                3,
+            ))
+
+        # Sort by priority
+        recs.sort(key=lambda r: -r[3])
+
+        # Build report
+        report = [f"# 💊 Compléments personnalisés pour {user.get('name', 'toi')}"]
+        report.append("")
+        report.append("⚠️ **Si tu prends des médicaments, valide avec ton médecin.**")
+        report.append("")
+        report.append("## Recommandations classées par impact")
+        report.append("")
+        priority_label = {5: "🔴 PRIORITÉ", 4: "🟠 IMPORTANT", 3: "🟡 RECOMMANDÉ"}
+        for name, dose, why, prio in recs:
+            label = priority_label.get(prio, "")
+            report.append(f"### {label} — {name}")
+            report.append(f"**Dosage** : {dose}")
+            report.append(f"**Pourquoi** : {why}")
+            report.append("")
+
+        report.append("## Achat")
+        report.append(
+            "Privilégie les marques certifiées tierces (NSF, Informed Sport). "
+            "Bonnes adresses : Nutripure, Yamamoto, Nutrimuscle, Now Foods, "
+            "ThorneResearch."
+        )
+        report.append("")
+        report.append("## Ce que tu NE DOIS PAS prendre sans raison")
+        report.append(
+            "- Multivitamines à mégadoses (souvent trop de vit A/E et pas assez "
+            "de ce dont tu as besoin)\n"
+            "- BCAA si apport prot >1.6g/kg (inutile)\n"
+            "- Brûleurs de graisse type 'fat burner' (stress + arnaque)\n"
+            "- Pre-workouts à 300mg caféine si tu dors mal\n"
+            "- Détoxs / cures bidons"
+        )
+
+        return "\n".join(report)
+
+    @beta_tool
+    def generate_workout(
+        days_per_week: int = 3,
+        equipment: str = "salle",
+        focus: str = "auto",
+    ) -> str:
+        """Generate a personalised training week based on the user's profile, \
+goal, sex and equipment. Returns a structured 3-5 day plan. Use when the \
+user asks for "un plan d'entraînement", "que faire en muscu", "comment \
+m'entraîner cette semaine".
+
+Args:
+    days_per_week: 2 to 6 sessions per week. Default 3.
+    equipment: 'salle' (machines + libres) | 'maison_basique' (élastiques, \
+poids du corps) | 'maison_équipée' (haltères, banc) | 'extérieur' (course, \
+parc) | 'aucun'.
+    focus: 'auto' (Calo choisit selon objectif) | 'force' | 'hypertrophie' | \
+'perte de poids' | 'endurance' | 'mobilité'.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+
+        days_per_week = max(2, min(6, int(days_per_week)))
+        goal = user.get("goal", "maintain")
+        sex = (user.get("sex") or "").upper()
+        age = user.get("age") or 30
+        metabolic_type = (user.get("metabolic_type") or "").lower()
+
+        # Auto-resolve focus
+        if focus == "auto":
+            if goal == "lose":
+                focus = "hypertrophie"  # préserver muscle en déficit
+            elif goal == "gain":
+                focus = "force"
+            else:
+                focus = "hypertrophie"
+            if "ménopause" in metabolic_type or (sex == "F" and age >= 45):
+                focus = "force"  # critique pour sarcopénie
+
+        # Decide split
+        if days_per_week <= 2:
+            split = "Full body (2 séances identiques ou alternées A/B)"
+            sessions = ["Full body A", "Full body B"]
+        elif days_per_week == 3:
+            split = "Full body 3x ou Push/Pull/Legs"
+            sessions = ["Full body A", "Full body B", "Full body C"]
+        elif days_per_week == 4:
+            split = "Upper/Lower 2x"
+            sessions = ["Upper A", "Lower A", "Upper B", "Lower B"]
+        elif days_per_week == 5:
+            split = "Push / Pull / Legs / Upper / Lower"
+            sessions = ["Push", "Pull", "Legs", "Upper", "Lower"]
+        else:
+            split = "PPL 2x"
+            sessions = ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"]
+
+        # Exercise library by equipment
+        exercises = _build_workout_exercises(equipment, focus)
+
+        report = [
+            f"# 💪 Plan d'entraînement {days_per_week}j/sem",
+            f"Objectif : **{goal}** · Focus : **{focus}** · Matériel : **{equipment}**",
+            f"Structure : {split}",
+            "",
+            "## Paramètres",
+        ]
+
+        if focus == "force":
+            report.append("- **Charges** : lourdes, 80-90% 1RM")
+            report.append("- **Réps** : 3-6 par série")
+            report.append("- **Repos** : 2-3 min entre séries")
+            report.append("- **Séries** : 4-5 par exercice principal")
+        elif focus == "hypertrophie":
+            report.append("- **Charges** : modérées-lourdes, 70-80% 1RM")
+            report.append("- **Réps** : 8-12 par série (difficile à la dernière)")
+            report.append("- **Repos** : 60-90 sec")
+            report.append("- **Séries** : 3-4 par exercice")
+        elif focus == "endurance":
+            report.append("- **Charges** : légères-modérées")
+            report.append("- **Réps** : 15-25")
+            report.append("- **Repos** : 30-60 sec")
+        elif focus == "perte de poids":
+            report.append("- **Format** : circuits + cardio HIIT")
+            report.append("- **Cardio** : 1-2 séances HIIT 25 min/sem")
+
+        # Build per-session plan
+        for i, session_name in enumerate(sessions[:days_per_week]):
+            report.append(f"\n## {session_name}")
+            session_exercises = exercises.get(session_name, exercises.get("default", []))
+            for ex in session_exercises:
+                report.append(f"- {ex}")
+
+        # Cardio guidance
+        report.append("\n## Cardio complémentaire")
+        if goal == "lose":
+            report.append("- **Marche** : 8000+ pas/jour OBLIGATOIRE")
+            report.append("- **HIIT** : 1-2x/sem 20-25 min (après muscu ou jour séparé)")
+            report.append("- **Z2** : 1x/sem 45 min (course lente, vélo)")
+        elif goal == "gain":
+            report.append("- **Marche** : 6000 pas/jour (suffisant)")
+            report.append("- **Pas de HIIT** : compromet la prise")
+            report.append("- **Z2 1x/sem** pour santé cardio (option)")
+        else:
+            report.append("- **Marche** : 7000-10000 pas/jour")
+            report.append("- **Z2 ou HIIT** : 1-2x/sem au choix")
+
+        # Recovery rule
+        report.append("\n## Récup")
+        report.append("- **Sommeil 7h+** non négociable")
+        report.append("- **Protéines 1.8-2g/kg/j** réparties")
+        report.append("- **Repos complet** : minimum 1 jour off/sem")
+        report.append("- **Mobilité** : 5-10 min/jour (utile, pas optionnel)")
+
+        # Progression
+        report.append("\n## Progression")
+        report.append(
+            "Augmente CHAQUE semaine : soit la charge (+2.5-5%), soit "
+            "le nombre de reps (+1-2). Si tu n'arrives plus à progresser "
+            "2 semaines d'affilée → 1 semaine deload (volume -40%)."
+        )
+
+        # Save as memory
+        db.add_memory(
+            user_id,
+            f"Plan entraînement généré : {days_per_week}j/sem, focus {focus}, équipement {equipment}",
+            category="sport",
+            importance=3,
+        )
+
+        return "\n".join(report)
+
+    @beta_tool
+    def workout_fuel(
+        workout_time: str,
+        workout_type: str = "muscu",
+        duration_min: int = 60,
+    ) -> str:
+        """Tell the user exactly what to eat before, during, and after a \
+training session. Use when the user asks "je m'entraîne à X, je mange quoi", \
+"pre-workout", "post-workout", "nutrition autour de l'entraînement".
+
+Args:
+    workout_time: ISO datetime or human time (e.g. '07h00', '18h30', 'matin', \
+'midi', 'soir').
+    workout_type: 'muscu' | 'cardio léger' | 'HIIT' | 'course longue' | \
+'match' | 'sport co' | 'crossfit' | 'yoga'.
+    duration_min: Session duration in minutes.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        weight = float(user.get("current_weight_kg") or 70)
+
+        # Determine time slot
+        slot = "matin"
+        try:
+            hour = int(workout_time.split(":")[0].replace("h", "").strip())
+            if hour < 10:
+                slot = "matin"
+            elif hour < 16:
+                slot = "midi"
+            else:
+                slot = "soir"
+        except (ValueError, IndexError):
+            t = workout_time.lower()
+            if "midi" in t or "12h" in t or "13h" in t:
+                slot = "midi"
+            elif "soir" in t or "18h" in t or "19h" in t or "20h" in t:
+                slot = "soir"
+
+        report = [
+            f"# 🍴 Fuel autour de ton {workout_type} ({slot}, {duration_min} min)",
+            "",
+        ]
+
+        # Pre-workout
+        report.append("## ⏱️ PRE-WORKOUT")
+        if slot == "matin":
+            if workout_type in ("muscu", "HIIT", "crossfit"):
+                report.append(
+                    "**90 min avant** (si possible) :\n"
+                    "- 40g flocons d'avoine + 1 banane + 20g whey + 1 c.à.c. miel\n"
+                    "- OU 2 tartines pain complet + 1 c.à.s. beurre cacahuète + 1 banane\n\n"
+                    "**Si tu t'entraînes à JEUN (intermittent fasting)** :\n"
+                    "- 1 espresso ou caféine 200mg\n"
+                    "- BCAA 10g + sel rose si effort >45 min\n"
+                    "- Petit-déj copieux JUSTE APRÈS"
+                )
+            else:
+                report.append(
+                    "À jeun ou ultra léger : 1 banane + 1 café.\n"
+                    "Pour cardio léger / yoga, pas besoin de fuel."
+                )
+        elif slot == "midi":
+            report.append(
+                "**Petit-déj 3-4h avant** : protéines + glucides complexes\n"
+                "- Ex : œufs + avoine + fruit, OU yaourt grec + granola + banane\n\n"
+                "**1h avant** :\n"
+                "- 1 banane + 10g amandes\n"
+                "- OU 1 compote sans sucre ajouté + 1 oeuf dur"
+            )
+        else:  # soir
+            report.append(
+                "**Déjeuner 4-5h avant** : repas complet équilibré\n"
+                "- Protéine (poulet, poisson) + glucides (riz, patate douce) + légumes\n\n"
+                "**1-1h30 avant** :\n"
+                "- 1 fruit + 1 yaourt grec\n"
+                "- OU 1 tartine pain complet + 1 c.à.c. miel"
+            )
+
+        # During (if >75 min)
+        if duration_min >= 75 or workout_type == "course longue":
+            report.append("\n## 💦 PENDANT (effort >75 min)")
+            report.append(
+                f"- Eau + électrolytes : 500-700 ml/heure\n"
+                f"- Glucides : 30-60g/h (gel, banane, dattes, boisson isotonique)\n"
+                f"- Sel rose ou sodium 300-700mg/h si tu transpires beaucoup"
+            )
+        else:
+            report.append("\n## 💦 PENDANT")
+            report.append("- Eau : 500ml minimum sur la séance")
+
+        # Post-workout
+        report.append("\n## ✅ POST-WORKOUT (fenêtre 60 min)")
+        protein_g = int(weight * 0.3)
+        carbs_g = int(weight * 0.5) if workout_type in ("muscu", "HIIT", "crossfit", "course longue") else int(weight * 0.3)
+        report.append(
+            f"**{protein_g}g protéines + {carbs_g}g glucides** :\n"
+            f"- Option 1 : shake whey 30g + 1 grosse banane + 1 cs miel\n"
+            f"- Option 2 : 2 œufs + 60g avoine + fruits rouges + 1 cs miel\n"
+            f"- Option 3 : 150g blanc poulet + 80g riz + légumes\n"
+            f"- Option 4 (vegan) : 100g tofu + 80g quinoa + légumes + sauce tahini"
+        )
+
+        report.append("\n## 💧 HYDRATATION POST")
+        report.append(
+            f"Pèse-toi avant/après : pour chaque 500g perdus, bois 750ml d'eau "
+            f"avec une pincée de sel rose."
+        )
+
+        # Save as memory
+        db.add_memory(
+            user_id,
+            f"Demande fuel workout : {workout_type} {workout_time} {duration_min} min",
+            category="sport",
+            importance=2,
+        )
+
+        return "\n".join(report)
+
+    @beta_tool
+    def recovery_protocol(intensity: str = "modérée") -> str:
+        """Generate a recovery protocol after a training session. Use when the \
+user mentions courbatures, fatigue post-entraînement, "comment récupérer".
+
+Args:
+    intensity: 'légère' | 'modérée' | 'intense' | 'épuisante (compétition)'.
+"""
+        report = ["# 🛌 Protocole récupération"]
+        report.append(f"Intensité de la séance : **{intensity}**\n")
+
+        report.append("## Dans l'heure qui suit")
+        report.append(
+            "- Repas/shake post-training (cf workout_fuel)\n"
+            "- 500ml-1L eau + sodium\n"
+            "- 5-10 min stretching doux ou foam roller léger"
+        )
+
+        report.append("\n## Le soir même")
+        report.append(
+            "- Repas complet : protéines + glucides + légumes + bon gras\n"
+            "- 1h avant coucher : magnésium bisglycinate 300mg\n"
+            "- Pas d'écrans 60 min avant dodo\n"
+            "- Chambre fraîche (18°C)\n"
+            "- Sommeil 8h+ visé"
+        )
+
+        if intensity in ("intense", "épuisante (compétition)"):
+            report.append("\n## Jour suivant")
+            report.append(
+                "- Repos COMPLET ou marche douce (Z1)\n"
+                "- Repas +200-400 kcal vs normal (glucides+++)\n"
+                "- Bain chaud (38-40°C) ou sauna 15 min\n"
+                "- Massage / foam roller 15 min\n"
+                "- Étirements légers"
+            )
+            report.append("\n## Surveillance")
+            report.append(
+                "Si DOMS >72h ou fatigue persiste → sous-récupération. Réduis "
+                "le volume de 30% la semaine suivante."
+            )
+        else:
+            report.append("\n## Jour suivant")
+            report.append(
+                "- Activité légère ok (marche, mobilité)\n"
+                "- Si DOMS gênants : bain tiède + magnésium topique sur la zone\n"
+                "- Hydratation maintenue 2.5L+"
+            )
+
+        return "\n".join(report)
+
+    @beta_tool
     def log_daily_check(
         hydration_l: float = 0,
         sleep_hours: float = 0,
@@ -399,6 +1300,316 @@ Args:
             ("\n\n" + "\n".join(feedback) if feedback else "") +
             "\n\nTu peux maintenant utiliser ces données dans tes conseils du jour."
         )
+
+    @beta_tool
+    def get_streak() -> str:
+        """Compute the user's current logging streak: consecutive days with at \
+least 1 meal logged. Use proactively to gamify / motivate. Mention the \
+streak in responses when it's >5 days (encourages continuity)."""
+        from datetime import datetime, timedelta, timezone
+        # Pull last 60 days of meals
+        since = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
+        meals = db.meals_since(user_id, since)
+        if not meals:
+            return "Aucun repas loggué récemment. Streak = 0."
+        # Collect distinct days
+        days = sorted({(m.get("eaten_at") or "")[:10] for m in meals if m.get("eaten_at")}, reverse=True)
+        if not days:
+            return "Aucun repas loggué récemment. Streak = 0."
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+        # Streak is broken if neither today nor yesterday has a log (1-day grace)
+        if days[0] not in (today, yesterday):
+            return f"Streak rompue. Dernier log : {days[0]}."
+        streak = 1
+        cursor = datetime.strptime(days[0], "%Y-%m-%d")
+        for d in days[1:]:
+            prev = datetime.strptime(d, "%Y-%m-%d")
+            if (cursor - prev).days == 1:
+                streak += 1
+                cursor = prev
+            else:
+                break
+        emoji = "🔥" if streak >= 7 else "💪" if streak >= 3 else "👍"
+        return (
+            f"{emoji} **Streak actuelle : {streak} jours consécutifs** avec au moins un repas loggué. "
+            f"Dernier log : {days[0]}. "
+            + ("Continue, casse pas la chaîne." if streak >= 3 else "Encourage à continuer.")
+        )
+
+    @beta_tool
+    def suggest_habit_stack() -> str:
+        """Suggest ONE micro-habit tailored to the user's current profile + \
+patterns. Use when the user wants progress without big effort, or when \
+sleep/hydration/activity ratings are low. The science: tiny habits compound."""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        candidates: list[tuple[str, str, int]] = []  # (habit, why, priority)
+
+        sleep = user.get("sleep_quality") or 3
+        stress = user.get("stress_level") or 3
+        goal = user.get("goal", "maintain")
+        metabolic = (user.get("metabolic_type") or "").lower()
+
+        if sleep <= 2:
+            candidates.append((
+                "Verre d'eau au réveil + lumière naturelle 5 min",
+                "Réinitialise le rythme circadien. Dormir mieux le soir commence le matin.",
+                5,
+            ))
+            candidates.append((
+                "Pas d'écran 30 min avant coucher",
+                "Mélatonine ↑. Effet visible dès la 3e nuit.",
+                5,
+            ))
+        if stress >= 4:
+            candidates.append((
+                "Respiration 4-7-8 : 3 cycles avant chaque repas",
+                "Active le parasympathique. Mange en mode digestion, pas en mode survie.",
+                4,
+            ))
+            candidates.append((
+                "10 min marche sans téléphone après le déjeuner",
+                "Glycémie ↓, stress ↓, cortisol ↓. Le plus sous-estimé.",
+                4,
+            ))
+        if goal == "lose":
+            candidates.append((
+                "Protéines à CHAQUE repas (paume de main minimum)",
+                "Satiété, perte de muscle prévenue. Le réflexe n°1 de la perte durable.",
+                5,
+            ))
+            candidates.append((
+                "Légumes en 1er dans l'assiette",
+                "Fibres mangées d'abord = glycémie stable + satiété précoce.",
+                3,
+            ))
+        if "ménopause" in metabolic or (user.get("sex") == "F" and (user.get("age") or 0) >= 45):
+            candidates.append((
+                "1 portion de protéines AU PETIT-DÉJ (30g)",
+                "Sarcopénie = ennemi n°1 en ménopause. Le PD est le levier le + facile.",
+                5,
+            ))
+            candidates.append((
+                "2 séances muscu/sem dans l'agenda (rendez-vous bloqué)",
+                "Sans bloc agenda, ça ne se fait pas. C'est la priorité ménopause.",
+                5,
+            ))
+
+        # Generic add-ons
+        candidates.append((
+            "Bouteille d'eau 1L visible sur ton bureau",
+            "Visuel = 2L/jour atteints sans y penser.",
+            3,
+        ))
+        candidates.append((
+            "Photo de chaque repas, même rapide",
+            "Le simple acte de photographier réduit l'apport de 10-15% (étudié).",
+            3,
+        ))
+        candidates.append((
+            "1 fruit ENTIER à porte de main (frigo, sac)",
+            "Snack par défaut = fruit, pas chips. La friction décide.",
+            2,
+        ))
+
+        candidates.sort(key=lambda c: -c[2])
+        habit, why, _ = candidates[0]
+        return (
+            f"# 🌱 Ta micro-habitude de la semaine\n\n"
+            f"**{habit}**\n\n"
+            f"_Pourquoi_ : {why}\n\n"
+            f"💡 Pas 10 habitudes en même temps. UNE seule, 7 jours. "
+            f"Ensuite on en ajoute une nouvelle. Engage-toi : tu fais quoi "
+            f"pour la déclencher AU MÊME MOMENT chaque jour ?"
+        )
+
+    @beta_tool
+    def detect_trigger_foods() -> str:
+        """Analyse the user's meal history + memories + patterns to surface \
+foods/situations that consistently lead to drift (over-eating, plateau, \
+poor sleep). Use when the user feels stuck or asks 'qu'est-ce qui me \
+plombe ?'. Returns a curated list of suspected triggers + actions."""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+
+        # Pull last 30 days of meals
+        from datetime import datetime, timedelta, timezone
+        since = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+        meals = db.meals_since(user_id, since)
+
+        # Heuristic detection
+        triggers: list[str] = []
+
+        # Detect frequent high-calorie items
+        item_counts: dict[str, list[int]] = {}
+        for m in meals:
+            for item in (m.get("items") or []):
+                name = (item.get("name") or "").lower()
+                kcal = int(item.get("kcal", 0) or 0)
+                if name and kcal > 0:
+                    item_counts.setdefault(name, []).append(kcal)
+
+        # Find items appearing 5+ times with avg kcal > 200
+        for name, kcals in item_counts.items():
+            if len(kcals) >= 5 and sum(kcals) / len(kcals) >= 200:
+                triggers.append(
+                    f"🍴 **{name.capitalize()}** apparait {len(kcals)}x ce mois "
+                    f"(moy {int(sum(kcals)/len(kcals))} kcal). À vérifier : "
+                    f"est-ce un réflexe automatique ?"
+                )
+
+        # Detect evening meal heaviness (>40% of daily kcal post-19h)
+        # Simplified: count meals after 19h
+        late_meals_kcal = []
+        all_meals_kcal = []
+        for m in meals:
+            ts = m.get("eaten_at") or ""
+            try:
+                h = int(ts[11:13])
+                kcal = int(m.get("total_calories") or 0)
+                all_meals_kcal.append(kcal)
+                if h >= 19:
+                    late_meals_kcal.append(kcal)
+            except (ValueError, IndexError):
+                continue
+        if late_meals_kcal and all_meals_kcal:
+            late_avg = sum(late_meals_kcal) / len(late_meals_kcal)
+            all_avg = sum(all_meals_kcal) / len(all_meals_kcal)
+            if late_avg > all_avg * 1.4:
+                triggers.append(
+                    f"🌙 **Dîners chargés** : tes repas du soir font en moyenne "
+                    f"{int(late_avg)} kcal vs {int(all_avg)} kcal/repas. "
+                    f"Décalage de l'apport vers la fin de journée = plateau probable."
+                )
+
+        # Look at memories for behavioral patterns
+        memories = db.memories_for_user(user_id, limit=50)
+        alcohol_signals = sum(
+            1 for m in memories
+            if any(w in (m.get("memory") or "").lower() for w in ("alcool", "verre", "vin", "bière", "apéro"))
+        )
+        if alcohol_signals >= 3:
+            triggers.append(
+                f"🍷 **Alcool revient {alcohol_signals}x** dans tes souvenirs/échanges. "
+                f"Si plateau : tester 21 jours sans = test de causalité simple."
+            )
+
+        if not triggers:
+            return (
+                "Pas de trigger flagrant détecté dans les 30 derniers jours. "
+                "C'est plutôt bon signe : ta consommation est variée. Si tu te "
+                "sens bloqué, le facteur est peut-être hors alimentaire "
+                "(sommeil, stress, cycle, hormones). Lance "
+                "`analyze_progress` + `decode_symptom` pour creuser."
+            )
+
+        return (
+            "# 🔍 Triggers détectés (30 derniers jours)\n\n"
+            + "\n\n".join(triggers)
+            + "\n\n💡 Présente ces constats SANS jugement. Demande à "
+            "l'utilisateur quels patterns lui parlent. Choisis UN trigger à "
+            "tester (élimination 21 jours, observation) avant d'en attaquer un autre."
+        )
+
+    @beta_tool
+    def generate_client_report(weeks: int = 4) -> str:
+        """⚠️ TOOL POUR LE COACH (Damien), pas pour le client final. Génère un \
+résumé pro de l'état d'un client sur les N dernières semaines. Utilisable \
+quand Damien lui-même cause à Calo via WhatsApp pour avoir une vue rapide \
+sur un de ses clients.
+
+Args:
+    weeks: Période à analyser (1-12). Default 4.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        weeks = max(1, min(12, int(weeks)))
+        from datetime import datetime, timedelta, timezone
+        since = (datetime.now(timezone.utc) - timedelta(days=weeks * 7)).strftime("%Y-%m-%d")
+        meals = db.meals_since(user_id, since)
+        weights = db.weights_history(user_id, limit=weeks * 2)
+        memories = db.memories_for_user(user_id, limit=10)
+
+        report = [
+            f"# 📋 Bilan client — {user.get('name')} ({weeks} sem)",
+            "",
+            f"## Profil",
+            f"- {user.get('sex')} · {user.get('age')} ans · {user.get('height_cm')} cm",
+            f"- Poids actuel : {user.get('current_weight_kg')} kg "
+            f"(cible {user.get('target_weight_kg') or '?'} kg)",
+            f"- Objectif : {user.get('goal')}",
+            f"- Type métabolique : {user.get('metabolic_type') or 'non évalué'}",
+            f"- Ajustement perso : {int((user.get('calorie_adjustment') or 1) * 100)}% vs textbook",
+        ]
+
+        if user.get("medical_conditions"):
+            report.append(f"- Pathologies : {user.get('medical_conditions')}")
+        if user.get("current_meds"):
+            report.append(f"- Médicaments : {user.get('current_meds')}")
+
+        # Activity
+        report.append(f"\n## Activité {weeks} sem")
+        report.append(f"- Repas loggués : {len(meals)}")
+        report.append(f"- Pesées : {len(weights)}")
+
+        if weights and len(weights) >= 2:
+            latest = float(weights[0]["weight_kg"] or 0)
+            oldest = float(weights[-1]["weight_kg"] or 0)
+            delta = latest - oldest
+            sign = "+" if delta >= 0 else ""
+            report.append(f"- Variation poids : {sign}{delta:.1f} kg")
+
+        if meals:
+            avg_kcal = sum(int(m.get("total_calories") or 0) for m in meals) // max(1, len(meals))
+            avg_meals_day = len(meals) / (weeks * 7)
+            report.append(f"- Moyenne kcal/repas : {avg_kcal}")
+            report.append(f"- Moyenne repas/jour : {avg_meals_day:.1f}")
+
+        # Engagement
+        sleep = user.get("sleep_quality") or 0
+        stress = user.get("stress_level") or 0
+        report.append(f"\n## Lifestyle")
+        report.append(f"- Sommeil : {sleep}/5" if sleep else "- Sommeil : non renseigné")
+        report.append(f"- Stress : {stress}/5" if stress else "- Stress : non renseigné")
+
+        # Recent memories (key context)
+        if memories:
+            report.append(f"\n## Faits clés mémorisés (top 5)")
+            for m in memories[:5]:
+                stars = "★" * int(m.get("importance") or 3)
+                report.append(f"- {m.get('memory')} {stars}")
+
+        # Patterns
+        if user.get("personal_patterns"):
+            report.append(f"\n## Patterns personnels")
+            report.append(user.get("personal_patterns"))
+
+        # Coach action items
+        report.append(f"\n## 🎯 Recommandations coach")
+        actions: list[str] = []
+        if sleep and sleep <= 2:
+            actions.append("🛌 Sommeil <2/5 — adresser en priorité (cortisol bloque tout)")
+        if stress and stress >= 4:
+            actions.append("⚡ Stress ≥4/5 — gestion stress avant déficit")
+        if len(meals) < weeks * 5:
+            actions.append("📸 Engagement faible (<5 repas/sem) — relancer ou diminuer la friction")
+        if weights and len(weights) < weeks // 2:
+            actions.append("⚖️ Pesées rares — proposer rituel hebdo fixe (J7 cycle)")
+        if user.get("metabolic_type") in (None, "", "non évalué"):
+            actions.append("🧬 Type métabolique pas encore classifié — observer 1-2 sem de plus")
+        if user.get("calorie_adjustment") and user.get("calorie_adjustment") < 0.85:
+            actions.append("🐢 Métabolisme adapté (-15%+) — diet break envisageable")
+
+        if actions:
+            report.extend(actions)
+        else:
+            report.append("✅ Tout est sous contrôle. Maintenir le rythme.")
+
+        return "\n".join(report)
 
     @beta_tool
     def check_milestones() -> str:
@@ -1487,6 +2698,16 @@ Args:
         travel_mode,
         prepare_for_event,
         compare_body_photos,
+        interpret_bloodwork,
+        decode_symptom,
+        recommend_supplements,
+        generate_workout,
+        workout_fuel,
+        recovery_protocol,
+        get_streak,
+        suggest_habit_stack,
+        detect_trigger_foods,
+        generate_client_report,
         find_recipe,
         generate_meal_plan,
         generate_grocery_list,

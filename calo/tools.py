@@ -291,6 +291,117 @@ inspiration without specifying.
         return "\n\n---\n\n".join(out)
 
     @beta_tool
+    def analyze_progress(weeks: int = 4) -> str:
+        """Smart progress analyser. Detects plateau, regression, or great \
+trajectory and suggests a concrete intervention (refeed, diet break, \
+recalculate calories, hold the course). Use this when the user asks "je \
+stagne", "je n'avance plus", "ça bouge plus", "j'ai pris du poids cette \
+semaine", or proactively in weekly check-ins.
+
+Args:
+    weeks: Number of weeks to analyse. Default 4. Min 2, max 12.
+"""
+        weeks = max(2, min(12, int(weeks)))
+        user = db.get_user_by_id(user_id)
+        if not user or not user.get("onboarding_complete"):
+            return "Onboarding incomplet."
+        weights = db.weights_history(user_id, limit=weeks * 2)
+        if len(weights) < 2:
+            return (
+                "Pas assez de mesures pour analyser (besoin de 2+ pesées). "
+                "Encourage l'utilisateur à se peser 1x/semaine au même jour."
+            )
+        latest = float(weights[0]["weight_kg"] or 0)
+        oldest = float(weights[-1]["weight_kg"] or 0)
+        delta = latest - oldest
+        goal = user.get("goal", "maintain")
+        target = float(user.get("target_weight_kg") or latest)
+        sign = "+" if delta >= 0 else ""
+        days_span = max(1, len(weights) * 7)
+        weekly_change = delta / (days_span / 7)
+
+        # Determine state
+        report = [
+            f"# Analyse progression ({len(weights)} pesées sur ~{days_span} jours)",
+            f"Poids actuel : {latest} kg",
+            f"Variation : {sign}{delta:.1f} kg ({sign}{weekly_change:.2f} kg/sem)",
+            f"Objectif : {goal} → cible {target} kg ({latest - target:+.1f} kg restants)",
+            "",
+        ]
+
+        if goal == "lose":
+            if weekly_change <= -0.3:
+                report.append("**État : 🟢 EXCELLENTE PROGRESSION**")
+                report.append(
+                    "Rythme sain (-0.3 à -0.7 kg/sem idéal). Continue ce qui marche, "
+                    "ne durcis surtout pas le déficit. Stratégie : maintien strict, "
+                    "pas de changement."
+                )
+            elif -0.3 < weekly_change <= -0.1:
+                report.append("**État : 🟡 PROGRESSION LENTE MAIS RÉELLE**")
+                report.append(
+                    "Tu avances doucement, c'est durable. Possibles ajustements : "
+                    "+1000 pas/jour, +1 séance cardio courte, ou serrer un poil les "
+                    "calories (-100 kcal/j). Ne touche PAS aux protéines."
+                )
+            elif -0.1 < weekly_change < 0.1:
+                report.append("**État : 🟠 PLATEAU DÉTECTÉ**")
+                report.append(
+                    "Plateau >2 semaines = signal métabolique. Trois options "
+                    "scientifiques :\n"
+                    "1. **Refeed 1-2 jours** : monte les glucides au maintien "
+                    "(reset leptine, relance la combustion)\n"
+                    "2. **Diet break 7-10 jours** : maintien calorique complet "
+                    "(reset hormonal profond, repart plus fort après)\n"
+                    "3. **Recalibrer les calories** : si poids -2-3 kg depuis le "
+                    "calcul initial, le besoin a baissé de 50-100 kcal. Tu peux "
+                    "soit relancer le déficit, soit prendre l'option 1 ou 2 d'abord."
+                )
+            else:
+                report.append("**État : 🔴 STAGNATION / RÉGRESSION**")
+                report.append(
+                    "Le poids monte malgré l'objectif perte. Causes probables :\n"
+                    "- Compliance compromise (week-end, alcool, snacks invisibles)\n"
+                    "- Stress + cortisol → rétention d'eau\n"
+                    "- Sommeil dégradé\n"
+                    "- Cycle (femme) en phase lutéale → +1-3 kg eau normal\n\n"
+                    "Action recommandée : passe en revue les 7 derniers jours "
+                    "avec l'utilisateur (alcool, sommeil, stress, cycle) AVANT "
+                    "de modifier les calories."
+                )
+        elif goal == "gain":
+            if weekly_change >= 0.2:
+                report.append("**État : 🟢 PRISE DE MASSE EN COURS**")
+                report.append(
+                    "Bonne dynamique. Rappelle que 0.2-0.4 kg/sem est l'idéal "
+                    "(moins = pas assez de stimulus, plus = trop de gras pris)."
+                )
+            elif 0 <= weekly_change < 0.2:
+                report.append("**État : 🟡 PRISE LENTE**")
+                report.append(
+                    "Bump : +200-300 kcal/jour (glucides priorité), +1 sucre lent "
+                    "post-training, prendre vraiment 4 repas/jour. Si toujours "
+                    "stagnation après 2 sem, +500 kcal."
+                )
+            else:
+                report.append("**État : 🔴 PERTE DE POIDS NON DÉSIRÉE**")
+                report.append(
+                    "L'objectif est la prise mais tu perds. Soit l'apport est "
+                    "insuffisant (à augmenter), soit l'activité est en hausse. "
+                    "Recalcule les besoins."
+                )
+        else:  # maintain
+            if abs(weekly_change) < 0.2:
+                report.append("**État : 🟢 MAINTIEN PARFAIT**")
+            else:
+                report.append("**État : 🟡 VARIATION HORS CIBLE**")
+                report.append(
+                    f"Tu vises le maintien mais tu varies de {weekly_change:+.2f} "
+                    "kg/sem. Léger ajustement calorique nécessaire (+/- 150 kcal/j)."
+                )
+        return "\n".join(report)
+
+    @beta_tool
     def generate_meal_plan(
         days: int = 7,
         focus: str = "auto",
@@ -528,6 +639,7 @@ Args:
         log_body_photo,
         get_daily_summary,
         get_weekly_progress,
+        analyze_progress,
         find_recipe,
         generate_meal_plan,
         list_challenges,

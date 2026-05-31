@@ -199,6 +199,60 @@ def _summarize_user_state(
         f"• Consentement photo morpho : {'oui' if user.get('photo_consent') else 'non'}\n"
         f"• Restrictions alimentaires : {user.get('restrictions') or 'aucune'}"
     )
+
+    # Adaptive metabolic profile (the magic block that makes Calo feel intelligent)
+    metabolic_lines: list[str] = []
+    if user.get("metabolic_type"):
+        adj_raw = user.get("calorie_adjustment")
+        adj_pct = (
+            f" (ajustement {int(float(adj_raw) * 100)}% vs TDEE textbook)"
+            if adj_raw is not None and adj_raw != 0
+            else ""
+        )
+        metabolic_lines.append(
+            f"\n# PROFIL MÉTABOLIQUE ADAPTATIF\n"
+            f"Type identifié : **{user.get('metabolic_type')}**{adj_pct}"
+        )
+    if user.get("medical_conditions"):
+        metabolic_lines.append(f"• Pathologies : {user.get('medical_conditions')}")
+    if user.get("current_meds"):
+        metabolic_lines.append(f"• Médicaments : {user.get('current_meds')}")
+    if user.get("metabolic_history"):
+        metabolic_lines.append(f"• Historique : {user.get('metabolic_history')}")
+    if user.get("prior_diets_tried"):
+        metabolic_lines.append(f"• Régimes essayés : {user.get('prior_diets_tried')}")
+    if user.get("digestive_profile"):
+        metabolic_lines.append(f"• Digestion : {user.get('digestive_profile')}")
+    if user.get("lifetime_lowest_kg") or user.get("lifetime_highest_kg"):
+        metabolic_lines.append(
+            f"• Plage adulte : {user.get('lifetime_lowest_kg') or '?'} kg "
+            f"min → {user.get('lifetime_highest_kg') or '?'} kg max"
+        )
+    if user.get("sleep_quality") or user.get("stress_level"):
+        metabolic_lines.append(
+            f"• Sommeil : {user.get('sleep_quality') or '?'}/5 · "
+            f"Stress : {user.get('stress_level') or '?'}/5"
+        )
+    if user.get("personal_patterns"):
+        metabolic_lines.append(
+            f"• Patterns personnels observés : {user.get('personal_patterns')}"
+        )
+    if metabolic_lines:
+        base += "\n" + "\n".join(metabolic_lines) + (
+            "\n\n⚠️ **UTILISE CE PROFIL MÉTABOLIQUE** dans tes réponses. "
+            "Si tu apprends quelque chose de nouveau (régime essayé, médicament, "
+            "pathologie, pattern), appelle `update_metabolic_profile`. "
+            "Si la trajectoire ne suit pas la prédiction du textbook, appelle "
+            "`analyze_progress` puis éventuellement `recalibrate_calories`."
+        )
+    else:
+        base += (
+            "\n\n# PROFIL MÉTABOLIQUE\n"
+            "Pas encore évalué. Découvre progressivement, sans interroger en "
+            "rafale : à chaque conversation, glisse 1 question pertinente "
+            "(histoire des régimes, médicaments, pathologie, sommeil, stress, "
+            "digestion, poids min/max adulte). Sauvegarde via `update_metabolic_profile`."
+        )
     if memories:
         base += "\n\n# CE QUE TU AS RETENU SUR LUI/ELLE (souvenirs long terme)\n"
         base += (

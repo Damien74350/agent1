@@ -104,6 +104,9 @@ class AirtableDB:
                 continue
             if key in {"photo_consent", "onboarding_complete"}:
                 value = bool(value)
+            if key == "calorie_adjustment" and value is not None:
+                # Airtable percent expects a decimal (0.85 = 85%)
+                value = float(value) / 100.0 if float(value) > 2 else float(value)
             mapped[field_id] = value
         if mapped:
             self.users.update(record_id, mapped, typecast=True, use_field_ids=True)

@@ -42,6 +42,20 @@ USERS_FIELDS = {
     "onboarding_complete": "fldH5BC9lkE0bKEBP",
     "admin_notes": "fldklbAHJU777IwR1",
     "created_at": "fldqF6aRQG3LcAKOO",
+    # Adaptive metabolic profile — Calo learns over time
+    "metabolic_history": "fldat12ppQGnAjSPo",
+    "metabolic_type": "fldnvgJD2gmUkHFHu",
+    "prior_diets_tried": "fldKlKdhV0PzkrOtK",
+    "lifetime_lowest_kg": "fldjzSAWvWMNtck7g",
+    "lifetime_highest_kg": "fldM0A1IUaiaREvfA",
+    "current_meds": "fldhzjR3a8mn5t61S",
+    "medical_conditions": "fld6ap3vy7h5AMLOq",
+    "digestive_profile": "fldP6asxX3TZIfV8C",
+    "sleep_quality": "fldlAqAc98VgaNhOI",
+    "stress_level": "fldTPoRQbwkGHScBR",
+    "calorie_adjustment": "fldaDY7VeBgMSGeTG",
+    "last_calibration": "fld1gFFSgqmRm7mXa",
+    "personal_patterns": "fldsCoMjczzqu9De6",
 }
 
 FOODS_FIELDS = {

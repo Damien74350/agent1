@@ -329,6 +329,174 @@ Args:
         )
 
     @beta_tool
+    def update_metabolic_profile(
+        metabolic_history: str = "",
+        metabolic_type: str = "",
+        prior_diets_tried: str = "",
+        lifetime_lowest_kg: float = 0,
+        lifetime_highest_kg: float = 0,
+        current_meds: str = "",
+        medical_conditions: str = "",
+        digestive_profile: str = "",
+        sleep_quality: int = 0,
+        stress_level: int = 0,
+        personal_patterns: str = "",
+    ) -> str:
+        """Enrich the user's adaptive metabolic profile. Call this PROACTIVELY \
+whenever the user shares ANY of the following during conversation. NEVER ask \
+all of these at once — weave them into natural conversation across days/weeks. \
+For free-text fields, APPEND to existing content (don't overwrite) — pass the \
+COMPLETE new text including the previous content. Pass only what's new this turn.
+
+WHEN to call:
+- User mentions a prior diet → fill `prior_diets_tried`
+- User mentions thyroid, SOPK, diabetes, endometriosis, IBS, IBD, NASH... → \
+  `medical_conditions` AND consider `metabolic_type` = "lent - hormonal..."
+- User mentions medications (anti-depressants, statins, thyroid hormones, \
+  contraception, corticosteroids, insulin) → `current_meds`
+- User mentions yo-yo, ED recovery, post-partum, hormonal events → \
+  `metabolic_history`
+- User mentions her lowest/highest adult weight → `lifetime_lowest_kg` / \
+  `lifetime_highest_kg`
+- User mentions bloating, lactose, gluten, FODMAP → `digestive_profile`
+- User reports sleep quality / stress level → ratings
+- User reveals a personal pattern ("je reprends 2kg dès que je bois") → \
+  `personal_patterns`
+- After 2-3 weeks of observation you classify their metabolic type → set it
+
+Args:
+    metabolic_history: New narrative entry to append (e.g. 'Yo-yo 2018-2024, \
+4 régimes successifs, perte muscle estimée -3kg').
+    metabolic_type: 'rapide' | 'normal' | 'lent - régimes à répétition' | \
+'lent - hormonal (thyroïde, SOPK)' | 'lent - ménopause' | 'résistance insuline' \
+| 'récupération TCA' | 'athlète entraîné'.
+    prior_diets_tried: New entry to append (e.g. 'Keto 6 mois 2022 -8kg puis \
++12kg en 4 mois').
+    lifetime_lowest_kg: Adult lifetime minimum weight.
+    lifetime_highest_kg: Adult lifetime maximum weight.
+    current_meds: Medications + brief reason (e.g. 'Lévothyrox 75µg matin \
+(Hashimoto)').
+    medical_conditions: Diagnosed conditions (e.g. 'Hashimoto diagnostiqué 2019').
+    digestive_profile: Intolerances, symptoms (e.g. 'Ballonnements quotidiens \
+soir, intolérance lactose probable').
+    sleep_quality: Rating 1-5 (1 horrible, 5 excellent).
+    stress_level: Rating 1-5 (1 zen, 5 stress chronique).
+    personal_patterns: Pattern observed (e.g. 'Reprend +2kg dès qu'elle boit \
+3 verres / sem').
+"""
+        updates: dict[str, Any] = {}
+
+        # For free-text append-style fields, fetch current value and append
+        current = db.get_user_by_id(user_id) if any(
+            v for v in (metabolic_history, prior_diets_tried, current_meds,
+                        medical_conditions, digestive_profile, personal_patterns)
+        ) else {}
+
+        def appended(field_key: str, new_text: str) -> str:
+            existing = (current or {}).get(field_key) or ""
+            ts = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            if existing:
+                return f"{existing}\n[{ts}] {new_text}".strip()
+            return f"[{ts}] {new_text}".strip()
+
+        if metabolic_history:
+            updates["metabolic_history"] = appended("metabolic_history", metabolic_history)
+        if prior_diets_tried:
+            updates["prior_diets_tried"] = appended("prior_diets_tried", prior_diets_tried)
+        if current_meds:
+            updates["current_meds"] = appended("current_meds", current_meds)
+        if medical_conditions:
+            updates["medical_conditions"] = appended("medical_conditions", medical_conditions)
+        if digestive_profile:
+            updates["digestive_profile"] = appended("digestive_profile", digestive_profile)
+        if personal_patterns:
+            updates["personal_patterns"] = appended("personal_patterns", personal_patterns)
+
+        if metabolic_type:
+            updates["metabolic_type"] = metabolic_type
+        if lifetime_lowest_kg > 0:
+            updates["lifetime_lowest_kg"] = float(lifetime_lowest_kg)
+        if lifetime_highest_kg > 0:
+            updates["lifetime_highest_kg"] = float(lifetime_highest_kg)
+        if 1 <= sleep_quality <= 5:
+            updates["sleep_quality"] = int(sleep_quality)
+        if 1 <= stress_level <= 5:
+            updates["stress_level"] = int(stress_level)
+
+        if not updates:
+            return "Aucun champ à mettre à jour."
+        db.update_user(user_id, **updates)
+        return f"Profil métabolique mis à jour : {', '.join(updates.keys())}"
+
+    @beta_tool
+    def recalibrate_calories(
+        new_daily_kcal: int,
+        reason: str,
+        adjustment_pct: int = 0,
+    ) -> str:
+        """Recalculate the user's daily calorie target when the textbook TDEE \
+formula doesn't match reality. Use this AFTER analyze_progress has detected a \
+persistent plateau or regression (2+ weeks) AND you've ruled out compliance \
+issues (alcohol, sleep, stress, cycle).
+
+This is what separates Calo from a static dashboard : Calo adjusts to the \
+ACTUAL response of the person's metabolism.
+
+When to call:
+- Plateau >2 weeks, compliance verified → -100 to -200 kcal/jour
+- Loss too fast (>0.8 kg/sem femme, >1 kg/sem homme) → +100 to +200 kcal
+- Gain not happening despite surplus → +200 to +300 kcal
+- After 4-6 weeks of stable trajectory → record the personal adjustment
+
+Args:
+    new_daily_kcal: The NEW daily calorie target (replaces the previous one).
+    reason: WHY you're adjusting (e.g. 'plateau 3 sem à 1700 kcal sans \
+écart, compliance OK, ralentissement métabolique probable -10%').
+    adjustment_pct: Personal multiplier vs textbook TDEE (e.g. 90 means -10% \
+slower metabolism than textbook). Leave 0 to skip.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        previous = user.get("daily_calories") or 0
+        # Adjust protein proportionally to keep g/kg ratio
+        weight = user.get("current_weight_kg") or 70
+        new_protein = round(float(weight) * 1.8)
+        # Approximate macro split for the new target
+        protein_kcal = new_protein * 4
+        fat_kcal = int(new_daily_kcal * 0.30)
+        carbs_kcal = max(0, new_daily_kcal - protein_kcal - fat_kcal)
+        new_carbs = carbs_kcal // 4
+        new_fat = fat_kcal // 9
+
+        updates = {
+            "daily_calories": int(new_daily_kcal),
+            "daily_protein_g": int(new_protein),
+            "daily_carbs_g": int(new_carbs),
+            "daily_fat_g": int(new_fat),
+            "last_calibration": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        }
+        if adjustment_pct and 60 <= adjustment_pct <= 140:
+            updates["calorie_adjustment"] = int(adjustment_pct)
+        db.update_user(user_id, **updates)
+
+        # Log this calibration as a memory for traceability
+        db.add_memory(
+            user_id,
+            f"Calo a recalibré les calories : {previous} → {new_daily_kcal} kcal. "
+            f"Raison : {reason}",
+            category="objectif",
+            importance=4,
+        )
+        return (
+            f"✅ Cible recalibrée : {previous} → {new_daily_kcal} kcal/jour. "
+            f"Protéines {new_protein}g, glucides {new_carbs}g, lipides {new_fat}g. "
+            f"Raison enregistrée : {reason}. "
+            f"Annonce le changement à l'utilisateur AVEC l'explication, et "
+            f"engage-le sur 2 semaines de test avant nouvelle évaluation."
+        )
+
+    @beta_tool
     def analyze_progress(weeks: int = 4) -> str:
         """Smart progress analyser. Detects plateau, regression, or great \
 trajectory and suggests a concrete intervention (refeed, diet break, \
@@ -678,6 +846,8 @@ Args:
         get_daily_summary,
         get_weekly_progress,
         analyze_progress,
+        update_metabolic_profile,
+        recalibrate_calories,
         find_recipe,
         generate_meal_plan,
         generate_grocery_list,

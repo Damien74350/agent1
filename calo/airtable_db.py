@@ -153,6 +153,20 @@ class AirtableDB:
         recs = self.meals.all(formula=formula, **self._BY_ID)
         return [_unwrap_meal(r) for r in recs]
 
+    def meals_since(self, user_id: str, since_iso: str) -> list[dict[str, Any]]:
+        """All meals for a user whose `Eaten At` >= since_iso (YYYY-MM-DD).
+        Sorted by eaten_at ascending."""
+        formula = (
+            f"AND({{{MEALS_FIELDS['eaten_at']}}} >= '{since_iso}', "
+            f"FIND('{user_id}', ARRAYJOIN({{{MEALS_FIELDS['user']}}})) > 0)"
+        )
+        recs = self.meals.all(
+            formula=formula,
+            sort=[MEALS_FIELDS["eaten_at"]],
+            **self._BY_ID,
+        )
+        return [_unwrap_meal(r) for r in recs]
+
     # ------------------------------------------------------------------
     # weight logs
     # ------------------------------------------------------------------

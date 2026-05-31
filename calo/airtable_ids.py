@@ -56,6 +56,7 @@ USERS_FIELDS = {
     "calorie_adjustment": "fldaDY7VeBgMSGeTG",
     "last_calibration": "fld1gFFSgqmRm7mXa",
     "personal_patterns": "fldsCoMjczzqu9De6",
+    "anamnese_started": "fldsrJLNR5N0gJbKh",
 }
 
 FOODS_FIELDS = {

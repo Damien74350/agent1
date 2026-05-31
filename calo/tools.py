@@ -329,6 +329,202 @@ Args:
         )
 
     @beta_tool
+    def start_anamnese() -> str:
+        """Start a 7-day baseline food assessment (anamnèse) for the user. \
+PROPOSE THIS PROACTIVELY in two situations:
+
+1. **At the END of onboarding** (after `complete_profile`) : "Avant qu'on \
+attaque, j'aimerais avoir une photo réelle de comment tu manges. Pendant \
+7 jours, envoie-moi TOUT — chaque repas, snack, boisson (eau, café, alcool, \
+sodas), même les petits grignotages. Pas de jugement, c'est notre baseline. \
+Après je te fais un debrief PRO avec un plan calibré sur TOI."
+
+2. **Quand l'utilisateur est bloqué et que tu doutes de sa déclaration** : \
+"On va remettre à plat. 7 jours d'anamnèse stricte, on saura exactement \
+où on en est et je recalibre."
+
+L'anamnèse est CRUCIALE : les gens sous-déclarent en moyenne de 30%. \
+La formule TDEE ne sert à rien si la consommation réelle est inconnue. \
+C'est aussi un moment d'engagement fort (le client sent un vrai suivi pro)."""
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.update_user(user_id, anamnese_started=today)
+        db.add_memory(
+            user_id,
+            f"Anamnèse 7 jours démarrée le {today}",
+            category="objectif",
+            importance=4,
+        )
+        return (
+            f"✅ Anamnèse démarrée ({today}). Pendant 7 jours, demande à "
+            f"l'utilisateur de logger TOUT (repas, snacks, boissons, alcool, "
+            f"sauces, grignotages). Pas de jugement. À J7-J8, appelle "
+            f"`analyze_anamnese` pour le debrief structuré."
+        )
+
+    @beta_tool
+    def analyze_anamnese(days: int = 7) -> str:
+        """Analyse the user's last N days of food logs as a professional dietitian \
+would do for a first consultation. Returns averages, patterns, suspected \
+under-reporting, macro distribution, meal frequency, weekend variance, \
+and the FIRST diagnostic + adjustment proposal.
+
+Call this 7-8 days after `start_anamnese` (or whenever the user asks for a \
+"bilan", "où j'en suis", "qu'est-ce que je devrais changer").
+
+Args:
+    days: Number of days to analyse. Default 7. Min 3, max 14.
+"""
+        from datetime import datetime, timedelta, timezone
+        days = max(3, min(14, int(days)))
+        user = db.get_user_by_id(user_id)
+        if not user or not user.get("onboarding_complete"):
+            return "Onboarding incomplet. Calo doit d'abord compléter le profil."
+
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+        meals = db.meals_since(user_id, since)
+        if len(meals) < 3:
+            return (
+                f"Pas assez de repas loggués sur les {days} derniers jours "
+                f"({len(meals)} trouvés). Relance l'utilisateur pour qu'il "
+                f"continue à logger, on refera le bilan dans qq jours."
+            )
+
+        # Group by day
+        by_day: dict[str, list[dict[str, Any]]] = {}
+        for m in meals:
+            day = (m.get("eaten_at") or "")[:10]
+            if day:
+                by_day.setdefault(day, []).append(m)
+
+        days_with_data = sorted(by_day.keys())
+        actual_days = len(days_with_data)
+
+        # Compute totals per day
+        day_totals = []
+        for day in days_with_data:
+            day_meals = by_day[day]
+            kcal = sum(int(m.get("total_calories") or 0) for m in day_meals)
+            p = sum(int(m.get("total_protein_g") or 0) for m in day_meals)
+            c = sum(int(m.get("total_carbs_g") or 0) for m in day_meals)
+            f = sum(int(m.get("total_fat_g") or 0) for m in day_meals)
+            day_totals.append({
+                "day": day,
+                "kcal": kcal, "p": p, "c": c, "f": f,
+                "meal_count": len(day_meals),
+            })
+
+        avg_kcal = sum(d["kcal"] for d in day_totals) // actual_days
+        avg_p = sum(d["p"] for d in day_totals) // actual_days
+        avg_c = sum(d["c"] for d in day_totals) // actual_days
+        avg_f = sum(d["f"] for d in day_totals) // actual_days
+        avg_meals = sum(d["meal_count"] for d in day_totals) / actual_days
+        min_kcal = min(d["kcal"] for d in day_totals)
+        max_kcal = max(d["kcal"] for d in day_totals)
+        variance_kcal = max_kcal - min_kcal
+
+        # Weekend vs weekday
+        weekday_kcal = []
+        weekend_kcal = []
+        for d in day_totals:
+            try:
+                dt = datetime.strptime(d["day"], "%Y-%m-%d")
+                if dt.weekday() >= 5:
+                    weekend_kcal.append(d["kcal"])
+                else:
+                    weekday_kcal.append(d["kcal"])
+            except ValueError:
+                pass
+        avg_weekday = sum(weekday_kcal) // len(weekday_kcal) if weekday_kcal else 0
+        avg_weekend = sum(weekend_kcal) // len(weekend_kcal) if weekend_kcal else 0
+
+        # Compare to textbook TDEE
+        textbook_kcal = int(user.get("daily_calories") or 0)
+        gap_pct = (
+            int((avg_kcal - textbook_kcal) / textbook_kcal * 100)
+            if textbook_kcal else 0
+        )
+
+        # Macro distribution (% of kcal)
+        protein_pct = round(avg_p * 4 / avg_kcal * 100) if avg_kcal else 0
+        carbs_pct = round(avg_c * 4 / avg_kcal * 100) if avg_kcal else 0
+        fat_pct = round(avg_f * 9 / avg_kcal * 100) if avg_kcal else 0
+
+        # Protein per kg
+        weight = float(user.get("current_weight_kg") or 70)
+        p_per_kg = round(avg_p / weight, 1)
+
+        # Diagnostic flags
+        flags: list[str] = []
+        if avg_kcal < textbook_kcal * 0.75 and user.get("goal") == "lose":
+            flags.append(
+                "⚠️ **SOUS-DÉCLARATION PROBABLE** : tu déclares avg "
+                f"{avg_kcal} kcal/j (vs cible {textbook_kcal}). "
+                "Si la perte n'arrive pas, c'est qu'il manque des items dans le log "
+                "(grignotages, boissons sucrées, alcool, sauces, 'goûter du plat')."
+            )
+        if p_per_kg < 1.2:
+            flags.append(
+                f"⚠️ **PROTÉINES INSUFFISANTES** : {p_per_kg}g/kg (cible "
+                f"{'1.8-2.0' if user.get('goal') in ('lose', 'gain') else '1.4-1.8'}g/kg). "
+                "Manque de satiété + risque perte musculaire."
+            )
+        if fat_pct > 40:
+            flags.append(
+                f"⚠️ **TROP DE LIPIDES** : {fat_pct}% des kcal (cible 25-35%). "
+                "Souvent dû aux sauces, fromages, charcuteries cachés."
+            )
+        if avg_meals < 3:
+            flags.append(
+                f"⚠️ **TROP PEU DE REPAS** : {avg_meals:.1f}/jour. Risque de craquage soir."
+            )
+        if variance_kcal > 700:
+            flags.append(
+                f"⚠️ **VARIANCE ÉNORME** : du jour le plus light au plus chargé "
+                f"= {variance_kcal} kcal d'écart. Manque de structure."
+            )
+        if weekend_kcal and weekday_kcal and avg_weekend > avg_weekday + 400:
+            flags.append(
+                f"⚠️ **WEEK-END EXPLOSIF** : +{avg_weekend - avg_weekday} kcal/j "
+                "vs semaine. C'est souvent là que disparaît le déficit."
+            )
+
+        # Build report
+        report = [
+            f"# 📊 Bilan anamnèse {actual_days} jours",
+            "",
+            f"## Moyennes quotidiennes",
+            f"- **{avg_kcal} kcal/jour** (vs cible {textbook_kcal} = {gap_pct:+d}%)",
+            f"- Protéines : {avg_p}g ({protein_pct}% · {p_per_kg}g/kg)",
+            f"- Glucides : {avg_c}g ({carbs_pct}%)",
+            f"- Lipides : {avg_f}g ({fat_pct}%)",
+            f"- Repas/jour : {avg_meals:.1f}",
+            "",
+            f"## Variation jour à jour",
+            f"- Plus light : {min_kcal} kcal",
+            f"- Plus chargé : {max_kcal} kcal",
+            f"- Écart : {variance_kcal} kcal",
+        ]
+        if weekend_kcal and weekday_kcal:
+            report.append(f"- Semaine : {avg_weekday} kcal/j · Week-end : {avg_weekend} kcal/j")
+
+        if flags:
+            report.append("\n## 🔍 Diagnostic")
+            for f in flags:
+                report.append(f"\n{f}")
+
+        report.append(
+            "\n## 🎯 Action recommandée"
+            "\nPrésente ces constats à l'utilisateur AVEC empathie (pas accusateur)."
+            " Propose 1-2 ajustements MAX, jamais 5 à la fois."
+            " Mets à jour `personal_patterns` avec les insights découverts via"
+            " `update_metabolic_profile`. Si l'écart vs textbook est marqué, propose"
+            " une `recalibrate_calories` justifiée."
+        )
+
+        return "\n".join(report)
+
+    @beta_tool
     def update_metabolic_profile(
         metabolic_history: str = "",
         metabolic_type: str = "",
@@ -848,6 +1044,8 @@ Args:
         analyze_progress,
         update_metabolic_profile,
         recalibrate_calories,
+        start_anamnese,
+        analyze_anamnese,
         find_recipe,
         generate_meal_plan,
         generate_grocery_list,

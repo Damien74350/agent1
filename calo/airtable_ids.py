@@ -16,6 +16,8 @@ WEIGHT_LOGS_TABLE = "tblOrpeTZf2cN770r"
 BODY_PHOTOS_TABLE = "tblCmbR8w7BrLErqZ"
 MEMORIES_TABLE = "tblSoqBsOGeUL20gd"
 RECIPES_TABLE = "tblwPLplGlehhyWfj"
+CHALLENGES_TABLE = "tbld6N7WUah20naa4"
+USER_CHALLENGES_TABLE = "tbl8GGMKbL0DEJ9WR"
 
 # --- field IDs ---
 # Using field IDs rather than names insulates Calo from renames in the Airtable UI.
@@ -120,4 +122,30 @@ RECIPES_FIELDS = {
     "active": "fldc5zpzj71nXIcd6",
     "created_at": "fldx8fwAAw9UN56gU",
     "notes": "fldCnsxzEzTjsAq7K",
+}
+
+CHALLENGES_FIELDS = {
+    "name": "fld5GsiOL108HPk5l",
+    "slug": "fld2TTtEkujTCVFgk",
+    "duration_days": "fldlI4CxNoYf03ZSM",
+    "category": "fld1Za78hzb9uJ4sv",
+    "difficulty": "fldgiJXdyGqojdkVP",
+    "target_audience": "fldALLMdxt82GWmWm",
+    "pitch": "fldYSEMhTNn27rE4U",
+    "daily_structure": "fldbH5VYHpbHZLwJs",
+    "rules": "fldvwSBrCZJ2k0cHP",
+    "expected_outcome": "fldjQQwJFygIzz8Wi",
+    "active": "fldSuFAdkljd4xiNs",
+    "created_at": "fldQAnB5zs7Tc5tgn",
+}
+
+USER_CHALLENGES_FIELDS = {
+    "started_at": "fldQ0cXuxeCgrKEoe",
+    "user": "fldiM2LFIFDAeUMnJ",
+    "challenge": "fldBmbmeConhrc0ZN",
+    "status": "fldHf5SspM6ORBy7h",
+    "current_day": "fldWNhpwJ0PqY3KWw",
+    "adherence": "fldE8sEycuBQYMZoI",
+    "notes": "fldBSnzqL8hxDa4Rt",
+    "completed_at": "fldS0eTT77LHz3bpv",
 }

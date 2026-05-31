@@ -290,6 +290,110 @@ inspiration without specifying.
         return "\n\n---\n\n".join(out)
 
     @beta_tool
+    def list_challenges(
+        category: str = "",
+        difficulty: str = "",
+        audience: str = "",
+    ) -> str:
+        """List Calo's structured challenges (30/60/90-day programmes). Use this \
+when the user asks for a challenge, a structured programme, "un défi", "un plan \
+sur 30 jours", "qu'est-ce que tu proposes comme programme été ?", etc. Filter \
+to narrow down.
+
+Args:
+    category: One of 'perte de poids' | 'prise de muscle' | 'habitudes saines' | \
+'anti-inflammation' | 'été - bikini body' | 'rentrée' | 'menopause-friendly' | \
+'performance sport'.
+    difficulty: 'facile' | 'modéré' | 'exigeant'.
+    audience: 'femme' | 'homme' | 'débutant' | 'intermédiaire' | 'avancé' | \
+'menopause' | 'post-grossesse' | 'sportif'.
+"""
+        challenges = db.list_challenges(
+            category=category or None,
+            difficulty=difficulty or None,
+            audience=audience or None,
+            max_results=10,
+        )
+        if not challenges:
+            return "Aucun challenge ne matche ces critères. Élargis la recherche."
+        out = []
+        for c in challenges:
+            out.append(
+                f"## {c['name']} ({c.get('duration_days', '?')} jours · "
+                f"{c.get('difficulty', '?')})\n"
+                f"🎯 Catégorie : {c.get('category', '?')}\n"
+                f"👥 Pour : {', '.join(c.get('target_audience') or [])}\n"
+                f"🔖 Slug : `{c.get('slug')}`\n\n"
+                f"{c.get('pitch', '')}\n\n"
+                f"**Résultats attendus :**\n{c.get('expected_outcome', '')}"
+            )
+        return "\n\n---\n\n".join(out)
+
+    @beta_tool
+    def get_challenge_details(slug: str) -> str:
+        """Fetch the full details of a challenge by its slug — daily structure, \
+rules, expected outcome. Use this when the user wants more detail on a specific \
+challenge before committing.
+
+Args:
+    slug: The challenge stable identifier (e.g. 'summer-shred-30', 'lean-90', \
+'meno-strong-30', 'cycle-sync-90', 'hydra-sleep-21', 'sucre-zero-30', \
+'anti-inflam-60', 'mediterranean-30', 'perf-sport-60', 'rentree-reset-30').
+"""
+        c = db.get_challenge_by_slug(slug)
+        if not c:
+            return f"Aucun challenge avec le slug '{slug}'. Appelle list_challenges pour voir les options."
+        return (
+            f"# {c['name']}\n"
+            f"⏱️ {c.get('duration_days', '?')} jours · {c.get('difficulty', '?')}\n"
+            f"🎯 {c.get('category', '?')}\n"
+            f"👥 Pour : {', '.join(c.get('target_audience') or [])}\n\n"
+            f"## Pitch\n{c.get('pitch', '')}\n\n"
+            f"## Structure quotidienne\n{c.get('daily_structure', '')}\n\n"
+            f"## Règles non négociables\n{c.get('rules', '')}\n\n"
+            f"## Résultats attendus\n{c.get('expected_outcome', '')}"
+        )
+
+    @beta_tool
+    def start_challenge(slug: str) -> str:
+        """Subscribe the current user to a challenge. ONLY call this once the \
+user has clearly confirmed they want to start (e.g. "ok je commence", "go", \
+"je m'inscris"). Saves the start date and tracks progress.
+
+Args:
+    slug: The challenge stable identifier (e.g. 'summer-shred-30').
+"""
+        c = db.get_challenge_by_slug(slug)
+        if not c:
+            return f"Aucun challenge avec le slug '{slug}'."
+        existing = db.get_active_user_challenge(user_id)
+        if existing:
+            return (
+                "L'utilisateur a déjà un challenge actif. Demande-lui s'il veut "
+                "le terminer avant d'en commencer un autre."
+            )
+        rec_id = db.start_user_challenge(user_id, c["id"])
+        return (
+            f"✅ Challenge **{c['name']}** démarré aujourd'hui (J1/{c.get('duration_days')}). "
+            f"Rappelle les 3 règles les plus importantes maintenant, et engage l'utilisateur "
+            f"sur la 1ère action concrète à faire dès aujourd'hui."
+        )
+
+    @beta_tool
+    def get_my_active_challenge() -> str:
+        """Check if the user has an active challenge running, and return its \
+status (current day, name, slug). Use this when the user asks 'où en suis-je \
+sur mon challenge', 'mon programme', or to contextualise advice."""
+        uc = db.get_active_user_challenge(user_id)
+        if not uc:
+            return "Aucun challenge actif pour cet utilisateur."
+        return (
+            f"Challenge actif : record UC {uc['id']}. "
+            f"Statut : {uc.get('status')}. Jour actuel : {uc.get('current_day')}. "
+            f"Démarré : {uc.get('started_at')}."
+        )
+
+    @beta_tool
     def search_knowledge(query: str) -> str:
         """Search Calo's knowledge base for relevant guidance. Call this when the \
 user mentions a topic like 'plateau', 'restaurant', 'sommeil', 'cycle', \
@@ -317,6 +421,10 @@ Args:
         get_daily_summary,
         get_weekly_progress,
         find_recipe,
+        list_challenges,
+        get_challenge_details,
+        start_challenge,
+        get_my_active_challenge,
         search_knowledge,
         remember,
     ]

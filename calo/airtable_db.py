@@ -18,6 +18,8 @@ from .airtable_ids import (
     BASE_ID,
     BODY_PHOTOS_FIELDS,
     BODY_PHOTOS_TABLE,
+    CHALLENGES_FIELDS,
+    CHALLENGES_TABLE,
     FOODS_FIELDS,
     FOODS_TABLE,
     KNOWLEDGE_FIELDS,
@@ -28,6 +30,8 @@ from .airtable_ids import (
     MEMORIES_TABLE,
     RECIPES_FIELDS,
     RECIPES_TABLE,
+    USER_CHALLENGES_FIELDS,
+    USER_CHALLENGES_TABLE,
     USERS_FIELDS,
     USERS_TABLE,
     WEIGHT_LOGS_FIELDS,
@@ -52,6 +56,8 @@ class AirtableDB:
         self.body_photos = self.api.table(BASE_ID, BODY_PHOTOS_TABLE)
         self.memories = self.api.table(BASE_ID, MEMORIES_TABLE)
         self.recipes = self.api.table(BASE_ID, RECIPES_TABLE)
+        self.challenges = self.api.table(BASE_ID, CHALLENGES_TABLE)
+        self.user_challenges = self.api.table(BASE_ID, USER_CHALLENGES_TABLE)
 
     # pyairtable returns fields keyed by NAME by default. Our schema uses
     # field IDs everywhere (so renames in the UI don't break us), so every
@@ -376,6 +382,71 @@ class AirtableDB:
         except Exception:
             return None
 
+    # ------------------------------------------------------------------
+    # challenges
+    # ------------------------------------------------------------------
+
+    def list_challenges(
+        self,
+        category: str | None = None,
+        difficulty: str | None = None,
+        audience: str | None = None,
+        max_results: int = 10,
+    ) -> list[dict[str, Any]]:
+        """List active challenges, optionally filtered by category/difficulty/audience."""
+        conditions = [f"{{{CHALLENGES_FIELDS['active']}}}"]
+        if category:
+            conditions.append(
+                f"{{{CHALLENGES_FIELDS['category']}}} = '{_escape(category)}'"
+            )
+        if difficulty:
+            conditions.append(
+                f"{{{CHALLENGES_FIELDS['difficulty']}}} = '{_escape(difficulty)}'"
+            )
+        if audience:
+            conditions.append(
+                f"FIND('{_escape(audience)}', ARRAYJOIN({{{CHALLENGES_FIELDS['target_audience']}}}, ',')) > 0"
+            )
+        formula = "AND(" + ", ".join(conditions) + ")"
+        recs = self.challenges.all(
+            formula=formula,
+            max_records=max_results,
+            sort=[CHALLENGES_FIELDS["duration_days"]],
+            **self._BY_ID,
+        )
+        return [_unwrap_challenge(r) for r in recs]
+
+    def get_challenge_by_slug(self, slug: str) -> dict[str, Any] | None:
+        rec = self.challenges.first(
+            formula=f"{{{CHALLENGES_FIELDS['slug']}}} = '{_escape(slug)}'",
+            **self._BY_ID,
+        )
+        return _unwrap_challenge(rec) if rec else None
+
+    def start_user_challenge(self, user_id: str, challenge_id: str) -> str:
+        """Subscribe a user to a challenge. Returns the UserChallenge record ID."""
+        rec = self.user_challenges.create(
+            {
+                USER_CHALLENGES_FIELDS["started_at"]: now_iso(),
+                USER_CHALLENGES_FIELDS["user"]: [user_id],
+                USER_CHALLENGES_FIELDS["challenge"]: [challenge_id],
+                USER_CHALLENGES_FIELDS["status"]: "actif",
+                USER_CHALLENGES_FIELDS["current_day"]: 1,
+            },
+            typecast=True,
+            use_field_ids=True,
+        )
+        return rec["id"]
+
+    def get_active_user_challenge(self, user_id: str) -> dict[str, Any] | None:
+        """Return the user's currently active challenge, if any."""
+        formula = (
+            f"AND({{{USER_CHALLENGES_FIELDS['status']}}} = 'actif', "
+            f"FIND('{user_id}', ARRAYJOIN({{{USER_CHALLENGES_FIELDS['user']}}})) > 0)"
+        )
+        rec = self.user_challenges.first(formula=formula, **self._BY_ID)
+        return _unwrap_user_challenge(rec) if rec else None
+
 
 # ----------------------------------------------------------------------
 # unwrapping helpers — turn the field-ID-keyed Airtable record into a friendly dict
@@ -461,6 +532,36 @@ def _unwrap_recipe(rec: dict[str, Any]) -> dict[str, Any]:
         "fiber_g": f.get(RECIPES_FIELDS["fiber_g"]),
         "ingredients": f.get(RECIPES_FIELDS["ingredients"]),
         "instructions": f.get(RECIPES_FIELDS["instructions"]),
+    }
+
+
+def _unwrap_challenge(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    audience_raw = f.get(CHALLENGES_FIELDS["target_audience"]) or []
+    return {
+        "id": rec["id"],
+        "name": f.get(CHALLENGES_FIELDS["name"]),
+        "slug": f.get(CHALLENGES_FIELDS["slug"]),
+        "duration_days": f.get(CHALLENGES_FIELDS["duration_days"]),
+        "category": f.get(CHALLENGES_FIELDS["category"]),
+        "difficulty": f.get(CHALLENGES_FIELDS["difficulty"]),
+        "target_audience": audience_raw if isinstance(audience_raw, list) else [],
+        "pitch": f.get(CHALLENGES_FIELDS["pitch"]),
+        "daily_structure": f.get(CHALLENGES_FIELDS["daily_structure"]),
+        "rules": f.get(CHALLENGES_FIELDS["rules"]),
+        "expected_outcome": f.get(CHALLENGES_FIELDS["expected_outcome"]),
+    }
+
+
+def _unwrap_user_challenge(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "started_at": f.get(USER_CHALLENGES_FIELDS["started_at"]),
+        "challenge": f.get(USER_CHALLENGES_FIELDS["challenge"], []),
+        "status": f.get(USER_CHALLENGES_FIELDS["status"]),
+        "current_day": f.get(USER_CHALLENGES_FIELDS["current_day"], 1),
+        "adherence": f.get(USER_CHALLENGES_FIELDS["adherence"]),
     }
 
 

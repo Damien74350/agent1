@@ -547,6 +547,614 @@ Args:
         )
 
     @beta_tool
+    def scan_food_label(label_summary: str = "") -> str:
+        """User has sent a photo of a food product label (Nutri-Score, table \
+nutritionnelle, ingrédients). Read with vision, then call THIS tool with a \
+short summary string. Returns a decryption framework: ultra-processed score, \
+sugar density, fat profile, ingredient red flags, verdict.
+
+Args:
+    label_summary: What you read on the label (e.g. 'Yaourt aux fruits 125g, \
+108 kcal/pot, sucres 14g, protéines 4g, ingrédients : lait, sucre, sirop \
+de glucose-fructose, arômes, gélifiants').
+"""
+        if not label_summary:
+            return (
+                "Lis d'abord l'étiquette avec vision et fournis 'label_summary' : "
+                "valeurs nutritionnelles (kcal, P/C/F, sucres, sel, fibres) + "
+                "ingrédients principaux."
+            )
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"Scan étiquette {today} : {label_summary[:120]}",
+            category="préférence",
+            importance=2,
+        )
+        return (
+            f"📦 **Cadre de décryptage**\n\n"
+            f"Étiquette lue : {label_summary}\n\n"
+            f"## Tes critères de classement\n\n"
+            f"**🟢 Bon produit** :\n"
+            f"- Sucres <5g/100g (hors fruits)\n"
+            f"- Sel <1g/100g (hors fromages, charcuterie)\n"
+            f"- Fibres >3g/100g si céréalier\n"
+            f"- Liste d'ingrédients courte (≤5) et compréhensible\n"
+            f"- Pas d'huile de palme, pas de sirop de glucose-fructose, "
+            f"pas d'arômes artificiels\n\n"
+            f"**🟡 Acceptable occasionnel** :\n"
+            f"- Sucres 5-15g/100g\n"
+            f"- Sel 1-1.5g/100g\n"
+            f"- Liste 5-10 ingrédients\n"
+            f"- 1-2 additifs E quelconques mais pas sensibles\n\n"
+            f"**🔴 À éviter** :\n"
+            f"- Sucres >15g/100g (ou >20g/100ml liquide)\n"
+            f"- Sel >1.5g/100g (hors fromage)\n"
+            f"- Sirop glucose-fructose en top 3 ingrédients\n"
+            f"- >10 ingrédients dont nombreux additifs/arômes\n"
+            f"- Acides gras trans / huiles partiellement hydrogénées\n\n"
+            f"**Additifs à éviter** :\n"
+            f"- E249-E252 (nitrites — charcuterie industrielle)\n"
+            f"- E951 (aspartame) E950 (acésulfame K)\n"
+            f"- E407 (carraghénane — inflammation intestinale)\n"
+            f"- E621 (glutamate)\n"
+            f"- E338-E452 (phosphates — os/reins)\n\n"
+            f"**Tes consignes** :\n"
+            f"1. Classe ce produit 🟢🟡🔴 selon les critères\n"
+            f"2. Identifie ce qui le tire vers le bas (sucres? sel? additifs?)\n"
+            f"3. Propose une alternative concrète si 🟡 ou 🔴\n"
+            f"4. Si Nutri-Score visible, contextualise (NS A peut être 🟡 si "
+            f"ultra-transformé — sodas zéro sont NS B mais 🔴)"
+        )
+
+    @beta_tool
+    def pantry_to_meal(
+        ingredients: list[str],
+        meal_type: str = "déjeuner",
+        max_prep_min: int = 30,
+    ) -> str:
+        """User has shared what they have on hand (fridge/pantry list or photo \
+description). Match against Calo recipes + suggest 3 doable meals NOW. \
+Returns ranked options.
+
+Args:
+    ingredients: List of available items (e.g. ['poulet 200g', 'brocoli', \
+'riz', 'œufs', 'yaourt grec', 'pomme', 'huile olive']).
+    meal_type: 'petit-déj' | 'déjeuner' | 'dîner' | 'snack' | 'auto'.
+    max_prep_min: Maximum prep time the user can spend.
+"""
+        if not ingredients:
+            return "Demande d'abord à l'utilisateur ce qu'il a (texte ou photo)."
+
+        # Find recipes matching any ingredient
+        recipe_scores: list[tuple[dict[str, Any], int, list[str]]] = []
+        all_recipes: list[dict[str, Any]] = []
+        if meal_type and meal_type != "auto":
+            all_recipes = db.search_recipes(category=meal_type, max_results=30)
+        else:
+            for cat in ("petit-déj", "déjeuner", "dîner", "snack"):
+                all_recipes += db.search_recipes(category=cat, max_results=10)
+
+        ingredients_lower = [i.lower() for i in ingredients]
+        for r in all_recipes:
+            ing_text = (r.get("ingredients") or "").lower()
+            prep_total = (r.get("prep_min") or 0) + (r.get("cook_min") or 0)
+            if prep_total > max_prep_min:
+                continue
+            matched = [i for i in ingredients_lower if any(
+                w in ing_text for w in i.split()
+            )]
+            if matched:
+                recipe_scores.append((r, len(matched), matched))
+
+        if not recipe_scores:
+            return (
+                f"Aucune recette Calo ne match tes ingrédients en <{max_prep_min} min. "
+                f"Propose UNE recette improvisée basée sur ce que l'utilisateur a "
+                f"(prot + légumes + féculent + bon gras + assaisonnement)."
+            )
+
+        # Sort by match count desc
+        recipe_scores.sort(key=lambda x: -x[1])
+        top3 = recipe_scores[:3]
+        out = ["# 🥘 Que tu peux faire MAINTENANT\n"]
+        for i, (r, score, matched) in enumerate(top3, 1):
+            total = (r.get("prep_min") or 0) + (r.get("cook_min") or 0)
+            out.append(
+                f"## Option {i} — {r['name']} ({total} min)\n"
+                f"📊 {r.get('kcal')} kcal · P:{r.get('protein_g')}g\n"
+                f"✅ Tu as : {', '.join(matched)}\n\n"
+                f"**Ingrédients complets :**\n{r.get('ingredients', '')}\n\n"
+                f"**Préparation :**\n{r.get('instructions', '')}\n"
+            )
+
+        out.append(
+            "\n💡 Propose les 3 options à l'utilisateur. S'il manque un "
+            "ingrédient pour son choix, propose un substitut équivalent macro."
+        )
+        return "\n".join(out)
+
+    @beta_tool
+    def adapt_recipe_for_family(
+        recipe_name: str,
+        adults: int = 2,
+        children: int = 0,
+        children_ages: str = "",
+    ) -> str:
+        """Adapt a Calo recipe for a family meal. Scales portions and suggests \
+kid-friendly tweaks if needed (less spice, smaller pieces, optional sides).
+
+Args:
+    recipe_name: Name of the Calo recipe to adapt.
+    adults: Number of adults.
+    children: Number of children.
+    children_ages: Age range or list (e.g. '3 et 7 ans').
+"""
+        results = db.search_recipes(query=recipe_name, max_results=1)
+        if not results:
+            return f"Recette '{recipe_name}' introuvable. Suggère 2-3 recettes proches."
+        r = results[0]
+        servings_original = r.get("servings") or 1
+
+        # Adult equivalent: child = 0.6 adult portion (avg)
+        total_equiv = adults + (children * 0.6)
+        scale = total_equiv / servings_original
+
+        out = [
+            f"# 👨‍👩‍👧 {r['name']} pour famille\n",
+            f"Composition : {adults} adulte(s) + {children} enfant(s)"
+            + (f" ({children_ages})" if children_ages else ""),
+            f"Recette originale : {servings_original} portion(s) → ratio ×{scale:.1f}",
+            "",
+            "## Ingrédients ajustés (estimation)",
+            "_Multiplie chaque quantité par le ratio ci-dessus_",
+            "",
+            r.get("ingredients", ""),
+            "",
+            "## Préparation",
+            r.get("instructions", ""),
+        ]
+
+        # Kid-friendly tips
+        if children > 0:
+            tips = ["\n## 👶 Adaptation enfants"]
+            ing_lower = (r.get("ingredients") or "").lower()
+            if any(w in ing_lower for w in ["piment", "harissa", "curry", "épice", "wasabi"]):
+                tips.append("- 🌶️ Prépare une portion **sans épices fortes** pour les enfants")
+            if "alcool" in ing_lower or "vin" in ing_lower:
+                tips.append("- 🍷 Cuit assez longtemps pour évaporer l'alcool, ou divise et ajoute l'alcool seulement à la portion adulte")
+            if any(w in ing_lower for w in ["poisson cru", "sashimi", "tartare", "œuf cru"]):
+                tips.append("- 🍣 Cuire/grasser la portion enfants (cru déconseillé <5 ans)")
+            if any(w in ing_lower for w in ["fruits à coque", "amandes", "noix", "noisettes"]):
+                tips.append("- 🥜 Couper finement ou broyer pour <4 ans (risque étouffement)")
+
+            # Generic tips
+            tips.append("- ✂️ Coupe en plus petits morceaux pour les enfants <6 ans")
+            tips.append("- 🍞 Propose une portion de pain ou riz à part pour les difficiles")
+            tips.append("- 🥦 Présente les légumes séparément du reste (les enfants triient)")
+            tips.append("- 🥄 Laisse-les se servir = plus d'engagement")
+            out.extend(tips)
+
+        # Macro tracking
+        out.append("\n## Macros par adulte (inchangées)")
+        out.append(
+            f"{r.get('kcal')} kcal · P:{r.get('protein_g')}g · "
+            f"C:{r.get('carbs_g')}g · F:{r.get('fat_g')}g"
+        )
+        out.append(
+            "_Logge UNIQUEMENT ta portion d'adulte avec log_meal — les enfants "
+            "ne sont pas dans ton compteur._"
+        )
+        return "\n".join(out)
+
+    @beta_tool
+    def cravings_toolkit(craving_type: str = "sucré") -> str:
+        """Anti-cravings protocol — 5-question diagnostic + alternatives. Use \
+when the user says "j'ai envie de X", "fringale", "je craque", "je vais \
+craquer". This is a BEHAVIORAL tool, not a guilt tool — frame it as \
+problem-solving.
+
+Args:
+    craving_type: 'sucré' | 'salé' | 'gras' | 'chocolat' | 'alcool' | 'pain'.
+"""
+        ct = craving_type.lower()
+        questions = [
+            "1. **Est-ce que j'ai vraiment faim ?** (Si je devais manger une "
+            "pomme là maintenant, est-ce que j'en aurais envie ? Si non = "
+            "envie émotionnelle, pas faim.)",
+            "2. **Quand ai-je mangé ma dernière vraie protéine ?** "
+            "(<6h satiété ok, >6h faim physiologique.)",
+            "3. **Combien d'eau aujourd'hui ?** (Soif déguisée en faim chez "
+            "60% des cas.)",
+            "4. **Quelle émotion juste avant l'envie ?** (Ennui, anxiété, "
+            "fatigue, frustration, célébration. Nomme-la.)",
+            "5. **C'est quoi le besoin réel ?** (Pause, câlin, dormir, "
+            "respirer, plaisir, m'autoriser. Soigne le besoin, pas le symptôme.)",
+        ]
+
+        alternatives = {
+            "sucré": [
+                "🍎 1 pomme + 1 c.à.c. beurre cacahuète (sucre lent + gras = satiété)",
+                "🍫 1 carré de chocolat noir 85% (8g, 50 kcal)",
+                "🍓 100g fruits rouges + 100g skyr nature (200 kcal, 12g prot)",
+                "🥤 1 grand verre d'eau + 1 c.à.c. miel (30 kcal, casse le pic)",
+                "☕ Thé cannelle infusé fort (mime sucré, 0 kcal)",
+                "🥥 1 datte Medjool (75 kcal, magnésium)",
+            ],
+            "salé": [
+                "🥒 Concombre + 1 c.à.s. houmous (100 kcal, fibres)",
+                "🥚 1 œuf dur + sel rose + poivre (75 kcal, prot)",
+                "🌰 15g amandes (90 kcal, gras+prot)",
+                "🥬 1 poignée olives (50 kcal)",
+                "🧀 30g feta + tomates cerises (100 kcal)",
+                "🍿 30g popcorn maison (sans gras) salté (110 kcal)",
+            ],
+            "gras": [
+                "🥑 1/4 avocat + sel + citron (80 kcal)",
+                "🧀 30g comté / parmesan (130 kcal, prot)",
+                "🐟 60g saumon fumé (120 kcal, oméga 3)",
+                "🥥 1 c.à.s. beurre de cacahuète + 1 fruit (180 kcal)",
+            ],
+            "chocolat": [
+                "🍫 10g chocolat noir 85%+ (60 kcal) — savoure lentement",
+                "☕ Cacao non sucré dans lait chaud + cannelle (80 kcal)",
+                "🥄 1 c.à.c. pâte à tartiner maison (cacao + amande + dattes)",
+                "🍌 Banane congelée + 1 c.à.c. cacao mixé (sorbet chocolat 100 kcal)",
+            ],
+            "alcool": [
+                "🥤 Eau gazeuse + jus citron + glace + menthe (mojito sans alcool)",
+                "🍷 1/2 verre vin allongé d'eau gazeuse (spritz léger 50 kcal)",
+                "🌿 Kombucha (boisson fermentée, sensation 'adulte' 30 kcal)",
+                "🍋 Tisane glacée citron-gingembre (0 kcal)",
+            ],
+            "pain": [
+                "🍞 1 vraie tranche de pain complet + houmous (150 kcal, fibres)",
+                "🥖 1/4 baguette tradition + 1 œuf + tomate (200 kcal)",
+                "🌾 30g flocons d'avoine + lait chaud + cannelle (200 kcal)",
+            ],
+        }
+
+        alts = alternatives.get(ct, alternatives["sucré"])
+        return (
+            f"# 🧠 Protocole anti-fringale ({craving_type})\n\n"
+            f"**Étape 1 — 5 questions** (réponds DANS TA TÊTE) :\n\n"
+            + "\n".join(questions)
+            + "\n\n**Étape 2 — Si la fringale est réelle, voici 6 alternatives "
+            f"intelligentes pour {craving_type}** :\n\n"
+            + "\n".join(f"- {a}" for a in alts)
+            + "\n\n**Étape 3 — Au moment de manger** :\n"
+            + "- Assieds-toi (pas debout, pas devant l'écran)\n"
+            + "- Sers UNE portion (pas le paquet)\n"
+            + "- Mange lentement (20+ mâchouillages)\n"
+            + "- Profite vraiment\n\n"
+            + "💡 Pas d'auto-flagellation si tu craques quand même. Un écart = "
+            + "un repas, pas un échec. Reprends au repas suivant."
+        )
+
+    @beta_tool
+    def track_mood(mood: int, note: str = "") -> str:
+        """Log the user's mood today (1-10) + optional context. Use whenever \
+the user mentions emotional state. Calo correlates mood with food/sleep/cycle.
+
+Args:
+    mood: 1 (terrible) to 10 (au top).
+    note: Optional context (e.g. 'réunion stressante', 'super dodo', 'pre-règles').
+"""
+        if not (1 <= mood <= 10):
+            return "Mood doit être entre 1 et 10."
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        emoji = "😢" if mood <= 3 else "😕" if mood <= 5 else "🙂" if mood <= 7 else "😄" if mood <= 9 else "🤩"
+        text = f"Mood {today} : {mood}/10 {emoji}"
+        if note:
+            text += f" — {note}"
+        db.add_memory(user_id, text, category="santé", importance=2)
+        feedback = ""
+        if mood <= 3:
+            feedback = (
+                "\n\n⚠️ Mood très bas. Vérifie : sommeil hier, repas, hydratation, "
+                "stress actif. Si <4 plus de 3 jours/sem → consultation pro."
+            )
+        elif mood >= 9:
+            feedback = "\n\n🌟 Super état. Repère ce qui a déclenché ça (sommeil, repas, sport) — c'est de l'or pour `personal_patterns`."
+        return f"✅ Mood logué : {mood}/10{feedback}"
+
+    @beta_tool
+    def rate_recipe(recipe_name: str, rating: int, note: str = "") -> str:
+        """Save the user's rating of a recipe (1-5 stars) + optional comment. \
+Calo uses this to learn preferences and suggest better recipes over time.
+
+Args:
+    recipe_name: Name of the Calo recipe.
+    rating: 1 (hâté) à 5 (love).
+    note: Optional ('trop sec', 'à refaire', 'manque de sel'...).
+"""
+        if not (1 <= rating <= 5):
+            return "Rating doit être entre 1 et 5."
+        stars = "★" * rating + "☆" * (5 - rating)
+        text = f"Recette '{recipe_name}' notée {stars}"
+        if note:
+            text += f" — {note}"
+        db.add_memory(user_id, text, category="préférence", importance=2)
+        if rating >= 4:
+            advice = "Repère-la pour la repropose plus souvent."
+        elif rating <= 2:
+            advice = "On évite cette recette. Note la raison dans personal_patterns."
+        else:
+            advice = "OK occasionnel."
+        return f"✅ Avis sauvegardé : {stars} pour '{recipe_name}'. {advice}"
+
+    @beta_tool
+    def elimination_test(food: str, days: int = 21) -> str:
+        """Set up a food elimination test. The user removes X for N days, then \
+reintroduces and notes the difference. Used to identify intolerances or \
+problematic foods.
+
+Args:
+    food: The food/family to eliminate (e.g. 'gluten', 'laitages', 'sucre ajouté', \
+'alcool', 'caféine', 'œufs', 'soja').
+    days: Duration of elimination. Default 21 (minimum scientifique pour voir effet).
+"""
+        from datetime import datetime, timezone, timedelta
+        today = datetime.now(timezone.utc)
+        end_date = (today + timedelta(days=days)).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"Test d'élimination {food} — {days} jours (J1: {today.strftime('%Y-%m-%d')}, fin: {end_date})",
+            category="santé",
+            importance=4,
+        )
+        return (
+            f"# 🧪 Test d'élimination — {food} pendant {days} jours\n\n"
+            f"Démarre : {today.strftime('%Y-%m-%d')}\n"
+            f"Fin : {end_date}\n\n"
+            f"## Règles\n"
+            f"1. **STRICT** : 0 trace de {food} pendant {days} jours. Une seule "
+            f"exposition fait perdre le test.\n"
+            f"2. **Vérifie les ingrédients** sur chaque étiquette (le {food} se "
+            f"cache partout).\n"
+            f"3. **Note quotidiennement** : énergie (1-10), sommeil, digestion, "
+            f"peau, humeur, douleurs.\n"
+            f"4. **Pas de changement majeur** ailleurs (calories, sport) pour "
+            f"isoler la variable.\n\n"
+            f"## J1-J3 (sevrage)\n"
+            f"Tu peux te sentir moins bien (fatigue, mal de tête, irritabilité). "
+            f"Normal, c'est l'adaptation.\n\n"
+            f"## J4-J{days}\n"
+            f"Observation. Si symptômes améliorés → {food} est probablement "
+            f"impliqué. Si rien ne change → ce n'était pas {food} le problème.\n\n"
+            f"## Réintroduction (après J{days})\n"
+            f"Mange une portion normale de {food} sur 1 jour. Observe les "
+            f"symptômes les 48-72h suivantes. Si retour des symptômes → causalité "
+            f"confirmée.\n\n"
+            f"💡 Mets un rappel J{days} pour le debrief. À ce moment-là Calo "
+            f"t'aide à interpréter."
+        )
+
+    @beta_tool
+    def detect_macro_response(weeks: int = 6) -> str:
+        """Look at the past N weeks of meals + weights and detect whether the \
+user responds better to higher carbs or higher fats (some lose better with \
+60g carbs/day, others with 200g+). Returns a hypothesis for tuning macro split.
+
+Args:
+    weeks: Lookback window. Default 6 (need 4+ for signal).
+"""
+        from datetime import datetime, timezone, timedelta
+        weeks = max(4, min(12, int(weeks)))
+        since = (datetime.now(timezone.utc) - timedelta(days=weeks * 7)).strftime("%Y-%m-%d")
+        meals = db.meals_since(user_id, since)
+        weights = db.weights_history(user_id, limit=weeks * 2)
+        if len(meals) < weeks * 7 // 2 or len(weights) < 4:
+            return (
+                "Pas assez de données pour détecter une réponse macro fiable. "
+                f"Il faut min 4 sem de logs + 4 pesées. Encourage l'utilisateur "
+                f"à logger plus."
+            )
+
+        # Group meals by week, compute avg carb % per week
+        by_week: dict[int, dict[str, int]] = {}
+        for m in meals:
+            try:
+                dt = datetime.fromisoformat((m.get("eaten_at") or "")[:19].replace("Z", ""))
+                week_num = dt.isocalendar()[1]
+                day = by_week.setdefault(week_num, {"kcal": 0, "p": 0, "c": 0, "f": 0, "days": set()})
+                day["kcal"] += int(m.get("total_calories") or 0)
+                day["p"] += int(m.get("total_protein_g") or 0)
+                day["c"] += int(m.get("total_carbs_g") or 0)
+                day["f"] += int(m.get("total_fat_g") or 0)
+                day["days"].add(dt.strftime("%Y-%m-%d"))
+            except (ValueError, TypeError):
+                continue
+
+        if len(by_week) < 4:
+            return "Pas assez de semaines avec données. Continue à logger."
+
+        weeks_sorted = sorted(by_week.keys())
+        week_carb_pct: dict[int, float] = {}
+        for w in weeks_sorted:
+            d = by_week[w]
+            days_count = max(1, len(d["days"]))
+            avg_kcal = d["kcal"] / days_count
+            week_carb_pct[w] = (d["c"] * 4 / avg_kcal * 100) if avg_kcal else 0
+
+        # Try to correlate with weight change per week
+        report = ["# 🧬 Analyse de réponse macro\n"]
+        report.append(f"Période analysée : {weeks} semaines, {len(by_week)} semaines avec données.\n")
+        report.append("## Carb % par semaine")
+        for w in weeks_sorted:
+            d = by_week[w]
+            days_count = max(1, len(d["days"]))
+            avg_kcal = d["kcal"] / days_count
+            report.append(
+                f"- Semaine {w} : {int(avg_kcal)} kcal/j, "
+                f"glucides {int(week_carb_pct[w])}% des kcal"
+            )
+
+        # Simple heuristic: compare high-carb weeks vs low-carb weeks
+        carb_values = list(week_carb_pct.values())
+        avg_carb_pct = sum(carb_values) / len(carb_values)
+        high_carb_weeks = [w for w in week_carb_pct if week_carb_pct[w] > avg_carb_pct]
+        low_carb_weeks = [w for w in week_carb_pct if week_carb_pct[w] <= avg_carb_pct]
+
+        report.append(f"\n## Moyenne : {int(avg_carb_pct)}% des kcal en glucides")
+        report.append(
+            f"- Semaines high-carb (>{int(avg_carb_pct)}%) : {len(high_carb_weeks)}\n"
+            f"- Semaines low-carb (≤{int(avg_carb_pct)}%) : {len(low_carb_weeks)}"
+        )
+
+        # Conclusion guidance
+        report.append("\n## 🎯 Recommandations")
+        report.append(
+            "Calo a besoin de plus de variabilité expérimentale pour confirmer : "
+            "essaie 2 semaines à 30% carbs (low-carb), puis 2 semaines à 50% "
+            "carbs (mod-carb), avec MÊME calories totales. Observe :\n"
+            "- Énergie quotidienne\n"
+            "- Sommeil\n"
+            "- Performance sportive\n"
+            "- Évolution poids (à profil cycle constant pour femmes)\n"
+            "- Fringales\n\n"
+            "Si tu perds mieux ET te sens mieux à 30% carbs → tu es **fat-friendly**. "
+            "Si l'inverse → **carb-friendly**. Si pareil → **flexible**, choisis "
+            "le rythme qui te plaît le plus.\n\n"
+            "Cette info est un TRÉSOR : enregistre-la dans `personal_patterns` "
+            "via `update_metabolic_profile`."
+        )
+        return "\n".join(report)
+
+    @beta_tool
+    def refeed_day_plan() -> str:
+        """Generate a 1-day refeed plan to reset leptine after extended deficit. \
+Use when the user has been in deficit 3+ weeks, is plateauing, or feels \
+chronic low energy."""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        weight = float(user.get("current_weight_kg") or 70)
+        # Refeed = back to maintenance, big carb bump
+        carbs_g = int(weight * 4)  # 4 g/kg = high
+        protein_g = int(weight * 1.8)
+        fat_g = int(weight * 0.6)  # low fat to fit kcal
+        total_kcal = protein_g * 4 + carbs_g * 4 + fat_g * 9
+
+        return (
+            f"# 🍚 Refeed Day — Reset léptine\n\n"
+            f"Pour {weight} kg, cibles d'aujourd'hui :\n"
+            f"- **{total_kcal} kcal** (≈ maintenance)\n"
+            f"- **{protein_g}g protéines** (1.8g/kg)\n"
+            f"- **{carbs_g}g glucides** (4g/kg — HAUT)\n"
+            f"- **{fat_g}g lipides** (BAS)\n\n"
+            f"## Journée type\n\n"
+            f"**Petit-déj (550 kcal)**\n"
+            f"- 80g flocons d'avoine + 250ml lait demi-écrémé\n"
+            f"- 1 banane + 100g myrtilles\n"
+            f"- 1 c.à.s. miel + cannelle\n\n"
+            f"**Snack matin (200 kcal)**\n"
+            f"- 200g yaourt grec 0% + 1 c.à.s. miel + 1 pomme\n\n"
+            f"**Déjeuner (700 kcal)**\n"
+            f"- 150g blanc poulet\n"
+            f"- 120g riz basmati cuit (cru: 40g)\n"
+            f"- 200g légumes vapeur\n"
+            f"- 1 fruit + 1 c.à.s. sirop d'érable\n\n"
+            f"**Snack après-midi (250 kcal)**\n"
+            f"- 1 sandwich pain complet + œuf + tomate\n\n"
+            f"**Dîner (500 kcal)**\n"
+            f"- 150g cabillaud vapeur\n"
+            f"- 200g patate douce four\n"
+            f"- 150g légumes\n"
+            f"- 1 trait huile olive\n\n"
+            f"**Dessert (100-150 kcal)**\n"
+            f"- 1 fruit frais ou 30g chocolat noir 70%\n\n"
+            f"## Règles\n"
+            f"- **Limite les graisses** (le refeed mise sur les glucides)\n"
+            f"- **0 alcool** (sabote l'effet leptine)\n"
+            f"- **Hydratation 3L** (sodium suit les glucides)\n"
+            f"- **Pas de sport HIIT** ce jour-là (récup)\n"
+            f"- **Sommeil 8h+** la nuit suivante\n\n"
+            f"## Lendemain\n"
+            f"- Pèse-toi : poids souvent **+1-2kg le matin suivant** (eau + "
+            f"glycogène). C'est NORMAL, ce n'est pas du gras.\n"
+            f"- Reprends ton déficit habituel\n"
+            f"- Observe l'énergie sur les 3-5 jours suivants (souvent meilleure)\n\n"
+            f"💡 Refeed = max 1x/semaine si plateau confirmé. Pas un cheat day, "
+            f"un OUTIL physiologique."
+        )
+
+    @beta_tool
+    def meal_prep_sunday(servings_per_meal: int = 1, lunches_count: int = 5) -> str:
+        """Generate a Sunday batch-cooking plan to set up the user's lunches \
+for the week. Picks 2-3 batch-friendly recipes from Calo, gives the assembly \
+plan + storage tips.
+
+Args:
+    servings_per_meal: Portions per meal (default 1).
+    lunches_count: How many lunches to prep. Default 5 (Mon-Fri).
+"""
+        # Find batch-cooking-tagged recipes
+        recipes = db.search_recipes(
+            tags=["batch cooking"],
+            category="déjeuner",
+            max_results=5,
+        )
+        if len(recipes) < 2:
+            recipes = db.search_recipes(category="déjeuner", max_results=5)
+        if not recipes:
+            return "Pas de recettes batch trouvées. Encourage l'utilisateur à enregistrer ses recettes préférées."
+
+        # Pick 2-3 recipes that combined give the lunches count
+        picks = recipes[:3] if lunches_count >= 5 else recipes[:2]
+        out = [
+            f"# 🥘 Plan Batch Cooking — Dimanche pour {lunches_count} déjeuners\n",
+            "## Recettes sélectionnées",
+        ]
+        total_kcal = 0
+        for i, r in enumerate(picks, 1):
+            multiplier = (lunches_count // len(picks))
+            if i <= lunches_count % len(picks):
+                multiplier += 1
+            out.append(
+                f"\n### {i}. {r['name']} × {multiplier} portions\n"
+                f"⏱️ {r.get('prep_min')} prep + {r.get('cook_min')} cuisson · "
+                f"📊 {r.get('kcal')} kcal/portion"
+            )
+            total_kcal += (r.get('kcal') or 0) * multiplier
+            out.append(f"\n**Ingrédients :**\n{r.get('ingredients', '')}")
+
+        out.append("\n## 🔪 Ordre d'exécution (optimisation temps)")
+        out.append(
+            "1. **Préchauffe** le four en premier (15 min)\n"
+            "2. **Lance les protéines** longues à cuire (poulet, poisson au four)\n"
+            "3. **Cuit les féculents** à l'eau pendant que ça cuit au four\n"
+            "4. **Hache tous les légumes** en parallèle\n"
+            "5. **Sautes les légumes** en fin (5-7 min)\n"
+            "6. **Refroidis 30 min** avant de mettre en boîtes\n"
+            "7. **Stocke** au frigo"
+        )
+
+        out.append("\n## 📦 Storage")
+        out.append(
+            "- Conteneurs en verre type Pyrex (mieux que plastique pour réchauffer)\n"
+            "- Légumes croquants à part si possible (qualité texture)\n"
+            "- Frigo 3-4 jours max. Au-delà → congèle.\n"
+            "- Sauce vinaigrette à part dans petits pots (sinon les salades sont tristes)"
+        )
+
+        out.append("\n## 💡 Astuces pro")
+        out.append(
+            "- Cuit ton riz/quinoa avec un peu de sel pour qu'il garde du goût refroidi\n"
+            "- Acidifie les avocats avec citron pour pas qu'ils noircissent\n"
+            "- Lave et essore TOUTE ta salade le dimanche, conserve dans linge propre + boîte\n"
+            "- Fais ton snack protéiné aussi (skyr portionné, œufs durs, etc.)"
+        )
+
+        out.append(
+            f"\n📊 **Total cuisiné** : {total_kcal} kcal sur {lunches_count} déjeuners "
+            f"(≈ {total_kcal // lunches_count} kcal/déjeuner)"
+        )
+        return "\n".join(out)
+
+    @beta_tool
     def interpret_bloodwork(notes: str = "") -> str:
         """User has just sent a photo of their blood test results. Use Calo's \
 vision to read the values, then call THIS tool to record the analysis as a \
@@ -2708,6 +3316,16 @@ Args:
         suggest_habit_stack,
         detect_trigger_foods,
         generate_client_report,
+        scan_food_label,
+        pantry_to_meal,
+        adapt_recipe_for_family,
+        cravings_toolkit,
+        track_mood,
+        rate_recipe,
+        elimination_test,
+        detect_macro_response,
+        refeed_day_plan,
+        meal_prep_sunday,
         find_recipe,
         generate_meal_plan,
         generate_grocery_list,

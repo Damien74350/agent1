@@ -329,6 +329,442 @@ Args:
         )
 
     @beta_tool
+    def log_daily_check(
+        hydration_l: float = 0,
+        sleep_hours: float = 0,
+        sleep_quality: int = 0,
+        stress_level: int = 0,
+        steps: int = 0,
+        note: str = "",
+    ) -> str:
+        """Save the user's daily lifestyle check. Call this when the user \
+mentions hydration, sleep, steps, stress in conversation, or proactively at \
+the daily/weekly check-in. Stores as a structured memory so analyze_progress \
+can correlate lifestyle with weight trajectory.
+
+Args:
+    hydration_l: Litres of water/fluid drunk today (e.g. 2.5).
+    sleep_hours: Hours of sleep last night (e.g. 7.5).
+    sleep_quality: 1 (terrible) to 5 (excellent).
+    stress_level: 1 (zen) to 5 (chronic high).
+    steps: Step count for the day.
+    note: Optional free text (e.g. "réveil 3h cette nuit, anxiety pre-meeting").
+"""
+        parts: list[str] = []
+        if hydration_l > 0:
+            parts.append(f"💧 {hydration_l}L eau")
+        if sleep_hours > 0:
+            q = f"{sleep_quality}/5" if sleep_quality > 0 else "?"
+            parts.append(f"😴 {sleep_hours}h sommeil ({q})")
+        if stress_level > 0:
+            parts.append(f"⚡ stress {stress_level}/5")
+        if steps > 0:
+            parts.append(f"👟 {steps} pas")
+        if note:
+            parts.append(f"📝 {note}")
+        if not parts:
+            return "Rien à logger — repose la question naturellement."
+
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        memory_text = f"Daily check {today} — " + " · ".join(parts)
+        db.add_memory(
+            user_id,
+            memory_text,
+            category="santé",
+            importance=2,
+        )
+
+        # Update user profile rating fields if recent rating provided
+        updates: dict[str, Any] = {}
+        if 1 <= sleep_quality <= 5:
+            updates["sleep_quality"] = sleep_quality
+        if 1 <= stress_level <= 5:
+            updates["stress_level"] = stress_level
+        if updates:
+            db.update_user(user_id, **updates)
+
+        feedback: list[str] = []
+        if hydration_l > 0 and hydration_l < 1.5:
+            feedback.append("⚠️ Hydratation basse")
+        if sleep_hours > 0 and sleep_hours < 6:
+            feedback.append("⚠️ Sommeil insuffisant (<6h) — impact cortisol+leptine")
+        if stress_level >= 4:
+            feedback.append("⚠️ Stress élevé — pense gestion (respiration, marche, magnésium)")
+        if steps > 0 and steps < 5000:
+            feedback.append("⚠️ Activité spontanée basse (<5000 pas)")
+
+        return (
+            "✅ Daily check loggué : " + " · ".join(parts) +
+            ("\n\n" + "\n".join(feedback) if feedback else "") +
+            "\n\nTu peux maintenant utiliser ces données dans tes conseils du jour."
+        )
+
+    @beta_tool
+    def check_milestones() -> str:
+        """Check for goal milestones reached and return what to celebrate. \
+Call this PROACTIVELY when the user logs a weight, completes a challenge \
+phase, or weekly. Helps with motivation/retention.
+
+Detects:
+- Premiers -1kg / -3kg / -5kg / -10kg
+- 25% / 50% / 75% / 100% du chemin vers la cible
+- 1 semaine / 1 mois / 3 mois / 6 mois d'engagement
+- Streak de logs (7/30/100 repas consécutifs)
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+
+        weights = db.weights_history(user_id, limit=100)
+        if len(weights) < 2:
+            return "Pas assez de mesures pour des jalons (besoin de 2 pesées+)."
+
+        # Sort weights ascending by logged_at
+        weights_sorted = list(reversed(weights))
+        start_weight = float(weights_sorted[0]["weight_kg"] or 0)
+        current_weight = float(weights_sorted[-1]["weight_kg"] or 0)
+        target_weight = float(user.get("target_weight_kg") or current_weight)
+        goal = user.get("goal", "maintain")
+
+        loss = start_weight - current_weight
+        total_to_lose = start_weight - target_weight
+        progress_pct = (
+            int(loss / total_to_lose * 100) if total_to_lose > 0 else 0
+        )
+
+        # Days since first weight
+        from datetime import datetime, timezone
+        try:
+            first_dt = datetime.fromisoformat(
+                weights_sorted[0]["logged_at"].replace("Z", "+00:00")
+            )
+            days_engaged = (datetime.now(timezone.utc) - first_dt).days
+        except (ValueError, TypeError, KeyError):
+            days_engaged = 0
+
+        achievements: list[str] = []
+
+        if goal == "lose":
+            for milestone in (1, 3, 5, 10, 15, 20):
+                if loss >= milestone:
+                    achievements.append(f"🏆 **-{milestone} kg perdus** depuis le début")
+            for pct in (25, 50, 75, 100):
+                if progress_pct >= pct:
+                    achievements.append(
+                        f"🎯 **{pct}% du chemin** vers ta cible "
+                        f"({current_weight} kg → cible {target_weight} kg)"
+                    )
+        elif goal == "gain":
+            gain = current_weight - start_weight
+            for milestone in (1, 3, 5, 10):
+                if gain >= milestone:
+                    achievements.append(f"🏆 **+{milestone} kg gagnés**")
+
+        for d in (7, 30, 90, 180, 365):
+            if days_engaged >= d:
+                achievements.append(
+                    f"💪 **{d} jours d'engagement** ({d//30}m si applicable)"
+                )
+
+        # Count meals logged
+        try:
+            recent_meals = db.meals_since(
+                user_id,
+                (datetime.now(timezone.utc) - __import__("datetime").timedelta(days=days_engaged or 30)).strftime("%Y-%m-%d"),
+            )
+            meal_count = len(recent_meals)
+            for m in (10, 50, 100, 250, 500):
+                if meal_count >= m:
+                    achievements.append(f"📸 **{m} repas loggués** au compteur")
+        except Exception:
+            pass
+
+        if not achievements:
+            return (
+                "Pas de nouveau milestone à célébrer pour l'instant. "
+                "Continue d'encourager dans le quotidien."
+            )
+
+        # Pick only the 1-2 most recent / impactful to avoid overload
+        return (
+            "🎉 Jalons atteints — célèbre-les AVEC l'utilisateur :\n\n"
+            + "\n".join(achievements[-3:])  # 3 most recent
+            + "\n\nUtilise UN ou DEUX de ces jalons dans ta réponse, "
+            "pas tous. Personnalise (utilise son prénom, rappelle son point "
+            "de départ). Si c'est un jalon majeur (-5kg, 50%, 3 mois), "
+            "marque vraiment le coup."
+        )
+
+    @beta_tool
+    def travel_mode(
+        destination: str,
+        days: int,
+        travel_type: str = "loisir",
+    ) -> str:
+        """Adapt Calo's coaching to a travel period. Call when the user says \
+"je pars en voyage", "vacances", "déplacement pro", "weekend escapade". \
+Returns a structured travel-adapted plan respecting the user's profile.
+
+Args:
+    destination: Country or region (e.g. 'Marrakech', 'Italie', 'New York', \
+'Bali', 'séminaire Lyon'). Used to anticipate food culture.
+    days: Number of days of travel.
+    travel_type: 'loisir' | 'business' | 'famille' | 'sportif' | 'détox'.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        goal = user.get("goal", "maintain")
+        name = user.get("name", "")
+
+        # Strategy depends on duration and travel type
+        if days <= 3:
+            mode = "maintien strict"
+            kcal_mod = "Reste sur tes cibles, c'est court."
+        elif days <= 7:
+            mode = "flex sans culpabilité"
+            kcal_mod = (
+                "Cible MAINTIEN (pas perte). Profite culture locale 1-2 fois, "
+                "le reste structuré."
+            )
+        elif days <= 14:
+            mode = "rythme balanced"
+            kcal_mod = (
+                "Maintien semaine 1, possibilité petit déficit semaine 2 si "
+                "tu vois la balance bouger. PRIORITÉ : ne pas reprendre."
+            )
+        else:
+            mode = "vie locale, on s'adapte"
+            kcal_mod = (
+                "C'est presque un déménagement. On bascule sur un objectif "
+                "MAINTIEN strict avec recalibration possible si activité change."
+            )
+
+        report = [
+            f"# 🧳 Mode voyage activé · {destination} · {days}j ({travel_type})",
+            f"",
+            f"## Stratégie : {mode}",
+            kcal_mod,
+            f"",
+            "## Les 7 règles voyage Calo",
+            "**1. Petit-déj PROTÉINÉ obligatoire** (œufs / yaourt grec / charcuterie maigre). "
+            "Cale le reste de la journée et limite les craquages.",
+            "**2. 1 repas culturel/jour** — fais-toi plaisir au déjeuner OU au dîner, "
+            "pas les deux + dessert + apéro.",
+            "**3. Hydratation MAX** (3L/jour mini). Voyage = déshydratation cachée "
+            "(climatisation, alcool, climat sec/chaud).",
+            "**4. Marche +++ ** : 12000+ pas/jour visent. Visite à pied, ça compense "
+            "naturellement les écarts.",
+            "**5. Alcool stratégique** : choisis tes verres. 2-3 verres/sem max si "
+            "objectif perte. Vin sec > cocktails sucrés > bière.",
+            "**6. 0 grignotage avion/route** : prépare 1 sandwich complet + fruits + "
+            "amandes. Les sandwiches aéroport = pièges à 700+ kcal.",
+            "**7. Photo systématique** : continue à m'envoyer tes repas. Pas de "
+            "jugement, juste pour qu'on garde le rythme et qu'on évite la dérive.",
+        ]
+
+        # Cuisine-specific tips
+        dest_lower = destination.lower()
+        cuisine_tip = ""
+        if any(x in dest_lower for x in ["italie", "ital", "rome", "milan"]):
+            cuisine_tip = (
+                "🇮🇹 **Italie** : focus poisson grillé, antipasti légumes, salade caprese. "
+                "Pizza margherita partagée OK. Évite la carbonara grande portion + tiramisu."
+            )
+        elif any(x in dest_lower for x in ["marrakech", "maroc", "tunisie", "tunis"]):
+            cuisine_tip = (
+                "🇲🇦 **Maghreb** : tajine poulet/poisson EXCELLENT (peu gras), "
+                "salades méchouia/zaalouk. Évite les pâtisseries au miel quotidiennes."
+            )
+        elif any(x in dest_lower for x in ["bali", "thailand", "thaïlande", "vietnam"]):
+            cuisine_tip = (
+                "🌴 **Asie du SE** : phở, salades thaï, poisson grillé + riz. "
+                "Évite pad thaï + smoothie sucré + dessert tous les jours."
+            )
+        elif any(x in dest_lower for x in ["new york", "usa", "états-unis", "etats-unis"]):
+            cuisine_tip = (
+                "🇺🇸 **USA** : portions XXL. Partage tout. Choisis 'lunch portion' si dispo. "
+                "Bowls poke/Sweetgreen plutôt que diners."
+            )
+        elif any(x in dest_lower for x in ["mexique", "mexico", "cuba"]):
+            cuisine_tip = (
+                "🌶️ **Amérique latine** : ceviche TOP, tacos al pastor OK, fajitas. "
+                "Évite burrito XXL + nachos + margaritas XL combo."
+            )
+        if cuisine_tip:
+            report.append(f"\n## Culture locale\n{cuisine_tip}")
+
+        report.append(
+            f"\n💡 {name}, propose à l'utilisateur que tu reprennes le check-in "
+            f"complet J+1 du retour pour évaluer impact + relancer le rythme."
+        )
+
+        # Save as memory for later reference
+        db.add_memory(
+            user_id,
+            f"Voyage {destination} {days}j ({travel_type}) — mode {mode}",
+            category="événement",
+            importance=3,
+        )
+        return "\n".join(report)
+
+    @beta_tool
+    def prepare_for_event(
+        event_type: str,
+        days_until: int,
+        event_name: str = "",
+    ) -> str:
+        """Build a countdown protocol before an important event. Call when the \
+user mentions "mariage", "vacances plage", "shooting photo", "compétition", \
+"date importante", "anniversaire 40 ans", etc.
+
+Args:
+    event_type: 'mariage' | 'plage' | 'photo' | 'compétition' | 'social' | \
+'shoot' | 'date'.
+    days_until: Days remaining until the event.
+    event_name: Optional description (e.g. 'Mariage frère 14 juin').
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        weight = float(user.get("current_weight_kg") or 70)
+
+        report = [f"# 🎯 Protocole {event_type.upper()} — J-{days_until}"]
+        if event_name:
+            report.insert(0, f"# Event : {event_name}")
+
+        # Strategy by timeline
+        if days_until >= 60:
+            phase = "Phase 1 — Construction (J-60+)"
+            plan = (
+                "Tu as le TEMPS. Approche durable : déficit doux -300 kcal, "
+                "muscu 3x/sem, sommeil 7h+. Objectif réaliste : -3 à -5 kg sur "
+                f"{days_until // 7} semaines. Pas de panique, c'est gagné."
+            )
+        elif days_until >= 28:
+            phase = "Phase 2 — Push (J-30 à J-60)"
+            plan = (
+                "Tu peux encore faire bouger les choses. Déficit -400 kcal, "
+                "muscu 4x/sem, +1 HIIT, hydratation 3L. Objectif : -2 à -4 kg "
+                "+ raffermissement visible."
+            )
+        elif days_until >= 14:
+            phase = "Phase 3 — Affûte (J-14 à J-30)"
+            plan = (
+                "On serre. Déficit -500 kcal, glucides modérés focus pré/post "
+                "training, élimination alcool, sodium contrôlé. -1.5 à -2.5 kg "
+                "réaliste."
+            )
+        elif days_until >= 7:
+            phase = "Phase 4 — Peak Week (J-7 à J-14)"
+            plan = (
+                "Stratégie pro :\n"
+                "- J-14 à J-8 : maintien strict, hydratation 4L, 0 alcool, "
+                "carbs moyens\n"
+                "- J-7 à J-4 : déplétion glucides douce (-30%), sodium normal\n"
+                "- J-3 à J-1 : recharge glucides intelligents + sodium en baisse"
+            )
+        elif days_until >= 3:
+            phase = "Phase 5 — Last Days (J-3)"
+            plan = (
+                "Plus de gains massifs possibles, c'est de la finition :\n"
+                "- Glucides modérés (200g/j)\n"
+                "- Sodium réduit (pas de plats industriels)\n"
+                "- Hydratation 3-4L jusque J-2, puis 2L J-1\n"
+                "- 0 alcool, 0 légumineuses (ballonnements)\n"
+                "- Sommeil 8h+"
+            )
+        else:
+            phase = "Phase 6 — Jour J / Veille"
+            plan = (
+                "Veille : repas léger, sans légumineuses ni crucifères. "
+                "Hydratation normale. Bonne nuit. Le matin : protéine + fruits, "
+                "peu de glucides. Pas d'expérimentation. **Tu profites.**"
+            )
+
+        report.append(f"\n## {phase}")
+        report.append(plan)
+
+        # Event-specific tweaks
+        event_tips = {
+            "mariage": (
+                "💍 **Mariage** : tu vas marcher, danser, peu manger pendant la "
+                "cérémonie. Préparation cardio + hydratation. Évite la 'crise "
+                "préparatifs' qui dérègle sommeil + cortisol."
+            ),
+            "plage": (
+                "🏖️ **Plage** : focus définition + ventre plat. Anti-bloat 48h "
+                "avant : 0 légumineuses, 0 crucifères, 0 sodas, 0 alcool. "
+                "Crème solaire bien sûr, et pose mémorable !"
+            ),
+            "photo": (
+                "📸 **Shoot** : peak week classique (déplétion + recharge). "
+                "Sommeil parfait la veille (visage frais). Eau citronnée le "
+                "matin (drainage)."
+            ),
+            "compétition": (
+                "🏆 **Compétition sportive** : pre-fuel J-1 + jour J (glucides "
+                "complexes 6-7g/kg). Hydratation 35-40 ml/kg + électrolytes. "
+                "Pas d'expérimentation. Repos J-1."
+            ),
+            "social": (
+                "🎉 **Événement social** : la pression sociale fait souvent "
+                "craquer. Mange un repas léger AVANT pour ne pas arriver "
+                "affamé. Choisis tes verres."
+            ),
+        }
+        if event_type.lower() in event_tips:
+            report.append(f"\n## Spécifique\n{event_tips[event_type.lower()]}")
+
+        report.append(
+            "\n💡 Engage l'utilisateur : qu'il visualise l'événement, c'est ce "
+            "qui maintient la motivation. Photo J-30, J-14, J-3 pour mesurer "
+            "le chemin parcouru."
+        )
+
+        # Save as memory
+        db.add_memory(
+            user_id,
+            f"Protocole événement {event_type} — J-{days_until}"
+            + (f" ({event_name})" if event_name else ""),
+            category="événement",
+            importance=4,
+        )
+
+        return "\n".join(report)
+
+    @beta_tool
+    def compare_body_photos() -> str:
+        """Compare the latest body photo with the previous one. Use this when \
+the user sends a new body photo AND a prior one exists. Returns the previous \
+analysis text so you can visually compare the current image with what was \
+observed before. NEVER guess if no previous exists; just analyse the new one."""
+        photos = db.body_photos_for_user(user_id)
+        if len(photos) < 2:
+            return (
+                "Pas de photo précédente à comparer (c'est la 1ère ou la 2e). "
+                "Fais juste une analyse complète de la photo actuelle et "
+                "sauvegarde-la via log_body_photo. La comparaison se fera la "
+                "prochaine fois."
+            )
+        # photos are sorted by captured_at desc; [0] is latest, [1] is previous
+        prev = photos[1]
+        return (
+            f"## Photo précédente ({prev.get('captured_at')})\n"
+            f"Angle : {prev.get('angle', '?')}\n"
+            f"Semaine #{prev.get('week_number', '?')}\n\n"
+            f"### Analyse précédente\n"
+            f"{prev.get('analysis') or '(pas d analyse texte)'}\n\n"
+            f"---\n\n"
+            f"**À toi de comparer** : regarde la photo qui vient d'être envoyée "
+            f"et l'analyse ci-dessus. Note les évolutions positives concrètes "
+            f"(définition, tonus, posture) et les zones en cours. Reste "
+            f"factuel, encourageant, jamais culpabilisant. Sauve l'analyse "
+            f"comparative via log_body_photo."
+        )
+
+    @beta_tool
     def start_anamnese() -> str:
         """Start a 7-day baseline food assessment (anamnèse) for the user. \
 PROPOSE THIS PROACTIVELY in two situations:
@@ -1046,6 +1482,11 @@ Args:
         recalibrate_calories,
         start_anamnese,
         analyze_anamnese,
+        log_daily_check,
+        check_milestones,
+        travel_mode,
+        prepare_for_event,
+        compare_body_photos,
         find_recipe,
         generate_meal_plan,
         generate_grocery_list,

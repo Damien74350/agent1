@@ -41,6 +41,19 @@ class CaloConfig:
 
     airtable_pat: str = field(default_factory=lambda: os.environ.get("AIRTABLE_PAT", ""))
 
+    # Voice features (optional). If absent → text-only mode, no degradation.
+    openai_api_key: str = field(
+        default_factory=lambda: os.environ.get("OPENAI_API_KEY", "")
+    )
+    elevenlabs_api_key: str = field(
+        default_factory=lambda: os.environ.get("ELEVENLABS_API_KEY", "")
+    )
+    elevenlabs_voice_id: str = field(
+        default_factory=lambda: os.environ.get(
+            "ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"  # "Charlotte" default
+        )
+    )
+
     def __post_init__(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.photos_dir.mkdir(parents=True, exist_ok=True)

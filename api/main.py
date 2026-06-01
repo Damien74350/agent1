@@ -12,6 +12,7 @@ from twilio.request_validator import RequestValidator
 from calo.chart_generator import CHART_DIR
 from calo.coach import CaloCoach, TurnInput
 from calo.config import CaloConfig
+from calo import voice as voice_mod
 
 from .twilio_client import TwilioWhatsApp
 
@@ -42,6 +43,18 @@ def get_chart(token: str):
     if not path.is_file():
         raise HTTPException(status_code=404, detail="not found")
     return FileResponse(path, media_type="image/png", filename="calo-chart.png")
+
+
+@app.get("/audio/{token}")
+def get_audio(token: str):
+    """Serves a generated MP3 voice reply to Twilio."""
+    safe = "".join(c for c in token if c.isalnum() or c in "-_")
+    if safe != token or not safe:
+        raise HTTPException(status_code=404, detail="not found")
+    path = voice_mod.AUDIO_DIR / f"{safe}.mp3"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(path, media_type="audio/mpeg", filename="calo-voice.mp3")
 
 
 @app.post("/twilio/webhook", response_class=Response)
@@ -87,30 +100,75 @@ def _process_turn(
         # Download the media if any.
         photo_bytes = None
         photo_media_type = "image/jpeg"
+        audio_bytes = None
+        is_audio_in = bool(media_content_type and media_content_type.startswith("audio/"))
         if media_url:
             try:
-                photo_bytes, photo_media_type = twilio.download_media(media_url)
+                downloaded, downloaded_type = twilio.download_media(media_url)
+                if is_audio_in:
+                    audio_bytes = downloaded
+                else:
+                    photo_bytes = downloaded
+                    photo_media_type = downloaded_type
             except Exception as exc:  # noqa: BLE001
                 log.exception("failed to download media: %s", exc)
+
+        # Voice IN — transcribe the audio so Calo treats it as plain text.
+        transcribed_text = ""
+        if audio_bytes:
+            transcribed_text = voice_mod.transcribe(
+                audio_bytes,
+                content_type=media_content_type or "audio/ogg",
+                api_key=config.openai_api_key,
+            ) or ""
+            log.info("transcribed %d bytes → %r", len(audio_bytes), transcribed_text[:80])
+            if not transcribed_text:
+                twilio.send_text(
+                    sender,
+                    "Je n'ai pas pu transcrire ton vocal 😕. Réessaye ou écris-moi.",
+                )
+                return
+
+        effective_text = transcribed_text or text or ""
 
         # Run the agent.
         out = coach.handle_turn(
             TurnInput(
                 user_id=user_id,
-                text=text or "",
+                text=effective_text,
                 photo_bytes=photo_bytes,
                 photo_media_type=photo_media_type,
             )
         )
         log.info("user=%s tools=%s reply_len=%d", user_id, out.tool_calls, len(out.reply_text))
 
-        # Send the reply back (text first, then any generated media).
+        # Voice OUT — synthesize the reply if the user just spoke to us (or
+        # has voice preference). Sent BEFORE the text so the audio lands first
+        # in WhatsApp ; we still send the text as a fallback / transcript.
+        sent_audio = False
+        if is_audio_in and (config.elevenlabs_api_key or config.openai_api_key):
+            audio_path = voice_mod.synthesize(
+                out.reply_text,
+                elevenlabs_key=config.elevenlabs_api_key,
+                elevenlabs_voice_id=config.elevenlabs_voice_id,
+                openai_key=config.openai_api_key,
+            )
+            if audio_path and config.public_url:
+                token = voice_mod.audio_token(audio_path)
+                audio_url = f"{config.public_url.rstrip('/')}/audio/{token}"
+                try:
+                    twilio.send_media(sender, audio_url, "")
+                    sent_audio = True
+                except Exception as exc:  # noqa: BLE001
+                    log.exception("failed to send audio reply: %s", exc)
+
+        # Send the text reply (always, as transcript + safety net).
         twilio.send_text(sender, out.reply_text)
-        for media_url, caption in zip(out.media_urls, out.media_captions):
+        for chart_url, caption in zip(out.media_urls, out.media_captions):
             try:
-                twilio.send_media(sender, media_url, caption)
+                twilio.send_media(sender, chart_url, caption)
             except Exception as exc:  # noqa: BLE001
-                log.exception("failed to send media %s: %s", media_url, exc)
+                log.exception("failed to send chart %s: %s", chart_url, exc)
 
     except Exception as exc:  # noqa: BLE001
         log.exception("turn failed: %s", exc)

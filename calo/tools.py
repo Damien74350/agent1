@@ -3269,6 +3269,532 @@ sur mon challenge', 'mon programme', or to contextualise advice."""
             f"Démarré : {uc.get('started_at')}."
         )
 
+    # ==========================================================================
+    # SPORT MODULE — programmes structurés, exos, séances, PRs
+    # ==========================================================================
+
+    @beta_tool
+    def list_programs(
+        goal: str = "",
+        equipment: str = "",
+        difficulty: str = "",
+    ) -> str:
+        """List structured multi-week workout programs. Call when the user asks \
+"quel programme pour moi", "j'ai besoin d'un plan", "comment m'entraîner sur \
+plusieurs semaines". A program is a serious commitment (4-16 weeks) vs a \
+one-off `generate_workout`.
+
+Args:
+    goal: 'hypertrophie' | 'force' | 'perte de poids' | 'endurance' | \
+'marathon' | 'postpartum' | 'senior strength' | 'débutant' | 'home no equipment'.
+    equipment: 'salle' | 'maison_basique' | 'maison_équipée' | 'extérieur' | 'course'.
+    difficulty: 'débutant' | 'intermédiaire' | 'avancé'.
+"""
+        progs = db.list_programs(
+            goal=goal or None,
+            equipment=equipment or None,
+            difficulty=difficulty or None,
+        )
+        if not progs:
+            return "Aucun programme ne match ces critères. Ré-essaie sans filtre."
+        out = ["# 📋 Programmes Calo disponibles\n"]
+        for p in progs:
+            out.append(
+                f"## {p['name']} ({p.get('duration_weeks')} sem · "
+                f"{p.get('days_per_week')}j/sem · {p.get('difficulty')})"
+            )
+            out.append(f"🎯 Objectif : {p.get('goal')}")
+            out.append(f"🏋️ Matériel : {', '.join(p.get('equipment') or [])}")
+            out.append(f"_{p.get('description', '')[:200]}..._" if p.get('description') and len(p.get('description', '')) > 200 else f"_{p.get('description', '')}_")
+            out.append(f"Slug : `{p.get('slug')}`\n")
+        out.append("💡 Propose à l'utilisateur le programme le plus adapté à son profil, "
+                   "son matériel et son objectif. Appelle `get_program_details(slug)` "
+                   "pour voir la structure complète.")
+        return "\n".join(out)
+
+    @beta_tool
+    def get_program_details(slug: str) -> str:
+        """Get the full structure of a specific program (weekly plan day by day).
+
+Args:
+    slug: The program slug (e.g. 'hypertrophie-12sem', 'marathon-12sem').
+"""
+        p = db.get_program_by_slug(slug)
+        if not p:
+            return f"Aucun programme trouvé avec slug '{slug}'. Appelle `list_programs`."
+        return (
+            f"# {p['name']}\n"
+            f"⏱️ {p.get('duration_weeks')} sem · {p.get('days_per_week')}j/sem · "
+            f"{p.get('difficulty')}\n"
+            f"🎯 {p.get('goal')}\n"
+            f"🏋️ Matériel : {', '.join(p.get('equipment') or [])}\n\n"
+            f"## Description\n{p.get('description', '')}\n\n"
+            f"## Structure hebdomadaire\n{p.get('weekly_structure', '')}"
+        )
+
+    @beta_tool
+    def start_program(slug: str) -> str:
+        """Subscribe the user to a structured workout program. ONLY call once \
+the user has confirmed ("ok je commence", "go"). Saves start date + resets \
+workouts counter.
+
+Args:
+    slug: The program slug.
+"""
+        from datetime import datetime, timezone
+        p = db.get_program_by_slug(slug)
+        if not p:
+            return f"Programme '{slug}' introuvable."
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.update_user(
+            user_id,
+            active_program=slug,
+            program_started_at=today,
+            workouts_completed=0,
+        )
+        db.add_memory(
+            user_id,
+            f"Programme {p['name']} démarré le {today} "
+            f"({p.get('duration_weeks')} sem, {p.get('days_per_week')}j/sem)",
+            category="sport",
+            importance=4,
+        )
+        return (
+            f"✅ Programme **{p['name']}** activé. J1/{p.get('duration_weeks') * 7}.\n\n"
+            f"Présente la STRUCTURE de la 1ère semaine à l'utilisateur, propose la "
+            f"première séance MAINTENANT, rappelle les règles clés (sommeil, prot, "
+            f"hydratation), et engage-le sur un J1 concret aujourd'hui ou demain."
+        )
+
+    @beta_tool
+    def get_today_workout() -> str:
+        """Return today's workout session based on the user's active program + \
+elapsed days. Calo computes which day of the week structure to suggest."""
+        from datetime import datetime, timezone
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        slug = user.get("active_program")
+        if not slug:
+            return ("Aucun programme actif. Propose à l'utilisateur d'en "
+                    "choisir un via `list_programs`.")
+        p = db.get_program_by_slug(slug)
+        if not p:
+            return f"Programme '{slug}' introuvable (peut-être supprimé)."
+        started = user.get("program_started_at")
+        if not started:
+            return "Date de démarrage manquante. Relance `start_program(slug)`."
+        try:
+            d0 = datetime.strptime(started, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            days_elapsed = (datetime.now(timezone.utc) - d0).days
+            week_num = days_elapsed // 7 + 1
+            day_in_week = days_elapsed % 7 + 1
+        except (ValueError, TypeError):
+            week_num, day_in_week = 1, 1
+        return (
+            f"# 📅 Séance du jour — {p['name']}\n"
+            f"Sem {week_num}/{p.get('duration_weeks')} · Jour {day_in_week}/7\n\n"
+            f"## Structure complète\n{p.get('weekly_structure', '')}\n\n"
+            f"💡 Identifie la séance correspondant au jour {day_in_week} (ou jour "
+            f"de repos si applicable). Présente UNIQUEMENT cette séance avec exos, "
+            f"séries, reps, repos. Ajoute des conseils d'exécution sur les exos clés. "
+            f"À la fin demande au user de logger la séance via `log_workout_session`."
+        )
+
+    @beta_tool
+    def log_workout_session(
+        session_name: str,
+        exercises_text: str,
+        day_name: str = "",
+        duration_min: int = 0,
+        rpe: int = 0,
+        pr_hit: bool = False,
+        note: str = "",
+    ) -> str:
+        """Log a completed workout session. Call AFTER the user reports having \
+done a training. Format `exercises_text` as lines: `Exercise|sets|reps|weight_kg|rpe`.
+
+Args:
+    session_name: Short label (e.g. 'Upper A Sem 3').
+    exercises_text: Multi-line log e.g. 'Squat|4|8|80|7\\nBench|4|8|60|7\\nDeadlift|3|5|100|8'.
+    day_name: Optional day label from program (e.g. 'Upper A', 'Push').
+    duration_min: Session duration.
+    rpe: Global RPE 1-10.
+    pr_hit: True if user hit a personal record this session.
+    note: Free text (energy, form, soreness).
+"""
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        user = db.get_user_by_id(user_id)
+        program_id = None
+        if user and user.get("active_program"):
+            p = db.get_program_by_slug(user["active_program"])
+            if p:
+                program_id = p["id"]
+        db.log_workout(
+            user_id=user_id,
+            session_name=session_name,
+            date_iso=today,
+            exercises_text=exercises_text,
+            program_id=program_id,
+            day_name=day_name or None,
+            duration_min=duration_min or None,
+            rpe=rpe or None,
+            note=note or None,
+            pr_hit=pr_hit,
+        )
+        # Increment counter
+        if user:
+            new_count = int(user.get("workouts_completed") or 0) + 1
+            db.update_user(user_id, workouts_completed=new_count)
+        feedback = []
+        if pr_hit:
+            feedback.append("🏆 **PR atteint** — célèbre ce moment, c'est de l'or pour la motivation !")
+            db.add_memory(
+                user_id,
+                f"PR session {today} : {session_name}",
+                category="sport",
+                importance=4,
+            )
+        if rpe and rpe >= 9:
+            feedback.append("⚠️ RPE 9+ : récupération sera longue. Sommeil 8h+, hydratation, nutrition post.")
+        if duration_min and duration_min > 90:
+            feedback.append("⏱️ Séance >90 min : risque chute testostérone, viser <75 min sur les prochaines.")
+        return (
+            f"✅ Séance loggée : **{session_name}** ({today})"
+            + (f"\n\n" + "\n".join(feedback) if feedback else "")
+        )
+
+    @beta_tool
+    def get_exercise_help(name: str) -> str:
+        """Look up an exercise in the library : technique, common mistakes, \
+regressions, progressions. Call when the user asks "comment faire X", \
+"technique squat", "j'ai mal au dos en deadlift".
+
+Args:
+    name: Exercise name in French (e.g. 'squat', 'développé couché', 'soulevé de terre').
+"""
+        ex = db.get_exercise_by_name(name)
+        if not ex:
+            return (
+                f"Exercice '{name}' pas dans la bibliothèque. "
+                "Réponds depuis ton expertise, focus technique + erreurs courantes + "
+                "régressions/progressions."
+            )
+        return (
+            f"# {ex['name']}\n"
+            f"📂 Catégorie : {ex.get('category')}\n"
+            f"🏋️ Matériel : {', '.join(ex.get('equipment') or [])}\n"
+            f"⚡ Difficulté : {ex.get('difficulty')}\n"
+            f"💪 Muscles : {', '.join(ex.get('primary_muscles') or [])}\n\n"
+            f"## Technique\n{ex.get('technique', '')}\n\n"
+            f"## ❌ Erreurs courantes\n{ex.get('common_mistakes', '')}\n\n"
+            f"## ⬇️ Régressions (plus facile)\n{ex.get('regressions', '')}\n\n"
+            f"## ⬆️ Progressions (plus difficile)\n{ex.get('progressions', '')}"
+        )
+
+    @beta_tool
+    def analyze_training_progress(weeks: int = 4) -> str:
+        """Analyse the user's last N weeks of workout logs : volume, intensity, \
+PRs, fatigue patterns. Detects need for deload or progression. Use when user \
+asks 'où j'en suis sur mon programme', 'je stagne', 'devrais-je déloader'.
+
+Args:
+    weeks: Lookback weeks. Default 4.
+"""
+        from datetime import datetime, timedelta, timezone
+        weeks = max(2, min(12, int(weeks)))
+        since = (datetime.now(timezone.utc) - timedelta(days=weeks * 7)).strftime("%Y-%m-%d")
+        logs = db.workout_logs_since(user_id, since)
+        if not logs:
+            return f"Aucune séance loggée sur les {weeks} dernières sem. Relance le logging."
+
+        total_sessions = len(logs)
+        prs = sum(1 for l in logs if l.get("pr_hit"))
+        avg_rpe = (
+            sum(int(l.get("rpe") or 0) for l in logs if l.get("rpe"))
+            / max(1, sum(1 for l in logs if l.get("rpe")))
+        )
+        avg_duration = (
+            sum(int(l.get("duration_min") or 0) for l in logs if l.get("duration_min"))
+            / max(1, sum(1 for l in logs if l.get("duration_min")))
+        )
+        sessions_per_week = total_sessions / weeks
+
+        # Flags
+        flags = []
+        if sessions_per_week < 2:
+            flags.append(f"⚠️ Adhérence faible ({sessions_per_week:.1f} séance/sem). Identifier obstacles.")
+        if avg_rpe >= 8.5:
+            flags.append(f"⚠️ RPE moyen {avg_rpe:.1f} = très intense. Déload conseillé semaine prochaine.")
+        if avg_duration > 80:
+            flags.append(f"⏱️ Durée moyenne {avg_duration:.0f} min = long. Viser <75 min pour optimiser.")
+        if prs == 0 and weeks >= 4:
+            flags.append("⚠️ 0 PR sur la période = plateau force probable. Revoir programmation ou déload.")
+
+        return (
+            f"# 📊 Bilan training {weeks} sem\n\n"
+            f"- **{total_sessions} séances** ({sessions_per_week:.1f}/sem)\n"
+            f"- **{prs} PRs** atteints\n"
+            f"- **RPE moyen** : {avg_rpe:.1f}/10\n"
+            f"- **Durée moyenne** : {avg_duration:.0f} min\n\n"
+            + ("## 🔍 Constats\n" + "\n".join(flags) + "\n\n" if flags else "")
+            + "💡 Présente ce bilan AVEC empathie. Si RPE élevé constant ou 0 PR : "
+            "propose déload (-40% volume sem prochaine). Si bonne progression : célèbre. "
+            "Si adhérence faible : creuse les obstacles, ajuste le programme."
+        )
+
+    @beta_tool
+    def update_personal_records(updates: str) -> str:
+        """Update the user's personal records (PRs). Use when they report a new \
+max (squat, bench, dead, course 10km, etc.).
+
+Args:
+    updates: Text of new records, e.g. 'squat 100kg\\nbench 80kg\\n10km 52min'.
+"""
+        from datetime import datetime, timezone
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        existing = user.get("personal_records") or ""
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        new_block = f"[{ts}]\n{updates}"
+        merged = (existing + "\n\n" + new_block).strip() if existing else new_block
+        db.update_user(user_id, personal_records=merged)
+        db.add_memory(
+            user_id,
+            f"Nouveau(x) PR le {ts} : {updates}",
+            category="sport",
+            importance=4,
+        )
+        return f"🏆 PRs sauvegardés :\n{updates}\n\nCélèbre ces progressions avec l'utilisateur !"
+
+    # ==========================================================================
+    # MENTAL MODULE — stress, anxiety, burnout, cognition
+    # ==========================================================================
+
+    @beta_tool
+    def breathing_protocol(situation: str = "stress") -> str:
+        """Generate a tailored breathing protocol for the user's current state. \
+Use when user mentions stress, anxiety, panic, sleep prep, pre-workout, \
+post-workout, focus needed.
+
+Args:
+    situation: 'stress' | 'panic' | 'sommeil' | 'pre-workout' | 'post-workout' | 'focus'.
+"""
+        s = situation.lower()
+        protocols = {
+            "stress": (
+                "# 🌬️ Cohérence cardiaque — Anti-stress\n\n"
+                "**5 minutes, 6 respirations/min.**\n\n"
+                "- Inspire 5 secondes par le nez\n"
+                "- Expire 5 secondes par la bouche\n"
+                "- Répète 30 cycles (= 5 min)\n\n"
+                "**Effet** : active le parasympathique, baisse cortisol de 20-30%, "
+                "stabilise variabilité cardiaque. À faire 3x/jour (matin, midi, "
+                "avant coucher) pour effet cumulatif maximal."
+            ),
+            "panic": (
+                "# 🚨 SOS Panique — Respiration 4-7-8\n\n"
+                "**Cycle physiologique, force le calme.**\n\n"
+                "- Inspire **4 sec** par le nez\n"
+                "- Retiens **7 sec** poumons pleins\n"
+                "- Expire **8 sec** par la bouche (souffle long)\n"
+                "- Répète 4 cycles, puis pause 30 sec\n"
+                "- Refais 4 cycles\n\n"
+                "**Bonus** : ancrage 5-4-3-2-1 simultanément (5 choses que tu "
+                "vois, 4 que tu touches, 3 que tu entends, 2 que tu sens, 1 "
+                "que tu goûtes). Recentre le système nerveux en 90 sec."
+            ),
+            "sommeil": (
+                "# 😴 Pré-sommeil — Respiration nasale lente\n\n"
+                "**Allongé dans le lit, lumières éteintes.**\n\n"
+                "- Inspire 4 sec par le nez\n"
+                "- Expire 6-8 sec par le nez (plus long que l'inspiration)\n"
+                "- 10-15 cycles\n"
+                "- Si pensées : reviens à la respiration sans juger\n\n"
+                "**Bonus** : scan corporel (tête → orteils, relâche chaque zone). "
+                "90% des cas, sommeil <15 min."
+            ),
+            "pre-workout": (
+                "# 🔥 Pre-workout — Activation\n\n"
+                "**3 minutes pour mobiliser.**\n\n"
+                "- Inspire 4 sec par le nez\n"
+                "- Expire 2 sec par la bouche (forte, courte)\n"
+                "- Répète 20 cycles\n"
+                "- Termine par 3 grandes inspirations\n\n"
+                "**Effet** : augmente CO2 toléré, baisse anxiété de performance, "
+                "active sympathique modéré (pas panique)."
+            ),
+            "post-workout": (
+                "# 🧘 Post-workout — Récupération\n\n"
+                "**5 min cohérence cardiaque + nasal**\n\n"
+                "- Allongé sur le dos\n"
+                "- Inspire 4 sec par le nez\n"
+                "- Pause 2 sec\n"
+                "- Expire 6 sec par le nez\n"
+                "- 30 cycles\n\n"
+                "**Effet** : accélère retour parasympathique, baisse cortisol "
+                "post-effort, optimise récupération."
+            ),
+            "focus": (
+                "# 🎯 Focus deep work — Box breathing\n\n"
+                "**Méthode Navy SEALs.**\n\n"
+                "- Inspire 4 sec\n"
+                "- Retiens 4 sec\n"
+                "- Expire 4 sec\n"
+                "- Retiens 4 sec (vide)\n"
+                "- Répète 5 min\n\n"
+                "**Effet** : calme mental + focus aiguisé. Idéal avant session "
+                "deep work ou présentation."
+            ),
+        }
+        return protocols.get(s, protocols["stress"])
+
+    @beta_tool
+    def anti_anxiety_toolkit() -> str:
+        """SOS anxiety toolkit — 5 immediate techniques to deploy when the user \
+is in anxiety/panic. Use when user mentions panic, anxiety attack, racing \
+thoughts, can't breathe, overwhelmed."""
+        return (
+            "# 🆘 SOS Anxiété — Boîte à outils immédiate\n\n"
+            "## 1️⃣ Ancrage 5-4-3-2-1 (30 sec)\n"
+            "Nomme à voix haute :\n"
+            "- **5** choses que tu VOIS autour de toi\n"
+            "- **4** choses que tu peux TOUCHER\n"
+            "- **3** sons que tu ENTENDS\n"
+            "- **2** odeurs que tu peux SENTIR\n"
+            "- **1** goût dans ta bouche\n"
+            "→ Force le cerveau hors de la spirale anxieuse, retour au présent.\n\n"
+            "## 2️⃣ Respiration 4-7-8 (90 sec)\n"
+            "- Inspire 4 sec nez\n"
+            "- Retiens 7 sec\n"
+            "- Expire 8 sec bouche\n"
+            "- 4 cycles, pause, 4 cycles\n"
+            "→ Active le parasympathique, baisse pulsation en 90 sec.\n\n"
+            "## 3️⃣ Eau glacée sur visage (immersion frontale)\n"
+            "Plonger le visage dans bol d'eau froide 15-30 sec, OU compresse "
+            "froide front + tempes.\n"
+            "→ Réflexe mammifère, baisse pulsation immédiate.\n\n"
+            "## 4️⃣ Mouvement (10 min)\n"
+            "Marche rapide DEHORS ou montée d'escaliers. Le mouvement consomme "
+            "le cortisol et l'adrénaline en excès.\n\n"
+            "## 5️⃣ Nommer + écrire (15 min)\n"
+            "Ouvre un carnet. Écris sans filtre :\n"
+            "- Qu'est-ce que je ressens ?\n"
+            "- À quoi je le rattache ?\n"
+            "- Quel est le pire scénario réaliste ? Le meilleur ? Le plus probable ?\n"
+            "- Qu'est-ce que je peux contrôler maintenant ?\n"
+            "→ Décharge cognitive, prise de recul.\n\n"
+            "## ⚠️ Quand consulter\n"
+            "Si attaques de panique répétées (>2/sem), anxiété qui bloque le "
+            "quotidien, ou pensées sombres : **consultation pro indispensable** "
+            "(psychologue, médecin). Calo n'est PAS un substitut au soin."
+        )
+
+    @beta_tool
+    def cognitive_reframe(negative_thought: str) -> str:
+        """Cognitive behavioral therapy (CBT) framework to reframe a negative \
+thought. Use when user expresses harsh self-talk: 'je suis nul', 'jamais je \
+n'y arriverai', 'tout est foutu', 'je dois être parfait'.
+
+Args:
+    negative_thought: The exact negative thought the user expressed.
+"""
+        return (
+            f"# 🧠 Recadrage cognitif — TCC\n\n"
+            f"Pensée actuelle :\n> _\"{negative_thought}\"_\n\n"
+            f"## Étape 1 — Identifie le biais\n"
+            f"Lesquel(s) reconnais-tu dans cette pensée ?\n\n"
+            f"- **Pensée tout-ou-rien** : 'Si je ne suis pas parfait, je suis nul'\n"
+            f"- **Catastrophisme** : 'Si je rate, tout est foutu'\n"
+            f"- **Filtrage négatif** : ne voir que les échecs, ignorer les réussites\n"
+            f"- **Personnalisation** : 'C'est forcément ma faute'\n"
+            f"- **Lecture de pensée** : 'Les autres pensent que...'\n"
+            f"- **Étiquetage** : 'Je SUIS nul' au lieu de 'J'ai raté'\n"
+            f"- **Should statements** : 'Je dois / il faut que' (rigide)\n\n"
+            f"## Étape 2 — Questionne la pensée\n"
+            f"- Quelle est la PREUVE concrète de cette pensée ?\n"
+            f"- Quelle est la preuve du CONTRAIRE ?\n"
+            f"- Est-ce que je dirais ça à mon meilleur ami dans la même situation ?\n"
+            f"- Dans 5 ans, est-ce que ça aura encore de l'importance ?\n"
+            f"- Est-ce un fait ou un sentiment ?\n\n"
+            f"## Étape 3 — Reformule\n"
+            f"Au lieu de :\n_\"{negative_thought}\"_\n\n"
+            f"Propose une version NUANCÉE + ACTIONNABLE. Exemple générique :\n"
+            f"- 'J'ai eu UN écart aujourd'hui, ça ne définit pas tout mon parcours'\n"
+            f"- 'Cette difficulté est temporaire, j'ai déjà surmonté pire'\n"
+            f"- 'Je n'ai pas réussi CETTE FOIS, voici ce que j'apprends pour la prochaine'\n\n"
+            f"## Étape 4 — Action\n"
+            f"Quelle UNE chose concrète tu peux faire dans les 10 prochaines minutes "
+            f"qui aille dans le sens de qui tu veux devenir ?"
+        )
+
+    @beta_tool
+    def burnout_assessment() -> str:
+        """Quick burnout / over-training assessment. Use when user mentions \
+chronic fatigue, no motivation, ED-like patterns, training despite injury, \
+sleep disorders, emotional flatness."""
+        return (
+            "# 🔥 Évaluation Burn-out / Surentraînement\n\n"
+            "Réponds OUI / NON à chacune (compte les OUI à la fin).\n\n"
+            "## Physique\n"
+            "1. Fatigue qui ne passe pas après 8h de sommeil\n"
+            "2. Fréquence cardiaque de repos en hausse (+5 bpm vs habituel)\n"
+            "3. Performances en baisse malgré effort équivalent\n"
+            "4. Récupération musculaire qui s'allonge (DOMS >4 jours)\n"
+            "5. Sommeil fragmenté (réveils 3-4h)\n"
+            "6. Infections à répétition (rhumes, angines)\n"
+            "7. Blessures ou douleurs récurrentes\n"
+            "8. Perte d'appétit OU fringales sucrées intenses\n"
+            "9. Libido en baisse\n"
+            "10. Cycles menstruels perturbés / aménorrhée\n\n"
+            "## Psychologique\n"
+            "11. Plus de plaisir à s'entraîner\n"
+            "12. Irritabilité sans raison\n"
+            "13. Sentiment de devoir 'mériter' la nourriture / repos\n"
+            "14. Anxiété de performance avant chaque séance\n"
+            "15. Pensées récurrentes : 'pas assez', 'jamais assez fait'\n"
+            "16. Incapacité à déconnecter (boulot, sport)\n"
+            "17. Pleurs faciles ou émotionnel à fleur de peau\n"
+            "18. Brouillard mental, oublis fréquents\n"
+            "19. Sentiment d'épuisement émotionnel\n"
+            "20. Désintérêt général (hobbies, famille, amis)\n\n"
+            "## Lecture des résultats\n"
+            "- **0-4 OUI** : RAS, continue bonne routine\n"
+            "- **5-9 OUI** : 🟡 Signaux de surmenage. Déload OBLIGATOIRE 1-2 sem "
+            "(volume -50%, sommeil ++, alimentation maintien). Réévalue après.\n"
+            "- **10-14 OUI** : 🟠 Pré-burnout. Stop intensité 2-4 sem, focus "
+            "récup totale. Consulte médecin pour bilan sanguin complet (TSH, "
+            "cortisol salivaire 4x/j, ferritine, vit D, testostérone).\n"
+            "- **15+ OUI** : 🔴 BURN-OUT installé. STOP sport intense. "
+            "**Consultation médicale obligatoire**, possiblement arrêt travail, "
+            "accompagnement psy. Ne joue PAS avec ça.\n\n"
+            "💡 Présente ces questions à l'utilisateur SANS dramatiser. "
+            "Aide-le à compter ses OUI. Si ≥10, **insiste sur consultation pro** "
+            "(médecin + psychologue). Met à jour `mental_profile` avec les insights."
+        )
+
+    @beta_tool
+    def update_mental_profile(note: str) -> str:
+        """Append a structured note to the user's mental health profile. Use when \
+the user shares context relevant to mental health: anxiety, depression history, \
+ED recovery, burnout, therapy, medication psy.
+
+Args:
+    note: What was learned about the user's mental health context.
+"""
+        from datetime import datetime, timezone
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        existing = user.get("mental_profile") or ""
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        new = f"[{ts}] {note}"
+        merged = (existing + "\n" + new).strip() if existing else new
+        db.update_user(user_id, mental_profile=merged)
+        return f"✅ Profil mental enrichi : {note}"
+
     @beta_tool
     def search_knowledge(query: str) -> str:
         """Search Calo's knowledge base for relevant guidance. Call this when the \
@@ -3333,6 +3859,21 @@ Args:
         get_challenge_details,
         start_challenge,
         get_my_active_challenge,
+        # Sport module
+        list_programs,
+        get_program_details,
+        start_program,
+        get_today_workout,
+        log_workout_session,
+        get_exercise_help,
+        analyze_training_progress,
+        update_personal_records,
+        # Mental module
+        breathing_protocol,
+        anti_anxiety_toolkit,
+        cognitive_reframe,
+        burnout_assessment,
+        update_mental_profile,
         search_knowledge,
         remember,
     ]

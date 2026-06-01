@@ -237,6 +237,20 @@ def _summarize_user_state(
         metabolic_lines.append(
             f"• Patterns personnels observés : {user.get('personal_patterns')}"
         )
+    # Sport module — programme actif
+    if user.get("active_program"):
+        metabolic_lines.append(
+            f"\n# 🏋️ PROGRAMME SPORTIF ACTIF\n"
+            f"Slug : `{user.get('active_program')}` (démarré {user.get('program_started_at')})\n"
+            f"Séances réalisées : {user.get('workouts_completed') or 0}"
+        )
+    if user.get("personal_records"):
+        metabolic_lines.append(f"• Personal Records :\n{user.get('personal_records')}")
+    # Mental profile
+    if user.get("mental_profile"):
+        metabolic_lines.append(
+            f"\n# 🧠 PROFIL MENTAL\n{user.get('mental_profile')}"
+        )
     if metabolic_lines:
         base += "\n" + "\n".join(metabolic_lines) + (
             "\n\n⚠️ **UTILISE CE PROFIL MÉTABOLIQUE** dans tes réponses. "

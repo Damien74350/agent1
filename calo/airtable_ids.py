@@ -18,6 +18,9 @@ MEMORIES_TABLE = "tblSoqBsOGeUL20gd"
 RECIPES_TABLE = "tblwPLplGlehhyWfj"
 CHALLENGES_TABLE = "tbld6N7WUah20naa4"
 USER_CHALLENGES_TABLE = "tbl8GGMKbL0DEJ9WR"
+PROGRAMS_TABLE = "tbl0WbGOk2zplHeiU"
+EXERCISES_TABLE = "tblDAceDl1prMuYtC"
+WORKOUT_LOGS_TABLE = "tblYEUsumV7Gjit2Q"
 
 # --- field IDs ---
 # Using field IDs rather than names insulates Calo from renames in the Airtable UI.
@@ -57,6 +60,54 @@ USERS_FIELDS = {
     "last_calibration": "fld1gFFSgqmRm7mXa",
     "personal_patterns": "fldsCoMjczzqu9De6",
     "anamnese_started": "fldsrJLNR5N0gJbKh",
+    # Sport + Mental modules
+    "active_program": "fldsmsFaReGUtlE7K",
+    "program_started_at": "fldXNOxNaY3hPM5ES",
+    "personal_records": "fldgdhjiP5hl4EblZ",
+    "mental_profile": "fldcOIPcvftlswNWN",
+    "workouts_completed": "fldpA29njGU4MC1gD",
+}
+
+PROGRAMS_FIELDS = {
+    "name": "fldxu9t2qleaCA3lr",
+    "slug": "fldtfWgGwdyEq6Prh",
+    "goal": "fldNNYXbWA263oerF",
+    "duration_weeks": "fld7E2F4MRckM6uqS",
+    "days_per_week": "fld6BcUBSTlbfXNll",
+    "equipment": "fldCcUP9TNsZhVOiD",
+    "difficulty": "fldWG9Vcbae1K57cC",
+    "description": "fldn7LQJ9TKjQsw70",
+    "weekly_structure": "fldltWC0jzO5KLnRC",
+    "tags": "fld9YajoD0vWyLx2H",
+    "active": "fldtPZWmMIuNwHgee",
+    "created_at": "fld0C8Z24LdGQFQUB",
+}
+
+EXERCISES_FIELDS = {
+    "name": "fld7vYzPtcOyeq9Og",
+    "category": "fldFnhwa6p1ccNCFB",
+    "equipment": "fldltgPb7TyxSMWsA",
+    "difficulty": "fldNnWNrOkpr9rMCC",
+    "primary_muscles": "fldPiIAqIVYUd34hc",
+    "technique": "fld7W1wRJTFSBtXY9",
+    "common_mistakes": "fldoHE9DjXtSdiNnb",
+    "regressions": "fldK47TIiMirDask7",
+    "progressions": "fld1sOzLzpBcOZQoT",
+    "video_url": "fld7occ56RautxmPo",
+    "active": "fldaSLXynBWvovemH",
+}
+
+WORKOUT_LOGS_FIELDS = {
+    "session": "fld5Q3z8i8Li73GEy",
+    "user": "fldg8GJokJM8RK1F2",
+    "date": "fldKOK8XOutXbRJqv",
+    "program": "fldiAL0J9p1PYBa46",
+    "day_name": "fldY6ARbmOXlH48vp",
+    "exercises_log": "fldfQ58LQ2Yjus3To",
+    "duration_min": "fldBzolUW8dd3D8rs",
+    "rpe": "fldLbQTNXtLElPRXh",
+    "note": "fldXCKF0FVO2pKijN",
+    "pr_hit": "fld7aBiRbDvQE26bn",
 }
 
 FOODS_FIELDS = {

@@ -20,6 +20,8 @@ from .airtable_ids import (
     BODY_PHOTOS_TABLE,
     CHALLENGES_FIELDS,
     CHALLENGES_TABLE,
+    EXERCISES_FIELDS,
+    EXERCISES_TABLE,
     FOODS_FIELDS,
     FOODS_TABLE,
     KNOWLEDGE_FIELDS,
@@ -28,6 +30,8 @@ from .airtable_ids import (
     MEALS_TABLE,
     MEMORIES_FIELDS,
     MEMORIES_TABLE,
+    PROGRAMS_FIELDS,
+    PROGRAMS_TABLE,
     RECIPES_FIELDS,
     RECIPES_TABLE,
     USER_CHALLENGES_FIELDS,
@@ -36,6 +40,8 @@ from .airtable_ids import (
     USERS_TABLE,
     WEIGHT_LOGS_FIELDS,
     WEIGHT_LOGS_TABLE,
+    WORKOUT_LOGS_FIELDS,
+    WORKOUT_LOGS_TABLE,
 )
 
 
@@ -58,6 +64,9 @@ class AirtableDB:
         self.recipes = self.api.table(BASE_ID, RECIPES_TABLE)
         self.challenges = self.api.table(BASE_ID, CHALLENGES_TABLE)
         self.user_challenges = self.api.table(BASE_ID, USER_CHALLENGES_TABLE)
+        self.programs = self.api.table(BASE_ID, PROGRAMS_TABLE)
+        self.exercises = self.api.table(BASE_ID, EXERCISES_TABLE)
+        self.workout_logs = self.api.table(BASE_ID, WORKOUT_LOGS_TABLE)
 
     # pyairtable returns fields keyed by NAME by default. Our schema uses
     # field IDs everywhere (so renames in the UI don't break us), so every
@@ -464,6 +473,127 @@ class AirtableDB:
         rec = self.user_challenges.first(formula=formula, **self._BY_ID)
         return _unwrap_user_challenge(rec) if rec else None
 
+    # ------------------------------------------------------------------
+    # workout programs + exercises + logs
+    # ------------------------------------------------------------------
+
+    def list_programs(
+        self,
+        goal: str | None = None,
+        equipment: str | None = None,
+        difficulty: str | None = None,
+        max_results: int = 12,
+    ) -> list[dict[str, Any]]:
+        conditions = [f"{{{PROGRAMS_FIELDS['active']}}}"]
+        if goal:
+            conditions.append(
+                f"{{{PROGRAMS_FIELDS['goal']}}} = '{_escape(goal)}'"
+            )
+        if difficulty:
+            conditions.append(
+                f"{{{PROGRAMS_FIELDS['difficulty']}}} = '{_escape(difficulty)}'"
+            )
+        if equipment:
+            conditions.append(
+                f"FIND('{_escape(equipment)}', ARRAYJOIN({{{PROGRAMS_FIELDS['equipment']}}}, ',')) > 0"
+            )
+        formula = "AND(" + ", ".join(conditions) + ")"
+        recs = self.programs.all(
+            formula=formula,
+            max_records=max_results,
+            sort=[PROGRAMS_FIELDS["duration_weeks"]],
+            **self._BY_ID,
+        )
+        return [_unwrap_program(r) for r in recs]
+
+    def get_program_by_slug(self, slug: str) -> dict[str, Any] | None:
+        rec = self.programs.first(
+            formula=f"{{{PROGRAMS_FIELDS['slug']}}} = '{_escape(slug)}'",
+            **self._BY_ID,
+        )
+        return _unwrap_program(rec) if rec else None
+
+    def list_exercises(
+        self,
+        category: str | None = None,
+        equipment: str | None = None,
+        muscle: str | None = None,
+        max_results: int = 20,
+    ) -> list[dict[str, Any]]:
+        conditions = [f"{{{EXERCISES_FIELDS['active']}}}"]
+        if category:
+            conditions.append(
+                f"{{{EXERCISES_FIELDS['category']}}} = '{_escape(category)}'"
+            )
+        if equipment:
+            conditions.append(
+                f"FIND('{_escape(equipment)}', ARRAYJOIN({{{EXERCISES_FIELDS['equipment']}}}, ',')) > 0"
+            )
+        if muscle:
+            conditions.append(
+                f"FIND('{_escape(muscle)}', ARRAYJOIN({{{EXERCISES_FIELDS['primary_muscles']}}}, ',')) > 0"
+            )
+        formula = "AND(" + ", ".join(conditions) + ")"
+        recs = self.exercises.all(
+            formula=formula,
+            max_records=max_results,
+            **self._BY_ID,
+        )
+        return [_unwrap_exercise(r) for r in recs]
+
+    def get_exercise_by_name(self, name: str) -> dict[str, Any] | None:
+        formula = (
+            f"AND({{{EXERCISES_FIELDS['active']}}}, "
+            f"FIND(LOWER('{_escape(name)}'), LOWER({{{EXERCISES_FIELDS['name']}}})) > 0)"
+        )
+        rec = self.exercises.first(formula=formula, **self._BY_ID)
+        return _unwrap_exercise(rec) if rec else None
+
+    def log_workout(
+        self,
+        user_id: str,
+        session_name: str,
+        date_iso: str,
+        exercises_text: str,
+        program_id: str | None = None,
+        day_name: str | None = None,
+        duration_min: int | None = None,
+        rpe: int | None = None,
+        note: str | None = None,
+        pr_hit: bool = False,
+    ) -> str:
+        payload: dict[str, Any] = {
+            WORKOUT_LOGS_FIELDS["session"]: session_name,
+            WORKOUT_LOGS_FIELDS["user"]: [user_id],
+            WORKOUT_LOGS_FIELDS["date"]: date_iso,
+            WORKOUT_LOGS_FIELDS["exercises_log"]: exercises_text,
+            WORKOUT_LOGS_FIELDS["pr_hit"]: bool(pr_hit),
+        }
+        if program_id:
+            payload[WORKOUT_LOGS_FIELDS["program"]] = [program_id]
+        if day_name:
+            payload[WORKOUT_LOGS_FIELDS["day_name"]] = day_name
+        if duration_min:
+            payload[WORKOUT_LOGS_FIELDS["duration_min"]] = int(duration_min)
+        if rpe:
+            payload[WORKOUT_LOGS_FIELDS["rpe"]] = int(rpe)
+        if note:
+            payload[WORKOUT_LOGS_FIELDS["note"]] = note
+        rec = self.workout_logs.create(payload, typecast=True, use_field_ids=True)
+        return rec["id"]
+
+    def workout_logs_since(self, user_id: str, since_iso: str) -> list[dict[str, Any]]:
+        formula = (
+            f"AND({{{WORKOUT_LOGS_FIELDS['date']}}} >= '{since_iso}', "
+            f"FIND('{user_id}', ARRAYJOIN({{{WORKOUT_LOGS_FIELDS['user']}}})) > 0)"
+        )
+        recs = self.workout_logs.all(
+            formula=formula,
+            sort=[WORKOUT_LOGS_FIELDS["date"]],
+            **self._BY_ID,
+        )
+        return [_unwrap_workout_log(r) for r in recs]
+
     def recipes_for_meal_plan(
         self,
         exclude_tags: list[str] | None = None,
@@ -627,6 +757,60 @@ def _unwrap_knowledge(rec: dict[str, Any]) -> dict[str, Any]:
         "topic": f.get(KNOWLEDGE_FIELDS["topic"]),
         "content": f.get(KNOWLEDGE_FIELDS["content"]),
         "tags": f.get(KNOWLEDGE_FIELDS["tags"], []),
+    }
+
+
+def _unwrap_program(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    equipment_raw = f.get(PROGRAMS_FIELDS["equipment"]) or []
+    tags_raw = f.get(PROGRAMS_FIELDS["tags"]) or []
+    return {
+        "id": rec["id"],
+        "name": f.get(PROGRAMS_FIELDS["name"]),
+        "slug": f.get(PROGRAMS_FIELDS["slug"]),
+        "goal": f.get(PROGRAMS_FIELDS["goal"]),
+        "duration_weeks": f.get(PROGRAMS_FIELDS["duration_weeks"]),
+        "days_per_week": f.get(PROGRAMS_FIELDS["days_per_week"]),
+        "equipment": equipment_raw if isinstance(equipment_raw, list) else [],
+        "difficulty": f.get(PROGRAMS_FIELDS["difficulty"]),
+        "description": f.get(PROGRAMS_FIELDS["description"]),
+        "weekly_structure": f.get(PROGRAMS_FIELDS["weekly_structure"]),
+        "tags": tags_raw if isinstance(tags_raw, list) else [],
+    }
+
+
+def _unwrap_exercise(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    equipment_raw = f.get(EXERCISES_FIELDS["equipment"]) or []
+    muscles_raw = f.get(EXERCISES_FIELDS["primary_muscles"]) or []
+    return {
+        "id": rec["id"],
+        "name": f.get(EXERCISES_FIELDS["name"]),
+        "category": f.get(EXERCISES_FIELDS["category"]),
+        "equipment": equipment_raw if isinstance(equipment_raw, list) else [],
+        "difficulty": f.get(EXERCISES_FIELDS["difficulty"]),
+        "primary_muscles": muscles_raw if isinstance(muscles_raw, list) else [],
+        "technique": f.get(EXERCISES_FIELDS["technique"]),
+        "common_mistakes": f.get(EXERCISES_FIELDS["common_mistakes"]),
+        "regressions": f.get(EXERCISES_FIELDS["regressions"]),
+        "progressions": f.get(EXERCISES_FIELDS["progressions"]),
+        "video_url": f.get(EXERCISES_FIELDS["video_url"]),
+    }
+
+
+def _unwrap_workout_log(rec: dict[str, Any]) -> dict[str, Any]:
+    f = rec.get("fields", {})
+    return {
+        "id": rec["id"],
+        "session": f.get(WORKOUT_LOGS_FIELDS["session"]),
+        "date": f.get(WORKOUT_LOGS_FIELDS["date"]),
+        "program": f.get(WORKOUT_LOGS_FIELDS["program"], []),
+        "day_name": f.get(WORKOUT_LOGS_FIELDS["day_name"]),
+        "exercises_log": f.get(WORKOUT_LOGS_FIELDS["exercises_log"]),
+        "duration_min": f.get(WORKOUT_LOGS_FIELDS["duration_min"]),
+        "rpe": f.get(WORKOUT_LOGS_FIELDS["rpe"]),
+        "note": f.get(WORKOUT_LOGS_FIELDS["note"]),
+        "pr_hit": f.get(WORKOUT_LOGS_FIELDS["pr_hit"], False),
     }
 
 

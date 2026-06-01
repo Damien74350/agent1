@@ -24,6 +24,20 @@ class TwilioWhatsApp:
             )
         return msg.sid
 
+    def send_media(self, to: str, media_url: str, caption: str = "") -> str:
+        """Send an image / audio file via WhatsApp.
+
+        `media_url` must be a publicly fetchable HTTPS URL (Twilio fetches it
+        server-side). For charts we expose them via the FastAPI `/chart/{token}`
+        endpoint. Caption is optional, max 1024 chars."""
+        msg = self.client.messages.create(
+            from_=self.config.twilio_whatsapp_from,
+            to=to,
+            media_url=[media_url],
+            body=caption[:1024] if caption else None,
+        )
+        return msg.sid
+
     def download_media(self, media_url: str) -> tuple[bytes, str]:
         """Twilio media URLs require basic auth. Returns (bytes, content_type)."""
         with httpx.Client(

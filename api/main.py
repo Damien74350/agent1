@@ -2,12 +2,14 @@
 
 import logging
 import threading
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from twilio.request_validator import RequestValidator
 
+from calo.chart_generator import CHART_DIR
 from calo.coach import CaloCoach, TurnInput
 from calo.config import CaloConfig
 
@@ -26,6 +28,20 @@ validator = RequestValidator(config.twilio_auth_token)
 @app.get("/")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "calo"}
+
+
+@app.get("/chart/{token}")
+def get_chart(token: str):
+    """Serves a generated chart PNG to Twilio (and the client). The token is a
+    secret-quality string baked at generation, so no further auth is needed."""
+    # Strict allowlist : prevent path traversal.
+    safe = "".join(c for c in token if c.isalnum() or c in "-_")
+    if safe != token or not safe:
+        raise HTTPException(status_code=404, detail="not found")
+    path = CHART_DIR / f"{safe}.png"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(path, media_type="image/png", filename="calo-chart.png")
 
 
 @app.post("/twilio/webhook", response_class=Response)
@@ -88,8 +104,13 @@ def _process_turn(
         )
         log.info("user=%s tools=%s reply_len=%d", user_id, out.tool_calls, len(out.reply_text))
 
-        # Send the reply back.
+        # Send the reply back (text first, then any generated media).
         twilio.send_text(sender, out.reply_text)
+        for media_url, caption in zip(out.media_urls, out.media_captions):
+            try:
+                twilio.send_media(sender, media_url, caption)
+            except Exception as exc:  # noqa: BLE001
+                log.exception("failed to send media %s: %s", media_url, exc)
 
     except Exception as exc:  # noqa: BLE001
         log.exception("turn failed: %s", exc)

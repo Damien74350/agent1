@@ -7,7 +7,7 @@ Storage split:
 """
 
 import base64
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
@@ -32,6 +32,8 @@ class TurnInput:
 class TurnOutput:
     reply_text: str
     tool_calls: list[str]
+    media_urls: list[str] = field(default_factory=list)
+    media_captions: list[str] = field(default_factory=list)
 
 
 class CaloCoach:
@@ -88,7 +90,14 @@ class CaloCoach:
         history = self.messages.recent(turn.user_id, limit=40)
 
         # 4. Bind tools for this turn.
-        tools = build_tools(self.db, turn.user_id, photo_ref)
+        attachments: list[dict[str, str]] = []
+        tools = build_tools(
+            self.db,
+            turn.user_id,
+            photo_ref,
+            attachments=attachments,
+            public_url_base=self.config.public_url or "",
+        )
 
         # 5. Inject user state context as a system reminder so the agent knows
         #    where the user is at without invalidating the cached system prompt.
@@ -129,7 +138,14 @@ class CaloCoach:
         #    keeps the next turn simple and correct.
         self.messages.add(turn.user_id, "assistant", final_text or "…")
 
-        return TurnOutput(reply_text=final_text or "…", tool_calls=tool_calls_taken)
+        media_urls = [a.get("url", "") for a in attachments if a.get("url")]
+        media_captions = [a.get("caption", "") for a in attachments if a.get("url")]
+        return TurnOutput(
+            reply_text=final_text or "…",
+            tool_calls=tool_calls_taken,
+            media_urls=media_urls,
+            media_captions=media_captions,
+        )
 
 
 def _serialize(blocks) -> list[dict[str, Any]]:

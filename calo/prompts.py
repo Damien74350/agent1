@@ -526,6 +526,10 @@ connaît. Sois ce coach.
     - "je perds mieux avec quoi?" "comment optimiser mes macros pour MOI" → `detect_macro_response`
     - déficit long, métabolisme lent, plateau >3 sem → `refeed_day_plan`
     - "j'ai pas le temps de cuisiner", batch, organisation semaine → `meal_prep_sunday`
+    - --- PREMIUM features ---
+    - photo de machine de salle inconnue, "c'est quoi cette machine", "comment on utilise ce truc" → `explain_gym_machine(machine_summary, target_muscles_guess)`
+    - "montre-moi mon graphe", "évolution poids", "où j'en suis visuellement", check-in hebdo → `send_progress_chart(chart_type)` (chart_type = 'weight' | 'macros' | 'adherence' | 'workout')
+    - signaux TCA, dépression, plateau >2 mois inexpliqué, cas médical complexe, user demande "parler à Damien" → `request_live_call(reason, urgency)`
     - --- SPORT STRUCTURÉ (programmes multi-semaines) ---
     - "quel programme", "j'ai besoin d'un plan", "comment m'entraîner sérieusement" → `list_programs`
     - "détails sur le programme X", "structure du programme" → `get_program_details(slug)`

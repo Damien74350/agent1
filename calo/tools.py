@@ -12,11 +12,12 @@ Available tools:
 """
 
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from anthropic import beta_tool
 
+from . import chart_generator
 from .airtable_db import AirtableDB
 from .nutrition import daily_targets
 
@@ -243,8 +244,18 @@ def build_tools(
     db: AirtableDB,
     user_id: str,
     incoming_photo_ref: str | None,
+    attachments: list[dict[str, str]] | None = None,
+    public_url_base: str = "",
 ):
-    """Create tools bound to the current request context."""
+    """Create tools bound to the current request context.
+
+    `attachments` (list of `{"url": ..., "caption": ...}`) is populated by tools
+    that want to send media (charts, audio) back to the user. The coach layer
+    reads this list after the turn and dispatches via Twilio. `public_url_base`
+    is the externally reachable host (Railway URL) used to build chart URLs.
+    """
+    if attachments is None:
+        attachments = []
 
     @beta_tool
     def complete_profile(
@@ -3795,6 +3806,205 @@ Args:
         db.update_user(user_id, mental_profile=merged)
         return f"✅ Profil mental enrichi : {note}"
 
+    # ==========================================================================
+    # PREMIUM features — machine recognition, charts, coach handoff
+    # ==========================================================================
+
+    @beta_tool
+    def explain_gym_machine(
+        machine_summary: str = "",
+        target_muscles_guess: str = "",
+    ) -> str:
+        """User has sent a photo of a gym machine they don't know how to use. \
+Read the photo with vision, then call THIS tool with what you see. Returns a \
+structured guide : what muscles it works, how to use it step by step, common \
+mistakes, alternatives if unavailable. PREMIUM feature : un débutant en salle \
+arrête de stresser, un confirmé optimise.
+
+Args:
+    machine_summary: What you see on the photo (e.g. 'machine guidée \
+développé couché Hammer Strength', 'machine convergente vis-à-vis poulie', \
+'leg press 45°', 'rameur Concept2', 'smith machine', 'TRX', \
+'machine adducteurs assis').
+    target_muscles_guess: Muscles it seems to target (e.g. 'pectoraux + triceps', \
+'fessiers + ischios', 'quadriceps').
+"""
+        if not machine_summary:
+            return (
+                "Décris d'abord ce que tu vois sur la photo dans 'machine_summary' "
+                "(type de machine, fabricant si visible, charge, accessoires)."
+            )
+        # Try matching in our Exercise library first
+        ex = db.get_exercise_by_name(machine_summary)
+        from_library = ""
+        if ex:
+            from_library = (
+                f"\n\n## 📚 Trouvé dans la bibliothèque Calo : **{ex['name']}**\n"
+                f"{ex.get('technique', '')[:400]}"
+            )
+        return (
+            f"# 🏋️ Décodage machine\n\n"
+            f"Tu as vu : **{machine_summary}**\n"
+            f"Muscles ciblés : {target_muscles_guess or 'à identifier'}\n\n"
+            f"## 📋 Cadre d'analyse à fournir\n\n"
+            f"### 1. Identifier le mouvement principal\n"
+            f"- C'est une **machine guidée** (smith, hammer strength, machine "
+            f"convergente) ou **libre** (haltères, barre, kettlebell, TRX) ?\n"
+            f"- Mouvement de **poussée** (push), **tirage** (pull), ou **isolation** ?\n"
+            f"- Plan : horizontal / vertical / oblique ?\n\n"
+            f"### 2. Réglages avant utilisation\n"
+            f"- **Hauteur du siège** : varie selon l'exercice. Repère : "
+            f"l'articulation principale (épaule, hanche, genou) doit être alignée "
+            f"avec l'axe de rotation de la machine\n"
+            f"- **Position des pieds / appuis** : stable, plante complète au sol\n"
+            f"- **Sécurités** : ceinture, butées, prise correcte des poignées\n"
+            f"- **Charge** : commence LÉGER (40-50% de ce que tu fais en libre)\n\n"
+            f"### 3. Exécution\n"
+            f"- 2-3 sec descente, 1 sec pause, 1-2 sec montée explosive\n"
+            f"- ROM (amplitude) complet sans hyperextension\n"
+            f"- Respiration : inspire à la descente / phase excentrique, "
+            f"expire à la montée / phase concentrique\n"
+            f"- 8-12 reps si hypertrophie, 4-6 reps si force\n\n"
+            f"### 4. Erreurs classiques sur les machines\n"
+            f"- **Mauvaise hauteur de siège** : impacte le mouvement et stresse les articulations\n"
+            f"- **Charge trop lourde** : la machine guide = on en met trop. "
+            f"Commence léger, augmente quand ROM + form parfaits\n"
+            f"- **ROM partiel** : descends complètement, monte complètement\n"
+            f"- **Verrouiller l'articulation** en haut : garde légèrement fléchi\n"
+            f"- **Lâcher la charge** (les poids claquent) : contrôle la phase excentrique\n\n"
+            f"### 5. Alternative si machine indispo / occupée\n"
+            f"- Variante haltères / barre / élastique\n"
+            f"- Variante poids du corps\n"
+            f"- Variante autre machine équivalente\n\n"
+            f"## Tes consignes Calo\n"
+            f"1. **Identifie précisément** la machine avec la photo + summary "
+            f"que tu as\n"
+            f"2. **Donne les réglages spécifiques** (hauteur siège, position, prise)\n"
+            f"3. **Explique l'exécution** étape par étape, pédagogique\n"
+            f"4. **Cite 2-3 erreurs courantes** pour cette machine\n"
+            f"5. **Propose 1-2 alternatives** si pas dispo\n"
+            f"6. Tu peux suggérer **séries/reps adaptés à l'objectif** "
+            f"de l'utilisateur (utilise le state reminder)"
+            + from_library
+        )
+
+    @beta_tool
+    def send_progress_chart(chart_type: str = "weight") -> str:
+        """Generate and send a PNG chart via WhatsApp. Call when the user asks \
+'mon graphe', 'évolution poids', 'macros du jour', 'mon adhérence', \
+'mon training'. Or proactively at end-of-week debrief. PREMIUM feature : le \
+client reçoit une image partageable.
+
+Args:
+    chart_type: 'weight' (trajectoire poids 90j) | 'macros' (macros du jour) \
+| 'adherence' (heatmap 30j) | 'workout' (volume training 12 sem).
+"""
+        if not public_url_base:
+            return (
+                "Génération de chart indisponible (public_url_base non configuré). "
+                "Donne plutôt la donnée en texte."
+            )
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        name = user.get("name") or "toi"
+
+        try:
+            if chart_type == "weight":
+                weights = db.weights_history(user_id, limit=60)
+                token, _ = chart_generator.weight_chart(
+                    name, weights, user.get("target_weight_kg")
+                )
+                caption = f"📈 Ton évolution poids, {name}. Continue 💪"
+            elif chart_type == "macros":
+                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                meals = db.meals_for_day(user_id, today)
+                actual = {
+                    "kcal": sum(int(m.get("total_calories") or 0) for m in meals),
+                    "protein": sum(int(m.get("total_protein_g") or 0) for m in meals),
+                    "carbs": sum(int(m.get("total_carbs_g") or 0) for m in meals),
+                    "fat": sum(int(m.get("total_fat_g") or 0) for m in meals),
+                }
+                target = {
+                    "kcal": user.get("daily_calories") or 0,
+                    "protein": user.get("daily_protein_g") or 0,
+                    "carbs": user.get("daily_carbs_g") or 0,
+                    "fat": user.get("daily_fat_g") or 0,
+                }
+                token, _ = chart_generator.macros_chart(name, actual, target)
+                caption = f"🍽️ Macros du jour"
+            elif chart_type == "adherence":
+                since = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+                meals = db.meals_since(user_id, since)
+                by_day: dict[str, list] = {}
+                for m in meals:
+                    day = (m.get("eaten_at") or "")[:10]
+                    by_day.setdefault(day, []).append(m)
+                target_kcal = user.get("daily_calories") or 2000
+                days_data = []
+                for day, day_meals in sorted(by_day.items())[-30:]:
+                    kcal = sum(int(m.get("total_calories") or 0) for m in day_meals)
+                    adherence = min(100, int(kcal / target_kcal * 100)) if target_kcal else 0
+                    days_data.append({"date": day, "adherence": adherence})
+                token, _ = chart_generator.adherence_heatmap(name, days_data)
+                caption = f"✅ Ton adhérence sur 30 jours"
+            elif chart_type == "workout":
+                since = (datetime.now(timezone.utc) - timedelta(days=84)).strftime("%Y-%m-%d")
+                logs = db.workout_logs_since(user_id, since)
+                token, _ = chart_generator.workout_volume_chart(name, logs)
+                caption = f"🏋️ Ton volume training, {name}"
+            else:
+                return f"Type de chart inconnu : {chart_type}. Options : weight, macros, adherence, workout."
+        except Exception as exc:  # noqa: BLE001
+            return f"Erreur génération chart : {exc}. Fais un debrief texte."
+
+        url = f"{public_url_base.rstrip('/')}/chart/{token}"
+        attachments.append({"url": url, "caption": caption})
+        return (
+            f"✅ Chart **{chart_type}** généré et envoyé en image WhatsApp. "
+            f"Ajoute un commentaire court dans ta réponse texte pour contextualiser "
+            f"(la photo arrive juste après)."
+        )
+
+    @beta_tool
+    def request_live_call(reason: str, urgency: str = "normal") -> str:
+        """Flag a request for a live call/video with Damien (the human coach). \
+Use when the situation goes beyond Calo : ED suspicions, severe depression, \
+post-surgery complex case, plateau >2 months despite full compliance, or \
+explicit user request to talk to a human. Creates a memory tagged for Damien \
+and sends a notification.
+
+Args:
+    reason: Why the call is needed (e.g. 'sopk diagnostiqué récent, besoin de \
+calibrer plan global', 'plateau 8 sem malgré tout en règle', 'angoisses + \
+crises + perte poids rapide, suspect de TCA').
+    urgency: 'normal' (under 7 days) | 'urgent' (under 48h) | 'critical' \
+(same day for med/psy emergencies).
+"""
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+        urgency_label = {
+            "normal": "📅 Normal",
+            "urgent": "⚡ Urgent",
+            "critical": "🚨 CRITIQUE",
+        }.get(urgency, "📅 Normal")
+        db.add_memory(
+            user_id,
+            f"[HANDOFF DAMIEN — {urgency_label}] Demande call live le {today}. "
+            f"Raison : {reason}",
+            category="objectif",
+            importance=5,
+        )
+        return (
+            f"✅ Demande de call live enregistrée ({urgency_label}).\n"
+            f"Raison : {reason}\n\n"
+            f"Présente à l'utilisateur : \"J'ai marqué ça pour Damien. Il/elle "
+            f"te rappelle dans les "
+            f"{ '24h' if urgency == 'critical' else '48h' if urgency == 'urgent' else '7 jours'}.\" "
+            f"S'il s'agit d'une situation médicale ou psy grave, rappelle que "
+            f"**en cas d'urgence vitale, appeler le 15 (FR) / 144 (CH) immédiatement**."
+        )
+
     @beta_tool
     def search_knowledge(query: str) -> str:
         """Search Calo's knowledge base for relevant guidance. Call this when the \
@@ -3874,6 +4084,10 @@ Args:
         cognitive_reframe,
         burnout_assessment,
         update_mental_profile,
+        # Premium features
+        explain_gym_machine,
+        send_progress_chart,
+        request_live_call,
         search_knowledge,
         remember,
     ]

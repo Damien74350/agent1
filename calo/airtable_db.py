@@ -518,6 +518,7 @@ class AirtableDB:
         category: str | None = None,
         equipment: str | None = None,
         muscle: str | None = None,
+        best_for: str | None = None,
         max_results: int = 20,
     ) -> list[dict[str, Any]]:
         conditions = [f"{{{EXERCISES_FIELDS['active']}}}"]
@@ -532,6 +533,10 @@ class AirtableDB:
         if muscle:
             conditions.append(
                 f"FIND('{_escape(muscle)}', ARRAYJOIN({{{EXERCISES_FIELDS['primary_muscles']}}}, ',')) > 0"
+            )
+        if best_for:
+            conditions.append(
+                f"FIND('{_escape(best_for)}', ARRAYJOIN({{{EXERCISES_FIELDS['best_for']}}}, ',')) > 0"
             )
         formula = "AND(" + ", ".join(conditions) + ")"
         recs = self.exercises.all(
@@ -783,6 +788,7 @@ def _unwrap_exercise(rec: dict[str, Any]) -> dict[str, Any]:
     f = rec.get("fields", {})
     equipment_raw = f.get(EXERCISES_FIELDS["equipment"]) or []
     muscles_raw = f.get(EXERCISES_FIELDS["primary_muscles"]) or []
+    best_for_raw = f.get(EXERCISES_FIELDS["best_for"]) or []
     return {
         "id": rec["id"],
         "name": f.get(EXERCISES_FIELDS["name"]),
@@ -795,6 +801,8 @@ def _unwrap_exercise(rec: dict[str, Any]) -> dict[str, Any]:
         "regressions": f.get(EXERCISES_FIELDS["regressions"]),
         "progressions": f.get(EXERCISES_FIELDS["progressions"]),
         "video_url": f.get(EXERCISES_FIELDS["video_url"]),
+        "contraindications": f.get(EXERCISES_FIELDS["contraindications"]),
+        "best_for": best_for_raw if isinstance(best_for_raw, list) else [],
     }
 
 

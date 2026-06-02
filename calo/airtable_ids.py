@@ -95,6 +95,8 @@ EXERCISES_FIELDS = {
     "progressions": "fld1sOzLzpBcOZQoT",
     "video_url": "fld7occ56RautxmPo",
     "active": "fldaSLXynBWvovemH",
+    "contraindications": "fld5Jpr5aOhQuWqG1",
+    "best_for": "fldkKOq774HAwTlS3",
 }
 
 WORKOUT_LOGS_FIELDS = {

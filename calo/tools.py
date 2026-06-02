@@ -3853,24 +3853,61 @@ appuis). Plus tu es précis, mieux je matche dans la bibliothèque."
                     break
 
         if matched_ex:
+            # Récupère les conditions médicales de l'utilisateur pour adapter
+            user = db.get_user_by_id(user_id)
+            user_conditions = (user or {}).get("medical_conditions") or ""
+            contraindic = matched_ex.get("contraindications") or ""
+            best_for = matched_ex.get("best_for") or []
+
+            # Détection automatique des risques selon les pathologies user
+            warnings: list[str] = []
+            user_lower = user_conditions.lower()
+            contraindic_lower = contraindic.lower()
+            risk_zones = [
+                ("genou", "genoux"),
+                ("hanche", "hanche"),
+                ("dos", "lombaires"),
+                ("lombaire", "lombaires"),
+                ("hernie", "lombaires"),
+                ("épaule", "épaules"),
+                ("arthrose", "arthrose"),
+                ("ostéoporose", "ostéoporose"),
+                ("postpartum", "postpartum"),
+                ("grossesse", "grossesse"),
+            ]
+            for user_word, zone_key in risk_zones:
+                if user_word in user_lower and zone_key in contraindic_lower:
+                    warnings.append(
+                        f"⚠️ Tu as mentionné **{user_word}** dans ton profil médical. "
+                        f"Pour cet exo, regarde la section Contraindications ci-dessous."
+                    )
+
             return (
                 f"# 🏋️ {matched_ex['name']} (matché bibliothèque Calo)\n\n"
                 f"📂 **Catégorie** : {matched_ex.get('category')}\n"
                 f"🏋️ **Matériel** : {', '.join(matched_ex.get('equipment') or [])}\n"
                 f"⚡ **Difficulté** : {matched_ex.get('difficulty')}\n"
-                f"💪 **Muscles ciblés** : {', '.join(matched_ex.get('primary_muscles') or [])}\n\n"
-                f"## 📋 Technique\n{matched_ex.get('technique', '')}\n\n"
+                f"💪 **Muscles ciblés** : {', '.join(matched_ex.get('primary_muscles') or [])}\n"
+                + (f"🎯 **Recommandé pour** : {', '.join(best_for)}\n" if best_for else "")
+                + ("\n" + "\n".join(warnings) + "\n" if warnings else "")
+                + (f"\n## ⚕️ Contraindications / adaptations\n{contraindic}\n" if contraindic else "")
+                + f"\n## 📋 Technique\n{matched_ex.get('technique', '')}\n\n"
                 f"## ❌ Erreurs courantes\n{matched_ex.get('common_mistakes', '')}\n\n"
                 f"## ⬇️ Régressions (plus facile)\n{matched_ex.get('regressions', '')}\n\n"
                 f"## ⬆️ Progressions (plus dur)\n{matched_ex.get('progressions', '')}\n\n"
                 f"## 💡 À toi de jouer\n"
                 f"1. Présente ces infos à l'utilisateur avec ton ton humain\n"
-                f"2. Adapte les conseils à son OBJECTIF (perte de poids = "
+                f"2. **VÉRIFIE les pathologies du user** dans le state reminder "
+                f"(medical_conditions). Si match avec contraindications → propose "
+                f"une **régression** ou alternative safe\n"
+                f"3. Adapte les conseils à son OBJECTIF (perte de poids = "
                 f"séries longues 12-15 reps ; force = lourd 4-6 reps ; "
                 f"hypertrophie = 8-12 reps modéré-lourd)\n"
-                f"3. Suggère un nombre de séries/reps précis basé sur son "
+                f"4. Suggère un nombre de séries/reps précis basé sur son "
                 f"state reminder (programme actif, niveau, expérience)\n"
-                f"4. Termine par : 'Tu veux qu'on l'intègre dans ta prochaine "
+                f"5. Si pathologie sérieuse + douleur active : recommande "
+                f"consultation kiné / médecin AVANT.\n"
+                f"6. Termine par : 'Tu veux qu'on l'intègre dans ta prochaine "
                 f"séance ?' pour engager."
             )
 
@@ -4011,6 +4048,58 @@ Args:
         )
 
     @beta_tool
+    def find_safe_alternatives(
+        injury_zone: str,
+        muscle_group: str = "",
+        max_results: int = 8,
+    ) -> str:
+        """Liste les exercices SÉCURISÉS pour une zone blessée/fragile. Appelle \
+ce tool dès que l'utilisateur mentionne : douleur genou, hanche, dos/lombaires, \
+épaule, arthrose, hernie, postpartum, ostéoporose, grossesse. Calo doit TOUJOURS \
+préférer des exos validés contre des exos non-évalués pour la zone.
+
+Args:
+    injury_zone: 'genoux fragiles' | 'hanche fragile' | 'lombaires fragiles' | \
+'épaules fragiles' | 'arthrose' | 'ostéoporose' | 'postpartum' | 'grossesse' | \
+'senior 65+' | 'rééducation' (ces valeurs matchent exactement les tags \
+'Best for' de la library).
+    muscle_group: Optionnel — pour filtrer par catégorie ('jambes', 'dos', \
+'pecs', 'épaules', 'bras', 'core', 'cardio', 'mobilité').
+"""
+        # Match library exercises explicitly tagged for this safe category
+        results = db.list_exercises(
+            best_for=injury_zone,
+            category=muscle_group or None,
+            max_results=max_results,
+        )
+        if not results:
+            return (
+                f"Aucun exercice spécifiquement tagué '{injury_zone}' dans la "
+                f"library. Utilise ton expertise pour proposer : 1) Mouvements "
+                f"sans impact ; 2) ROM réduit ; 3) Charge légère ; 4) Focus "
+                f"mobilité + activation ; 5) RECOMMANDE consultation kiné/médecin "
+                f"si douleur active >3/10."
+            )
+        out = [f"# ✅ Exos sécurisés pour : **{injury_zone}**"]
+        if muscle_group:
+            out.append(f"Filtré par : {muscle_group}\n")
+        for ex in results:
+            out.append(
+                f"\n## {ex['name']} ({ex.get('difficulty')})"
+            )
+            out.append(f"💪 {', '.join(ex.get('primary_muscles') or [])}")
+            if ex.get("contraindications"):
+                out.append(f"⚕️ {ex['contraindications'][:200]}")
+            tech = ex.get("technique") or ""
+            out.append(f"📋 {tech[:200]}{'...' if len(tech) > 200 else ''}")
+        out.append(
+            "\n💡 Présente 3-4 options à l'utilisateur (pas tout d'un coup). "
+            "Adapte à son objectif. **Si douleur >3/10 ou aiguë récente → "
+            "recommande consultation kiné AVANT le sport.**"
+        )
+        return "\n".join(out)
+
+    @beta_tool
     def request_live_call(reason: str, urgency: str = "normal") -> str:
         """Flag a request for a live call/video with Damien (the human coach). \
 Use when the situation goes beyond Calo : ED suspicions, severe depression, \
@@ -4130,6 +4219,7 @@ Args:
         update_mental_profile,
         # Premium features
         explain_gym_machine,
+        find_safe_alternatives,
         send_progress_chart,
         request_live_call,
         search_knowledge,

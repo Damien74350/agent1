@@ -3815,44 +3815,79 @@ Args:
         machine_summary: str = "",
         target_muscles_guess: str = "",
     ) -> str:
-        """User has sent a photo of a gym machine they don't know how to use. \
-Read the photo with vision, then call THIS tool with what you see. Returns a \
-structured guide : what muscles it works, how to use it step by step, common \
-mistakes, alternatives if unavailable. PREMIUM feature : un débutant en salle \
-arrête de stresser, un confirmé optimise.
+        """User has sent a photo of a gym machine or exercise they want to \
+understand. Read the photo with vision, then call THIS tool with what you see. \
+Returns a structured guide : matched library entry if available (technique, \
+common mistakes, regressions, progressions), or a comprehensive framework if \
+not. PREMIUM feature : un débutant en salle arrête de stresser, un confirmé \
+optimise.
 
 Args:
-    machine_summary: What you see on the photo (e.g. 'machine guidée \
-développé couché Hammer Strength', 'machine convergente vis-à-vis poulie', \
-'leg press 45°', 'rameur Concept2', 'smith machine', 'TRX', \
-'machine adducteurs assis').
-    target_muscles_guess: Muscles it seems to target (e.g. 'pectoraux + triceps', \
-'fessiers + ischios', 'quadriceps').
+    machine_summary: Précisément ce que tu vois sur la photo (e.g. 'machine \
+guidée développé couché Hammer Strength', 'leg press 45° avec 4 poids de \
+20kg', 'rameur Concept2', 'smith machine avec barre', 'pec deck butterfly', \
+'TRX avec sangles', 'banc Larry Scott preacher curl', 'hack squat machine', \
+'cable crossover'). Si tu reconnais une machine de la liste : utilise SON \
+nom exact pour optimiser le match.
+    target_muscles_guess: Muscles visiblement ciblés (e.g. 'pectoraux + \
+triceps', 'fessiers + ischios', 'quadriceps', 'lats + biceps').
 """
         if not machine_summary:
             return (
                 "Décris d'abord ce que tu vois sur la photo dans 'machine_summary' "
-                "(type de machine, fabricant si visible, charge, accessoires)."
+                "(type de machine, accessoires visibles, charge, position des \
+appuis). Plus tu es précis, mieux je matche dans la bibliothèque."
             )
-        # Try matching in our Exercise library first
-        ex = db.get_exercise_by_name(machine_summary)
-        from_library = ""
-        if ex:
-            from_library = (
-                f"\n\n## 📚 Trouvé dans la bibliothèque Calo : **{ex['name']}**\n"
-                f"{ex.get('technique', '')[:400]}"
+
+        # Try multiple matches to find the best library entry.
+        # Match strategies (order of priority) :
+        #  1. Direct name search
+        #  2. Each keyword in the summary
+        matched_ex = db.get_exercise_by_name(machine_summary)
+        if not matched_ex:
+            # Try each significant keyword
+            words = [w for w in machine_summary.lower().split() if len(w) >= 4]
+            for w in words[:5]:  # cap to avoid spam
+                matched_ex = db.get_exercise_by_name(w)
+                if matched_ex:
+                    break
+
+        if matched_ex:
+            return (
+                f"# 🏋️ {matched_ex['name']} (matché bibliothèque Calo)\n\n"
+                f"📂 **Catégorie** : {matched_ex.get('category')}\n"
+                f"🏋️ **Matériel** : {', '.join(matched_ex.get('equipment') or [])}\n"
+                f"⚡ **Difficulté** : {matched_ex.get('difficulty')}\n"
+                f"💪 **Muscles ciblés** : {', '.join(matched_ex.get('primary_muscles') or [])}\n\n"
+                f"## 📋 Technique\n{matched_ex.get('technique', '')}\n\n"
+                f"## ❌ Erreurs courantes\n{matched_ex.get('common_mistakes', '')}\n\n"
+                f"## ⬇️ Régressions (plus facile)\n{matched_ex.get('regressions', '')}\n\n"
+                f"## ⬆️ Progressions (plus dur)\n{matched_ex.get('progressions', '')}\n\n"
+                f"## 💡 À toi de jouer\n"
+                f"1. Présente ces infos à l'utilisateur avec ton ton humain\n"
+                f"2. Adapte les conseils à son OBJECTIF (perte de poids = "
+                f"séries longues 12-15 reps ; force = lourd 4-6 reps ; "
+                f"hypertrophie = 8-12 reps modéré-lourd)\n"
+                f"3. Suggère un nombre de séries/reps précis basé sur son "
+                f"state reminder (programme actif, niveau, expérience)\n"
+                f"4. Termine par : 'Tu veux qu'on l'intègre dans ta prochaine "
+                f"séance ?' pour engager."
             )
+
+        # Fallback : pas dans la library → cadre générique mais riche
         return (
-            f"# 🏋️ Décodage machine\n\n"
+            f"# 🏋️ Décodage machine (pas dans la bibliothèque — utilise ton expertise)\n\n"
             f"Tu as vu : **{machine_summary}**\n"
             f"Muscles ciblés : {target_muscles_guess or 'à identifier'}\n\n"
             f"## 📋 Cadre d'analyse à fournir\n\n"
             f"### 1. Identifier le mouvement principal\n"
             f"- C'est une **machine guidée** (smith, hammer strength, machine "
-            f"convergente) ou **libre** (haltères, barre, kettlebell, TRX) ?\n"
-            f"- Mouvement de **poussée** (push), **tirage** (pull), ou **isolation** ?\n"
+            f"convergente, machine guidée verticale) ou **libre** (haltères, "
+            f"barre, kettlebell, TRX) ?\n"
+            f"- Mouvement de **poussée** (push), **tirage** (pull), ou "
+            f"**isolation** ?\n"
             f"- Plan : horizontal / vertical / oblique ?\n\n"
-            f"### 2. Réglages avant utilisation\n"
+            f"### 2. Réglages avant utilisation (TRÈS IMPORTANT)\n"
             f"- **Hauteur du siège** : varie selon l'exercice. Repère : "
             f"l'articulation principale (épaule, hanche, genou) doit être alignée "
             f"avec l'axe de rotation de la machine\n"
@@ -3860,32 +3895,41 @@ développé couché Hammer Strength', 'machine convergente vis-à-vis poulie', \
             f"- **Sécurités** : ceinture, butées, prise correcte des poignées\n"
             f"- **Charge** : commence LÉGER (40-50% de ce que tu fais en libre)\n\n"
             f"### 3. Exécution\n"
-            f"- 2-3 sec descente, 1 sec pause, 1-2 sec montée explosive\n"
+            f"- 2-3 sec descente (excentrique = le plus important pour "
+            f"croissance musculaire)\n"
+            f"- 1 sec pause / contraction max\n"
+            f"- 1-2 sec montée explosive\n"
             f"- ROM (amplitude) complet sans hyperextension\n"
-            f"- Respiration : inspire à la descente / phase excentrique, "
-            f"expire à la montée / phase concentrique\n"
-            f"- 8-12 reps si hypertrophie, 4-6 reps si force\n\n"
+            f"- Respiration : inspire à la descente, expire à la montée\n"
+            f"- 8-12 reps si hypertrophie, 4-6 reps si force, 15+ reps si "
+            f"endurance\n\n"
             f"### 4. Erreurs classiques sur les machines\n"
-            f"- **Mauvaise hauteur de siège** : impacte le mouvement et stresse les articulations\n"
+            f"- **Mauvaise hauteur de siège** : impacte le mouvement et "
+            f"stresse les articulations\n"
             f"- **Charge trop lourde** : la machine guide = on en met trop. "
             f"Commence léger, augmente quand ROM + form parfaits\n"
             f"- **ROM partiel** : descends complètement, monte complètement\n"
             f"- **Verrouiller l'articulation** en haut : garde légèrement fléchi\n"
-            f"- **Lâcher la charge** (les poids claquent) : contrôle la phase excentrique\n\n"
+            f"- **Lâcher la charge** (les poids claquent) : contrôle la phase "
+            f"excentrique\n\n"
             f"### 5. Alternative si machine indispo / occupée\n"
             f"- Variante haltères / barre / élastique\n"
             f"- Variante poids du corps\n"
             f"- Variante autre machine équivalente\n\n"
             f"## Tes consignes Calo\n"
             f"1. **Identifie précisément** la machine avec la photo + summary "
-            f"que tu as\n"
-            f"2. **Donne les réglages spécifiques** (hauteur siège, position, prise)\n"
-            f"3. **Explique l'exécution** étape par étape, pédagogique\n"
-            f"4. **Cite 2-3 erreurs courantes** pour cette machine\n"
-            f"5. **Propose 1-2 alternatives** si pas dispo\n"
-            f"6. Tu peux suggérer **séries/reps adaptés à l'objectif** "
-            f"de l'utilisateur (utilise le state reminder)"
-            + from_library
+            f"que tu as. Tu connais la plupart des machines de salle.\n"
+            f"2. **Donne les réglages spécifiques** (hauteur siège, position "
+            f"pieds, prise, charge de départ)\n"
+            f"3. **Explique l'exécution** étape par étape, pédagogique, "
+            f"comme à un débutant\n"
+            f"4. **Cite 3-5 erreurs courantes** pour cette machine "
+            f"spécifiquement\n"
+            f"5. **Propose 2-3 alternatives** si pas dispo / occupée\n"
+            f"6. **Suggère séries/reps** adaptés à l'objectif de l'utilisateur "
+            f"(utilise le state reminder pour personnaliser)\n"
+            f"7. Termine par engagement : 'Tu veux qu'on l'ajoute à ta "
+            f"prochaine séance ?'"
         )
 
     @beta_tool

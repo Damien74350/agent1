@@ -4100,6 +4100,500 @@ Args:
         return "\n".join(out)
 
     @beta_tool
+    def calculate_one_rep_max(weight_kg: float, reps: int, exercise: str = "") -> str:
+        """Calculate the estimated 1RM (one-rep max) from a working set. \
+Use when the user reports a heavy set (e.g. 'j'ai fait squat 100kg pour 5'). \
+Returns estimates from 3 formulas + recommendations for training percentages.
+
+Args:
+    weight_kg: Weight lifted in kg.
+    reps: Number of reps completed (1-15 range valid).
+    exercise: Optional exercise name (squat, bench, deadlift, etc.).
+"""
+        if reps < 1 or reps > 15 or weight_kg <= 0:
+            return "Reps 1-15 et poids > 0 requis."
+        # Three formulas + their average
+        epley = weight_kg * (1 + reps / 30)
+        brzycki = weight_kg * 36 / (37 - reps)
+        lombardi = weight_kg * (reps ** 0.10)
+        avg_1rm = round((epley + brzycki + lombardi) / 3, 1)
+
+        # Training percentages
+        ex_str = f" ({exercise})" if exercise else ""
+        return (
+            f"# 📊 Estimation 1RM{ex_str}\n\n"
+            f"De : **{weight_kg} kg pour {reps} reps**\n\n"
+            f"## 3 formules\n"
+            f"- Epley : {epley:.1f} kg\n"
+            f"- Brzycki : {brzycki:.1f} kg\n"
+            f"- Lombardi : {lombardi:.1f} kg\n"
+            f"- **Moyenne : {avg_1rm} kg** ← utilise cette valeur\n\n"
+            f"## Pourcentages de training\n"
+            f"- **Force max (1-3 reps)** : {avg_1rm * 0.90:.1f}-{avg_1rm * 0.95:.1f} kg (90-95%)\n"
+            f"- **Force (3-6 reps)** : {avg_1rm * 0.85:.1f}-{avg_1rm * 0.90:.1f} kg (85-90%)\n"
+            f"- **Hypertrophie lourde (6-8 reps)** : {avg_1rm * 0.80:.1f}-{avg_1rm * 0.85:.1f} kg (80-85%)\n"
+            f"- **Hypertrophie modérée (8-12 reps)** : {avg_1rm * 0.70:.1f}-{avg_1rm * 0.80:.1f} kg (70-80%)\n"
+            f"- **Endurance (15+ reps)** : {avg_1rm * 0.60:.1f}-{avg_1rm * 0.70:.1f} kg (60-70%)\n\n"
+            f"⚠️ Estimation. Pour 1RM vrai, test en salle avec spotter + échauffement complet."
+        )
+
+    @beta_tool
+    def find_substitutes(ingredient: str, reason: str = "") -> str:
+        """Find appropriate substitutes for an ingredient. Use when the user \
+asks 'remplace par quoi', 'je n'ai pas X', 'je suis allergique à Y'.
+
+Args:
+    ingredient: The ingredient to substitute (e.g. 'oeufs', 'beurre', 'lait', \
+'gluten', 'farine', 'sucre').
+    reason: Optional reason ('allergie', 'vegan', 'sans gluten', 'cetogene', \
+'low-carb', 'pas chez moi').
+"""
+        ing = ingredient.lower().strip()
+        substitutes: dict[str, str] = {
+            "œuf": "**Pour pâtisserie** : 1 œuf = 3 cs compote de pomme OU 1 cs graines de lin moulues + 3 cs eau (chia OK aussi) OU 1/4 banane écrasée OU 60g tofu silken mixé. Pour omelette : tofu brouillé.",
+            "oeuf": "**Pour pâtisserie** : 1 œuf = 3 cs compote de pomme OU 1 cs graines de lin moulues + 3 cs eau (chia OK aussi) OU 1/4 banane écrasée OU 60g tofu silken mixé. Pour omelette : tofu brouillé.",
+            "beurre": "**Pour cuisson** : huile d'olive (sauté) OU huile de coco (pâtisserie) OU compote pomme (pâtisserie sucrée) OU avocat écrasé OU yaourt grec. Ratio 3/4 du beurre.",
+            "lait": "Lait d'amande, soja, avoine, coco, riz. **Pour pâtisserie** : ratio 1:1. **Pour café** : amande/avoine. **Riche en prot** : soja non sucré.",
+            "crème": "Crème de coco (riche), crème de soja, yaourt grec dilué, lait + maïzena. Pour montée : crème de coco bien froide.",
+            "fromage": "Levure nutritionnelle (saveur fromage), tofu silken avec citron/sel pour ricotta, faux parmesan : noix de cajou + levure nut + sel.",
+            "gluten": "Farine de riz, farine de sarrasin, farine d'amandes, farine de pois chiches, farine de quinoa, farine de coco, mix 'sans gluten' du commerce. Texture différente, ajuster liquides.",
+            "farine de blé": "Farine de riz (-25% liquides), farine d'amandes (riche), farine de sarrasin (gout), mix sans gluten 1:1. Recettes adapter.",
+            "sucre": "Miel (1/2 quantite), sirop d'érable (même quantite), stévia, érythritol, allulose, dates mixées. **À éviter** : sucralose en patisserie (chauffe altere).",
+            "huile": "Huile olive (cuisson normale), huile coco (haute température), huile avocat, huile cameline (cru), purée d'amandes / oléagineux.",
+            "viande": "Tofu mariné, tempeh, seitan, lentilles, pois chiches, champignons (texture), jackfruit (effiloché). Légumineuses requierent assaisonnement +++",
+            "poisson": "Tofu pané dans algues nori, sardines (autre poisson), salmon vegan : carotte fumée marinée + algues, tempeh + sauce wasabi.",
+            "pâtes": "Pâtes de légumineuses (lentilles, pois chiches), spaghettis de courgette, konjac (low-carb), shirataki, riz, quinoa, sarrasin.",
+            "pain": "Crackers, galettes de riz, pain sans gluten (oats, sarrasin), pain de seigle, wraps de feuilles de salade ou tortillas mais.",
+            "riz": "Quinoa, sarrasin, riz de chou-fleur, légumineuses cuites, orge, riz complet vs blanc.",
+            "yaourt": "Yaourt soja, coco, amande, skyr (riche prot), fromage blanc, kefir, lait fermente.",
+            "ch é colat": "Cacao non sucré, caroube (lighter), poudre cacao + huile coco + miel/dattes maison.",
+            "miel": "Sirop d'érable, sirop d'agave, sirop yacon, datesmixées, mélasses noire. Pour vegan : éviter miel.",
+            "huile de palme": "OK éviter — utilise huile coco, huile olive, huile colza selon usage."
+        }
+
+        # Match flexibility
+        result = None
+        for key, val in substitutes.items():
+            if key in ing:
+                result = val
+                break
+
+        reason_note = ""
+        if reason:
+            reason_note = f"\n\n_Raison : {reason}_"
+
+        if result:
+            return (
+                f"# 🔄 Substituts pour : {ingredient}\n\n"
+                f"{result}{reason_note}\n\n"
+                f"💡 Conseil Calo : adapter quantités selon recette. Test petit lot d'abord si pâtisserie."
+            )
+        return (
+            f"# 🔄 Substituts pour : {ingredient}\n\n"
+            f"Pas de substitut spécifique dans la base. Réponds depuis ton expertise nutritionnelle.\n"
+            f"Considère :\n"
+            f"1. La fonction de l'ingrédient (liant, gras, sucre, texture, saveur)\n"
+            f"2. Le contexte (recette sucrée/salée, allergie, choix éthique)\n"
+            f"3. Macros équivalents si pertinent{reason_note}"
+        )
+
+    @beta_tool
+    def cycle_phase_advisor(day_of_cycle: int) -> str:
+        """For women, provide phase-specific nutrition + sport guidance based \
+on the day of the menstrual cycle. Use when user asks 'j'en suis où dans \
+mon cycle', 'que faire J15', or proactively if cycle date known.
+
+Args:
+    day_of_cycle: Day of cycle (1 = first day of period, ~28 = day before next).
+"""
+        day = max(1, min(35, int(day_of_cycle)))
+
+        # Phase identification
+        if day <= 5:
+            phase = "MENSTRUELLE"
+            phase_desc = "Estrogenes et progesterone au plus bas. Energie physique reduite, mental stable. Comme un homme hormonalement."
+            nutrition = (
+                "**+200-300 kcal** (perte sang + besoins fer)\n"
+                "- Fer +++ (viande rouge, foie, palourdes, lentilles + vit C)\n"
+                "- Magnesium 400mg (anti-crampes)\n"
+                "- Omega 3 (anti-inflammatoire)\n"
+                "- Hydratation 3L\n"
+                "- Cafeine moderee (aggrave crampes)"
+            )
+            sport = (
+                "- Cardio LEGER : marche, vélo lent, yoga doux\n"
+                "- Muscu si bien : forme/technique > charges\n"
+                "- EVITE : HIIT intense, 1RM, sports impact\n"
+                "- ECOUTE : fatigue extreme = repos OK"
+            )
+        elif day <= 13:
+            phase = "FOLLICULAIRE"
+            phase_desc = "Estrogenes en hausse rapide. Pic energie + libido + humeur. Ta PHASE OR."
+            nutrition = (
+                "Calories normales\n"
+                "- Sensibilite insulino max = + glucides OK\n"
+                "- Proteines normales\n"
+                "- Cafe sans probleme\n"
+                "- Glucides complexes peri-workout"
+            )
+            sport = (
+                "**Pic d'intensite** : powerlifting, CrossFit, sprints\n"
+                "- TEST tes PRs ici (force max)\n"
+                "- HIIT excellent\n"
+                "- Apprentissage moteur optimum (nouveaux mouvements)"
+            )
+        elif day <= 16:
+            phase = "OVULATION"
+            phase_desc = "Pic LH déclenche ovulation. Estrogenes au sommet. Energie au top, libido pic."
+            nutrition = (
+                "Calories normales\n"
+                "- Mange ce que tu veux structure\n"
+                "- Hydratation +++\n"
+                "- Vitamine E (qualite ovulation)"
+            )
+            sport = (
+                "Continue intensite élevée\n"
+                "- Force pic\n"
+                "- **ATTENTION** : risque lésion ligament croisé augmenté (50%) chez femmes sportives → échauffe bien, prudence pivots"
+            )
+        elif day <= 21:
+            phase = "LUTÉALE PRECOCE"
+            phase_desc = "Progestérone monte. Energie encore OK, sommeil legerement perturbé."
+            nutrition = (
+                "Calories normales\n"
+                "- Glucides moderes\n"
+                "- Magnesium 400mg (calmant)\n"
+                "- B6 (anti-SPM)"
+            )
+            sport = (
+                "Volume normal\n"
+                "- Intensite modere a haute\n"
+                "- Force se stabilise"
+            )
+        else:
+            phase = "LUTÉALE TARDIVE (SPM)"
+            phase_desc = "Progestérone qui chute, estrogènes en baisse. SPM : irritabilite, ballonnements, fringales, sommeil mauvais."
+            nutrition = (
+                "**+200 kcal** (besoins reels accrus)\n"
+                "- +30g glucides pour stabiliser humeur\n"
+                "- Chocolat noir 85%+ OK (magnesium)\n"
+                "- Tryptophane : dinde, banane, oeufs (serotonine)\n"
+                "- B6 : avocat, banane (anti-SPM)\n"
+                "- Calcium 1200mg (anti-SPM)\n"
+                "- Magnesium 400mg\n"
+                "- LIMITER : cafe (>2 = anxiete), alcool (sommeil), sucre raffiné (yo-yo emotionnel)"
+            )
+            sport = (
+                "- Volume modéré\n"
+                "- Intensité baisse\n"
+                "- Yoga, marche, natation\n"
+                "- Force baisse 5-10% : NORMAL, pas un échec\n"
+                "- Pas le moment pour PRs"
+            )
+
+        return (
+            f"# 🌸 J{day} : Phase **{phase}**\n\n"
+            f"{phase_desc}\n\n"
+            f"## 🍽️ Nutrition\n{nutrition}\n\n"
+            f"## 🏋️ Sport\n{sport}\n\n"
+            f"💡 Si tu suis ton cycle dans une app (Clue, Flo, Natural Cycles), "
+            f"partage les patterns observés avec moi pour ajuster sur le LONG terme. "
+            f"Cycle = ton tableau de bord physiologique."
+        )
+
+    @beta_tool
+    def pre_competition_brief(competition_type: str, days_until: int) -> str:
+        """Generate a pre-competition nutritional + mental briefing. Use for \
+marathon, triathlon, powerlifting comp, boxing, etc. Critical for athletes.
+
+Args:
+    competition_type: 'marathon' | 'semi' | 'triathlon' | 'powerlifting' | \
+'boxing' | 'crossfit' | 'tennis' | 'autre'.
+    days_until: Number of days until competition.
+"""
+        ct = competition_type.lower()
+
+        if days_until > 14:
+            phase = "PRÉPARATION LOINTAINE"
+            base = (
+                "## Phase préparation (J-14 et avant)\n"
+                "- Nutrition cible quotidienne maintenue (pas de cycles dramatiques)\n"
+                "- Sommeil 8h+\n"
+                "- Stress controle\n"
+                "- Pas de nouvel aliment / supplement\n"
+                "- 0 alcool 2 sem avant si vise PR\n"
+                "- Tests materiel + tactique pendant entrainements\n"
+                "- Bilan sanguin si pas fait dans l'annee\n"
+            )
+        elif days_until > 7:
+            phase = "AFFUTAGE 7-14J"
+            base = (
+                "## Phase affutage (J-7 à J-14)\n"
+                "- Volume entrainement -30 a -40% (tapering)\n"
+                "- Intensite maintenue\n"
+                "- Calories cibles maintenues\n"
+                "- Sommeil priorité absolue\n"
+                "- Pas de muscu lourde 4 jours avant\n"
+                "- Hydratation +20%\n"
+            )
+        elif days_until > 2:
+            phase = f"J-{days_until} A J-3 (carb-loading)"
+            base = (
+                f"## Phase carb-loading (J-{days_until})\n"
+                "- **Glucides 7-10 g/kg/jour** (vs 4-5 normal)\n"
+                "- Proteines maintenues 1.6-1.8 g/kg\n"
+                "- Lipides BAS (15-20% kcal)\n"
+                "- Fibres modérées (éviter inconfort)\n"
+                "- Volume sport minimal\n"
+                "- 0 alcool\n"
+                "- Sommeil 9h\n"
+                "- Pre-emballer aliments / boissons course\n"
+            )
+        elif days_until == 2:
+            phase = "J-2 (veille de veille)"
+            base = (
+                "## J-2\n"
+                "- Glucides 8-10 g/kg\n"
+                "- Repas familiers, faciles à digerer\n"
+                "- Eviter legumineuses (fermentation)\n"
+                "- Eviter cruciferes crus (gaz)\n"
+                "- Lit avant 22h\n"
+                "- 0 alcool\n"
+            )
+        elif days_until == 1:
+            phase = "VEILLE"
+            base = (
+                "## VEILLE (J-1)\n"
+                "- Diner 18h-19h max (pas plus tard)\n"
+                "- Glucides simples + peu de fibres\n"
+                "- Pasta blanche + sauce tomate légère + poisson blanc + légumes cuits + dessert\n"
+                "- 0 nouveauté alimentaire\n"
+                "- 0 alcool\n"
+                "- Hydratation 3L + sodium\n"
+                "- Lit avant 22h\n"
+                "- Preparer tenue + materiel + dossard\n"
+            )
+        else:
+            phase = "JOUR J"
+            base = (
+                "## JOUR J\n"
+                "- Petit-dej 3-4h avant : 100-150g avoine + banane + miel + café\n"
+                "- 1h avant : banane + dattes + 200ml eau\n"
+                "- Hydratation : sips eau + electrolytes\n"
+                "- Echauffement progressif\n"
+                "- Mental : visualisation +++\n"
+            )
+
+        # Sport-specific
+        sport_specific = {
+            "marathon": (
+                "## Spécifique MARATHON\n"
+                "- Pendant : 60-90g glucides/h (gels testés)\n"
+                "- 500-750 ml liquide/h + 300-700 mg sodium\n"
+                "- Cafeine 3-6 mg/kg vers km 25\n"
+                "- Départ contrôlé (90% des walls = depart trop rapide)\n"
+                "- Visualise les 5 derniers km depuis la veille"
+            ),
+            "semi": (
+                "## Spécifique SEMI-MARATHON\n"
+                "- Pendant : 30-60g glucides/h\n"
+                "- Plus rapide donc moins de carb intra-effort\n"
+                "- Strategie pace controllé"
+            ),
+            "triathlon": (
+                "## Spécifique TRIATHLON\n"
+                "- Pendant velo : 60-90g/h (le moment idéal de manger)\n"
+                "- Test nutrition transition velo->course\n"
+                "- Hydratation +++"
+            ),
+            "powerlifting": (
+                "## Spécifique POWERLIFTING\n"
+                "- Veille : sodium normal (NE PAS réduire pour faire poids sauf catégorie)\n"
+                "- Si fait poids : peser puis manger 1.5L liquide + carbs + sodium\n"
+                "- 3h avant compétition : repas riche prot + glucides\n"
+                "- Cafeine + L-théanine 45 min avant\n"
+                "- Mental : visualisation des charges max"
+            ),
+            "boxing": (
+                "## Spécifique BOXE / SPORT COMBAT\n"
+                "- Souvent faire poids (catégories)\n"
+                "- 24h avant pesage : sodium réduit\n"
+                "- Post-pesage : 1.5-2L liquide + carbs + sodium + proteines\n"
+                "- Dîner pre-fight : digestible, protéines + glucides moderate\n"
+                "- Echauffement complet, mental ++"
+            ),
+            "crossfit": (
+                "## Spécifique CROSSFIT COMPETITION\n"
+                "- Plusieurs WODs : maintien glycogene critical\n"
+                "- Entre WODs : glucides 30-60g + electrolytes\n"
+                "- Hydratation +++\n"
+                "- Recovery active entre"
+            ),
+        }
+
+        result = f"# 🎯 Briefing pré-competition : {competition_type.upper()}\n"
+        result += f"J-{days_until} ({phase})\n\n"
+        result += base
+        if ct in sport_specific:
+            result += "\n\n" + sport_specific[ct]
+        result += (
+            "\n\n## 💡 Conseil Calo\n"
+            "RIEN de nouveau le jour J. Tout ce que tu fais = testé en entrainement. "
+            "Mental visualisation = 30% du résultat (etudes psycho sport). "
+            "Confiance = préparation répétée."
+        )
+        return result
+
+    @beta_tool
+    def sport_specific_macros(sport: str, body_weight_kg: float = 0) -> str:
+        """Return optimal macros tailored to a specific sport. Use when user \
+asks 'macros pour MMA', 'glucides pour cyclisme', 'comment manger pour rugby', etc.
+
+Args:
+    sport: 'powerlifting' | 'bodybuilding' | 'marathon' | 'cyclisme' | \
+'triathlon' | 'mma' | 'crossfit' | 'tennis' | 'football' | 'rugby' | \
+'basket' | 'natation' | 'climbing' | 'gymnastique'.
+    body_weight_kg: Body weight for calculation. If 0, will use user's weight from profile.
+"""
+        user = db.get_user_by_id(user_id)
+        if body_weight_kg <= 0 and user:
+            body_weight_kg = float(user.get("current_weight_kg") or 70)
+        if body_weight_kg <= 0:
+            return "Poids requis pour calcul. Précise via body_weight_kg."
+
+        w = body_weight_kg
+        s = sport.lower()
+
+        profiles = {
+            "powerlifting": {
+                "prot": (2.0, 2.4),
+                "carb": (4, 6),
+                "fat": (1.0, 1.4),
+                "kcal_mult": (35, 45),
+                "note": "Phase prise force/masse. Surplus léger.",
+            },
+            "bodybuilding": {
+                "prot": (2.0, 2.6),
+                "carb": (3, 5),
+                "fat": (0.8, 1.2),
+                "kcal_mult": (32, 42),
+                "note": "Selon phase : prise (surplus +500) ou sèche (deficit -500).",
+            },
+            "marathon": {
+                "prot": (1.6, 1.8),
+                "carb": (6, 10),
+                "fat": (1.0, 1.5),
+                "kcal_mult": (50, 70),
+                "note": "Carb-loading 3 jours avant comp : 8-10 g/kg.",
+            },
+            "cyclisme": {
+                "prot": (1.4, 1.8),
+                "carb": (6, 12),
+                "fat": (1.0, 1.5),
+                "kcal_mult": (50, 80),
+                "note": "Long ride : 60-90g glucides/heure pendant.",
+            },
+            "triathlon": {
+                "prot": (1.6, 1.8),
+                "carb": (6, 10),
+                "fat": (1.0, 1.5),
+                "kcal_mult": (50, 75),
+                "note": "Recharge glycogene critical entre disciplines.",
+            },
+            "mma": {
+                "prot": (1.8, 2.2),
+                "carb": (4, 6),
+                "fat": (1.0, 1.4),
+                "kcal_mult": (40, 55),
+                "note": "Categories poids = cycles de pesage. Strategy specifique.",
+            },
+            "crossfit": {
+                "prot": (1.8, 2.2),
+                "carb": (4, 6),
+                "fat": (1.0, 1.4),
+                "kcal_mult": (40, 55),
+                "note": "Force + endurance. Glucides essentiels.",
+            },
+            "tennis": {
+                "prot": (1.4, 1.8),
+                "carb": (5, 7),
+                "fat": (1.0, 1.4),
+                "kcal_mult": (40, 50),
+                "note": "Sport explosif intermittent. Hydratation +++.",
+            },
+            "football": {
+                "prot": (1.6, 1.8),
+                "carb": (5, 7),
+                "fat": (1.0, 1.4),
+                "kcal_mult": (40, 55),
+                "note": "Sport mixte explosif/endurance.",
+            },
+            "rugby": {
+                "prot": (2.0, 2.4),
+                "carb": (5, 7),
+                "fat": (1.0, 1.5),
+                "kcal_mult": (45, 60),
+                "note": "Force + impact + endurance. Calories elevees.",
+            },
+            "basket": {
+                "prot": (1.6, 1.8),
+                "carb": (5, 7),
+                "fat": (1.0, 1.4),
+                "kcal_mult": (40, 55),
+                "note": "Sport explosif aerobie. Bonjour electrolytes.",
+            },
+            "natation": {
+                "prot": (1.6, 1.8),
+                "carb": (5, 8),
+                "fat": (1.0, 1.5),
+                "kcal_mult": (45, 65),
+                "note": "Depense elevee. Recharge glycogène critical.",
+            },
+            "climbing": {
+                "prot": (1.8, 2.0),
+                "carb": (4, 6),
+                "fat": (0.8, 1.2),
+                "kcal_mult": (35, 50),
+                "note": "Ratio force/poids critique. Lean focus.",
+            },
+            "gymnastique": {
+                "prot": (1.8, 2.0),
+                "carb": (4, 6),
+                "fat": (0.8, 1.2),
+                "kcal_mult": (35, 50),
+                "note": "Force/poids + flexibility. Lean physique.",
+            },
+        }
+
+        if s not in profiles:
+            return (
+                f"Sport '{sport}' non listé. Réponds depuis ton expertise. "
+                f"Considère : type effort (force/endurance/mixte), durée, fréquence, "
+                f"catégorie poids éventuelle. Macros base : 1.6-2g prot/kg, "
+                f"4-6g glucides/kg, 1g lipides/kg pour mixte modéré."
+            )
+
+        p = profiles[s]
+        kcal_min = int(w * p["kcal_mult"][0])
+        kcal_max = int(w * p["kcal_mult"][1])
+
+        return (
+            f"# 🏆 Macros optimaux : **{sport.upper()}** ({w} kg)\n\n"
+            f"## Cibles quotidiennes\n"
+            f"- **Calories** : {kcal_min}-{kcal_max} kcal\n"
+            f"- **Protéines** : {int(w * p['prot'][0])}-{int(w * p['prot'][1])}g ({p['prot'][0]}-{p['prot'][1]} g/kg)\n"
+            f"- **Glucides** : {int(w * p['carb'][0])}-{int(w * p['carb'][1])}g ({p['carb'][0]}-{p['carb'][1]} g/kg)\n"
+            f"- **Lipides** : {int(w * p['fat'][0])}-{int(w * p['fat'][1])}g ({p['fat'][0]}-{p['fat'][1]} g/kg)\n\n"
+            f"## Spécifique\n{p['note']}\n\n"
+            f"## Periworkout\n"
+            f"- Pre-workout (2h avant) : 1-2g glucides/kg + 0.3g prot/kg\n"
+            f"- Intra (>60 min) : 30-60g glucides/h + electrolytes\n"
+            f"- Post (0-2h) : 0.3-0.5g prot/kg + 0.5-1g glucides/kg\n\n"
+            f"💡 Ajustement individuel nécessaire selon performance + recovery + composition corporelle. "
+            f"Track 2-4 sem pour calibrer."
+        )
+
+    @beta_tool
     def request_live_call(reason: str, urgency: str = "normal") -> str:
         """Flag a request for a live call/video with Damien (the human coach). \
 Use when the situation goes beyond Calo : ED suspicions, severe depression, \
@@ -4220,6 +4714,11 @@ Args:
         # Premium features
         explain_gym_machine,
         find_safe_alternatives,
+        calculate_one_rep_max,
+        find_substitutes,
+        cycle_phase_advisor,
+        pre_competition_brief,
+        sport_specific_macros,
         send_progress_chart,
         request_live_call,
         search_knowledge,

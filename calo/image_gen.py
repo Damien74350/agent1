@@ -22,6 +22,7 @@ VISION_DIR = Path(os.environ.get("CALO_VISION_DIR", "/tmp/calo_vision"))
 VISION_DIR.mkdir(parents=True, exist_ok=True)
 
 _OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations"
+_OPENAI_EDIT_URL = "https://api.openai.com/v1/images/edits"
 _MODEL = os.environ.get("CALO_IMAGE_MODEL", "gpt-image-1")
 
 
@@ -54,6 +55,58 @@ def build_vision_prompt(
         f"hypersexualised. No text, no logos, no real or recognisable face. "
         f"{extra}"
     ).strip()
+
+
+def build_simulation_prompt(goal: str, sport_context: str = "") -> str:
+    """Prompt for an image EDIT of the user's real photo → a realistic, labelled
+    'goal simulation'. Deliberately conservative: a healthy, plausible improved
+    version, never extreme, never hypersexualised."""
+    sport_bit = f", in the spirit of {sport_context}" if sport_context else ""
+    return (
+        f"Edit this photo into a realistic, encouraging SIMULATION of the same "
+        f"person after reaching a healthy fitness goal{sport_bit}: leaner, more "
+        f"toned, confident posture and bright expression. Keep the identity, "
+        f"face and setting recognisable and natural. Realistic, NON-extreme, "
+        f"healthy proportions. Goal mood: {goal}. No text, no logos."
+    )
+
+
+def edit_to_simulation(
+    image_bytes: bytes,
+    prompt: str,
+    api_key: str | None = None,
+    size: str = "1024x1024",
+    timeout: float = 90.0,
+) -> tuple[str, Path] | None:
+    """Generate a realistic 'goal simulation' from the user's real photo via the
+    OpenAI image-edit endpoint. Returns (token, path) or None. Never raises."""
+    key = api_key or os.environ.get("OPENAI_API_KEY", "")
+    if not key or not image_bytes:
+        return None
+    try:
+        resp = httpx.post(
+            _OPENAI_EDIT_URL,
+            headers={"Authorization": f"Bearer {key}"},
+            data={"model": _MODEL, "prompt": prompt, "n": "1", "size": size},
+            files={"image": ("photo.png", image_bytes, "image/png")},
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        data = resp.json()["data"][0]
+        if data.get("b64_json"):
+            raw = base64.b64decode(data["b64_json"])
+        elif data.get("url"):
+            img = httpx.get(data["url"], timeout=timeout)
+            img.raise_for_status()
+            raw = img.content
+        else:
+            return None
+        token = _new_token()
+        path = VISION_DIR / f"{token}.png"
+        path.write_bytes(raw)
+        return token, path
+    except Exception:  # noqa: BLE001 — degrade gracefully
+        return None
 
 
 def generate_vision_board(

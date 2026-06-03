@@ -97,6 +97,7 @@ class CaloCoach:
             photo_ref,
             attachments=attachments,
             public_url_base=self.config.public_url or "",
+            current_photo_bytes=turn.photo_bytes,
         )
 
         # 5. Inject user state context as a system reminder so the agent knows

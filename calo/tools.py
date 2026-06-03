@@ -361,6 +361,7 @@ def build_tools(
     incoming_photo_ref: str | None,
     attachments: list[dict[str, str]] | None = None,
     public_url_base: str = "",
+    current_photo_bytes: bytes | None = None,
 ):
     """Create tools bound to the current request context.
 
@@ -6388,39 +6389,67 @@ foot 3x/sem', 'je cuisinais maison', 'moins de stress').
         goal: str,
         sex: str = "",
         sport_context: str = "",
+        mode: str = "illustration",
     ) -> str:
-        """Génère une IMAGE motivante 'vision board' envoyée en photo WhatsApp : \
-une illustration aspirationnelle et SAINE qui incarne l'objectif (PAS un montage \
-photoréaliste du visage de l'utilisateur, PAS une prédiction médicale). À \
-proposer APRÈS `build_transformation_vision`, comme coup de boost visuel. \
-Toujours présenté comme inspiration, jamais comme promesse.
+        """Génère une IMAGE de motivation envoyée en photo WhatsApp. Deux modes :
+- 'illustration' : illustration aspirationnelle générique et saine (par défaut).
+- 'simulation' : SIMULATION réaliste à partir de la VRAIE photo envoyée par \
+l'utilisateur ce tour-ci (nécessite une photo). Toujours étiquetée comme \
+'simulation objectif', JAMAIS comme prédiction de l'apparence réelle ni promesse.
+
+À proposer APRÈS `build_transformation_vision`. Pour 'simulation', demande \
+d'abord à l'utilisateur d'envoyer une photo de lui s'il n'y en a pas sur ce tour.
 
 Args:
-    goal: L'objectif/mood à incarner (ex 'silhouette athlétique tonique et \
-énergique', 'corps de boxeur affûté', 'forme et confiance retrouvées').
-    sex: 'homme' | 'femme' (sinon figure neutre).
+    goal: L'objectif/mood à incarner (ex 'silhouette athlétique tonique', \
+'corps de boxeur affûté', 'forme et confiance retrouvées').
+    sex: 'homme' | 'femme' (sinon figure neutre) — utilisé en mode illustration.
     sport_context: discipline si pertinent ('boxe', 'course', 'musculation').
+    mode: 'illustration' (générique) | 'simulation' (depuis la vraie photo).
 """
         if not public_url_base:
             return ("Génération d'image indisponible (public_url_base non configuré). "
                     "Donne plutôt la projection en texte via build_transformation_vision.")
-        prompt = image_gen.build_vision_prompt(goal, sex=sex, sport_context=sport_context)
-        result = image_gen.generate_vision_board(prompt)
+
+        if mode == "simulation":
+            if not current_photo_bytes:
+                return ("Pour la simulation réaliste, il me faut une photo de toi "
+                        "sur ce message. Demande à l'utilisateur d'envoyer une photo "
+                        "(de face, bien éclairée), puis rappelle l'outil en mode "
+                        "'simulation'.")
+            prompt = image_gen.build_simulation_prompt(goal, sport_context=sport_context)
+            result = image_gen.edit_to_simulation(current_photo_bytes, prompt)
+            caption = ("🎯 SIMULATION objectif (illustration, pas une prédiction "
+                       "de ton apparence réelle) — l'énergie vers laquelle on va 💪")
+            present = (
+                "✅ Simulation réaliste générée et envoyée.\n\n"
+                "💡 *IMPÉRATIF : présente-la explicitement comme une **simulation "
+                "objectif / illustration**, PAS une prédiction de ton corps exact. "
+                "Mots à utiliser : 'voici une simulation de l'objectif vers lequel "
+                "on bosse'. Reste bienveillant, relie au plan concret et à la "
+                "projection chiffrée. Si la personne a un rapport sensible au corps, "
+                "désamorce : c'est un outil de motivation, le vrai juge c'est ton "
+                "énergie et ta santé, pas une image.*"
+            )
+        else:
+            prompt = image_gen.build_vision_prompt(goal, sex=sex, sport_context=sport_context)
+            result = image_gen.generate_vision_board(prompt)
+            caption = "✨ Ta vision — l'énergie vers laquelle on avance 💪"
+            present = (
+                "✅ Vision board généré et envoyé en image WhatsApp.\n\n"
+                "💡 *Présente-la comme une INSPIRATION (pas une prédiction de ton "
+                "apparence exacte). Relie-la à la projection chiffrée et au plan "
+                "concret. C'est un carburant de motivation, pas une promesse.*"
+            )
+
         if not result:
             return ("La génération d'image n'est pas dispo pour l'instant "
                     "(clé OpenAI absente ou erreur). Reste sur la projection texte — "
                     "ne bloque pas la conversation, c'est un bonus.")
         token, _ = result
         url = f"{public_url_base.rstrip('/')}/vision/{token}"
-        caption = "✨ Ta vision — l'énergie vers laquelle on avance 💪"
         attachments.append({"url": url, "caption": caption})
-        return (
-            "✅ Vision board généré et envoyé en image WhatsApp.\n\n"
-            "💡 *Présente-la comme une INSPIRATION (pas une prédiction de ton "
-            "apparence exacte) : 'Voilà l'énergie/la forme vers laquelle on bosse'. "
-            "Relie-la à la projection chiffrée et au plan concret. Reste honnête et "
-            "bienveillant — c'est un carburant de motivation, pas une promesse.*"
-        )
+        return present
 
     @beta_tool
     def analyze_morphotype(

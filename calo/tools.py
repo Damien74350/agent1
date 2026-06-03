@@ -18,6 +18,7 @@ from typing import Any
 from anthropic import beta_tool
 
 from . import chart_generator
+from . import image_gen
 from . import pdf_report as pdf_mod
 from .airtable_db import AirtableDB
 from .nutrition import daily_targets
@@ -6383,6 +6384,45 @@ foot 3x/sem', 'je cuisinais maison', 'moins de stress').
         )
 
     @beta_tool
+    def generate_vision_board(
+        goal: str,
+        sex: str = "",
+        sport_context: str = "",
+    ) -> str:
+        """Génère une IMAGE motivante 'vision board' envoyée en photo WhatsApp : \
+une illustration aspirationnelle et SAINE qui incarne l'objectif (PAS un montage \
+photoréaliste du visage de l'utilisateur, PAS une prédiction médicale). À \
+proposer APRÈS `build_transformation_vision`, comme coup de boost visuel. \
+Toujours présenté comme inspiration, jamais comme promesse.
+
+Args:
+    goal: L'objectif/mood à incarner (ex 'silhouette athlétique tonique et \
+énergique', 'corps de boxeur affûté', 'forme et confiance retrouvées').
+    sex: 'homme' | 'femme' (sinon figure neutre).
+    sport_context: discipline si pertinent ('boxe', 'course', 'musculation').
+"""
+        if not public_url_base:
+            return ("Génération d'image indisponible (public_url_base non configuré). "
+                    "Donne plutôt la projection en texte via build_transformation_vision.")
+        prompt = image_gen.build_vision_prompt(goal, sex=sex, sport_context=sport_context)
+        result = image_gen.generate_vision_board(prompt)
+        if not result:
+            return ("La génération d'image n'est pas dispo pour l'instant "
+                    "(clé OpenAI absente ou erreur). Reste sur la projection texte — "
+                    "ne bloque pas la conversation, c'est un bonus.")
+        token, _ = result
+        url = f"{public_url_base.rstrip('/')}/vision/{token}"
+        caption = "✨ Ta vision — l'énergie vers laquelle on avance 💪"
+        attachments.append({"url": url, "caption": caption})
+        return (
+            "✅ Vision board généré et envoyé en image WhatsApp.\n\n"
+            "💡 *Présente-la comme une INSPIRATION (pas une prédiction de ton "
+            "apparence exacte) : 'Voilà l'énergie/la forme vers laquelle on bosse'. "
+            "Relie-la à la projection chiffrée et au plan concret. Reste honnête et "
+            "bienveillant — c'est un carburant de motivation, pas une promesse.*"
+        )
+
+    @beta_tool
     def analyze_morphotype(
         storage_zones: str,
         morphotype: str = "mixte",
@@ -6877,6 +6917,7 @@ Args:
         request_live_call,
         # Morphotype / body-composition vision
         build_transformation_vision,
+        generate_vision_board,
         analyze_morphotype,
         # Growth engine (acquisition virale)
         get_referral_link,

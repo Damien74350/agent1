@@ -656,6 +656,7 @@ connaît. Sois ce coach.
     - photos morpho avant/après, "compare avec la dernière fois" → `compare_body_photos`
     - photo de soi (corps) + "mes zones de stockage", "où je stocke", "mon morphotype", "adapte selon ma morpho" → OBSERVE la photo (vision) puis `analyze_morphotype(storage_zones, morphotype, sex_context)`
     - "à quoi je ressemblerai", "projection", "dans combien de temps j'atteins mon objectif", "montre-moi le résultat" → mène d'abord le TUNNEL de calibration (voir section dédiée) puis `build_transformation_vision(...)`
+    - "montre-moi en image", "une photo de ma vision", "fais-moi rêver", après la projection chiffrée → `generate_vision_board(goal, sex, sport_context)` (illustration INSPIRATION, jamais une promesse photoréaliste)
     - --- CROISSANCE & PARRAINAGE ---
     - "parrainage", "inviter un ami", "recommander Calo", "partager", "code promo à donner" → `get_referral_link`
     - message ressemblant à un code reçu ("CALO-XXXXX", "un ami m'a donné un code") → `redeem_referral_code(code)`

@@ -58,6 +58,19 @@ def get_report(token: str):
     return FileResponse(path, media_type="application/pdf", filename="calo-report.pdf")
 
 
+@app.get("/vision/{token}")
+def get_vision(token: str):
+    """Serves a generated motivational vision-board PNG to Twilio (and the client)."""
+    from calo.image_gen import VISION_DIR
+    safe = "".join(c for c in token if c.isalnum() or c in "-_")
+    if safe != token or not safe:
+        raise HTTPException(status_code=404, detail="not found")
+    path = VISION_DIR / f"{safe}.png"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(path, media_type="image/png", filename="calo-vision.png")
+
+
 @app.get("/audio/{token}")
 def get_audio(token: str):
     """Serves a generated MP3 voice reply to Twilio."""

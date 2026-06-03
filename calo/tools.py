@@ -5293,6 +5293,635 @@ Args:
         return general
 
     @beta_tool
+    def identify_emotion(description: str = "") -> str:
+        """Help the user precisely identify what they're feeling. Most people \
+say 'je suis stressé' but it could be anxious, overwhelmed, frustrated, \
+disappointed, etc. Precise identification = better intervention. Use when user \
+expresses emotional state vaguely.
+
+Args:
+    description: What the user said about their feeling (e.g. 'je me sens \
+nul', 'je suis vidé', 'j'ai un truc bizarre').
+"""
+        return (
+            f"# 🎭 Identification émotionnelle\n\n"
+            f"L'utilisateur a dit : *\"{description}\"*\n\n"
+            f"## La roue des émotions (Plutchik)\n\n"
+            f"### 8 émotions primaires\n"
+            f"1. **JOIE** : nuances → sérénité, extase, optimisme, fierté\n"
+            f"2. **TRISTESSE** : nuances → pensif, mélancolie, deuil, désespoir\n"
+            f"3. **PEUR** : nuances → appréhension, anxiété, terreur, panique\n"
+            f"4. **COLÈRE** : nuances → irritation, frustration, fureur, rage\n"
+            f"5. **DÉGOÛT** : nuances → ennui, aversion, mépris, haine\n"
+            f"6. **SURPRISE** : nuances → distrait, étonné, ahuri, choqué\n"
+            f"7. **ANTICIPATION** : intérêt, attente, vigilance\n"
+            f"8. **CONFIANCE** : acceptation, admiration\n\n"
+            f"## Émotions sociales complexes\n"
+            f"- **Honte** vs **Culpabilité** (honte = je suis mauvais / culpabilité = j'ai mal fait)\n"
+            f"- **Envie** vs **Jalousie**\n"
+            f"- **Solitude** vs **Solitude choisie**\n"
+            f"- **Désespoir** vs **Tristesse profonde**\n"
+            f"- **Burnout** (épuisement émotionnel) vs **Dépression**\n\n"
+            f"## Tes consignes Calo\n\n"
+            f"1. **Reflète** ce que tu entends : \"Si je comprends bien, tu te sens X...\"\n"
+            f"2. **Propose 2-3 émotions précises** parmi la liste ci-dessus\n"
+            f"3. **Localise dans le corps** : \"Où tu sens ça dans ton corps ? (poitrine, gorge, ventre, tête, autre)\"\n"
+            f"4. **Questionne le déclencheur** : \"Qu'est-ce qui a déclenché ça ?\"\n"
+            f"5. **Intensité** : \"Sur 10, c'est à combien ?\"\n"
+            f"6. Pas de jugement, juste de la curiosité bienveillante\n"
+            f"7. Si >7/10 ET récurrent → suggère consultation pro douce"
+        )
+
+    @beta_tool
+    def thought_record_cbt(
+        situation: str,
+        automatic_thought: str,
+        emotion: str,
+        intensity: int = 5,
+    ) -> str:
+        """Formal CBT thought record. The GOLD STANDARD of cognitive therapy. \
+Use when user has a recurring negative thought pattern they want to work on. \
+Identifies cognitive distortions + generates balanced alternative thought.
+
+Args:
+    situation: Objective situation that triggered the thought.
+    automatic_thought: The exact thought as user said it.
+    emotion: The emotion(s) felt (sad, anxious, angry...).
+    intensity: 1-10 intensity of emotion.
+"""
+        return (
+            f"# 🧠 CBT Thought Record\n\n"
+            f"**Situation** : {situation}\n"
+            f"**Pensée automatique** : *\"{automatic_thought}\"*\n"
+            f"**Émotion** : {emotion} ({intensity}/10)\n\n"
+            f"## Étape 1 — Identifier les distorsions cognitives\n"
+            f"Lesquelles reconnais-tu dans cette pensée ? (peut être plusieurs)\n\n"
+            f"### Les 20 distorsions classiques\n"
+            f"1. **Pensée tout-ou-rien** (\"si je ne suis pas parfait, je suis nul\")\n"
+            f"2. **Surgénéralisation** (\"je rate toujours tout\")\n"
+            f"3. **Filtrage négatif** (ne voir que le mauvais)\n"
+            f"4. **Disqualification du positif** (\"oui mais c'était de la chance\")\n"
+            f"5. **Lecture de pensée** (\"il pense forcément que...\")\n"
+            f"6. **Voyance** (\"je vais échouer c'est sûr\")\n"
+            f"7. **Catastrophisme** (\"si je rate, tout est foutu\")\n"
+            f"8. **Minimisation** (du positif) / **Amplification** (du négatif)\n"
+            f"9. **Raisonnement émotionnel** (\"je me sens nul DONC je suis nul\")\n"
+            f"10. **Should statements** (\"je devrais...\")\n"
+            f"11. **Étiquetage** (\"je SUIS nul\" au lieu de \"j'ai raté\")\n"
+            f"12. **Personnalisation** (\"c'est forcément ma faute\")\n"
+            f"13. **Blaming** (toujours la faute des autres)\n"
+            f"14. **Sophisme de l'équité** (\"c'est INJUSTE\")\n"
+            f"15. **Comparaison sociale** (\"les autres réussissent mieux\")\n"
+            f"16. **Sophisme du changement** (l'autre doit changer pour mon bonheur)\n"
+            f"17. **Sophisme du contrôle** (interne ou externe)\n"
+            f"18. **Prêt à mériter** (\"j'aurais mérité que ça marche\")\n"
+            f"19. **Always being right** (besoin d'avoir raison)\n"
+            f"20. **Heaven's reward** (\"si je m'épuise, je serai récompensé\")\n\n"
+            f"## Étape 2 — Examiner les preuves\n"
+            f"- **POUR** cette pensée : quelles preuves concrètes ?\n"
+            f"- **CONTRE** cette pensée : quelles preuves contraires ?\n"
+            f"- Que dirait un ami bienveillant et sage ?\n"
+            f"- Dans 5 ans, est-ce que ça aura encore de l'importance ?\n\n"
+            f"## Étape 3 — Pensée alternative équilibrée\n"
+            f"Pas \"positive\" forcée. **ÉQUILIBRÉE et RÉALISTE**.\n"
+            f"Format : \"Bien que [partie vraie de la pensée], en réalité \"\n\n"
+            f"## Étape 4 — Re-évaluer l'émotion\n"
+            f"Avec la nouvelle pensée, l'intensité émotion devient ?\n\n"
+            f"## Tes consignes\n"
+            f"1. Guide l'utilisateur étape par étape (pas en bloc)\n"
+            f"2. Reste BIENVEILLANT, jamais critique\n"
+            f"3. Reformule avec ses mots\n"
+            f"4. Si la pensée vient d'un trauma profond : recommande therapie pro\n"
+            f"5. Sauvegarde l'insight via `remember(importance=4)`"
+        )
+
+    @beta_tool
+    def values_assessment() -> str:
+        """ACT (Acceptance & Commitment Therapy) values clarification. The \
+foundational protocol for meaningful life direction. Use when user feels lost, \
+unmotivated, or asks 'what should I do with my life'."""
+        return (
+            "# 💎 Clarification des Valeurs (ACT)\n\n"
+            "Tes valeurs sont les DIRECTIONS qui donnent sens à ta vie. Pas des "
+            "objectifs (objectifs = destinations finies). Les valeurs = "
+            "comment tu veux ÊTRE chaque jour.\n\n"
+            "## Étape 1 — Les 10 domaines de vie\n"
+            "Pour chaque domaine, demande à l'utilisateur :\n"
+            "1. **Quelle est l'IMPORTANCE pour toi ?** (1-10)\n"
+            "2. **À quel point la VIS-TU actuellement ?** (1-10)\n"
+            "3. **Le GAP entre les deux** = ta priorité de travail\n\n"
+            "### Les domaines\n"
+            "1. 🏥 **Santé physique** (corps, énergie, sommeil)\n"
+            "2. 🧠 **Santé mentale & émotionnelle**\n"
+            "3. 💑 **Relations amoureuses / partenaire**\n"
+            "4. 👨‍👩‍👧 **Famille / parentage**\n"
+            "5. 👥 **Amitiés / vie sociale**\n"
+            "6. 💼 **Carrière / travail / vocation**\n"
+            "7. 💰 **Argent / sécurité financière**\n"
+            "8. 🎨 **Loisirs / créativité / passions**\n"
+            "9. 🌱 **Croissance personnelle / apprentissage**\n"
+            "10. 🌍 **Contribution / spiritualité / cause**\n\n"
+            "## Étape 2 — Les 50 valeurs (top liste)\n"
+            "Demande à l'utilisateur de choisir SES 5 VALEURS DU CŒUR :\n\n"
+            "Authenticité · Aventure · Beauté · Bienveillance · Compassion · "
+            "Courage · Créativité · Curiosité · Détermination · Discipline · "
+            "Élégance · Excellence · Famille · Foi · Générosité · Gratitude · "
+            "Honnêteté · Humilité · Humour · Indépendance · Intégrité · "
+            "Joie · Justice · Liberté · Loyauté · Maîtrise · Nature · "
+            "Originalité · Ouverture · Paix · Passion · Patience · Performance · "
+            "Persévérance · Plaisir · Présence · Respect · Responsabilité · "
+            "Rigueur · Sagesse · Santé · Sécurité · Sensualité · Service · "
+            "Simplicité · Sincérité · Solitude · Spiritualité · Tendresse · "
+            "Vérité\n\n"
+            "## Étape 3 — Action committed\n"
+            "Pour chacune des 5 valeurs choisies :\n"
+            "- **Quel COMPORTEMENT concret incarne cette valeur cette semaine ?**\n"
+            "- **Quel obstacle prévisible** ? Comment le surmonter ?\n"
+            "- **Engagement** : 1 action minimale aujourd'hui dans ce sens\n\n"
+            "## Tes consignes Calo\n"
+            "1. **Ne va pas trop vite** : cet exercice mérite 30-60 min\n"
+            "2. Tu peux le scinder en 2-3 conversations\n"
+            "3. Sauvegarde les 5 valeurs choisies dans `update_mental_profile`\n"
+            "4. Reviens dessus régulièrement (weekly review)\n"
+            "5. **La cohérence valeurs ↔ actions** = bien-être profond"
+        )
+
+    @beta_tool
+    def gratitude_journal(items: str) -> str:
+        """Log a daily gratitude entry. Practice scientifically proven \
+(Emmons 2003) to increase well-being, decrease depression, improve sleep.
+
+Args:
+    items: 3 things the user is grateful for today, separated by | or comma.
+"""
+        if not items:
+            return (
+                "Demande à l'utilisateur 3 choses :\n"
+                "1. UNE chose pour laquelle il est reconnaissant aujourd'hui (peu importe la taille)\n"
+                "2. UNE personne qui a fait une différence positive (même petite)\n"
+                "3. UNE chose qu'il appréciera dans le futur proche\n\n"
+                "Cherche le SPÉCIFIQUE et le RESSENTI, pas le générique."
+            )
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"Gratitude {today} : {items[:300]}",
+            category="santé",
+            importance=2,
+        )
+        return (
+            f"✅ Gratitude loggée pour le {today}.\n\n"
+            f"## Pourquoi c'est puissant\n"
+            f"- **8 semaines** de pratique quotidienne (Emmons 2003) = "
+            f"-20% symptômes dépressifs, +30% bien-être subjectif\n"
+            f"- Rewire le cerveau vers le scan POSITIF (vs négatif par défaut)\n"
+            f"- Améliore qualité sommeil\n"
+            f"- Renforce relations sociales\n\n"
+            f"## La pratique ultime\n"
+            f"- Quotidien (jamais skip)\n"
+            f"- SPÉCIFIQUE (pas 'ma famille' mais 'le sourire de ma fille au goûter')\n"
+            f"- VARIE les sources (pas toujours les mêmes 3)\n"
+            f"- Inclus 1 difficulté que tu as su surmonter\n\n"
+            f"💡 Effet en 21 jours, transformation en 90 jours. Continue."
+        )
+
+    @beta_tool
+    def self_compassion_break(situation: str = "") -> str:
+        """Kristin Neff's Self-Compassion Break protocol. For when user is harsh \
+with themselves after a failure, mistake, difficulty. Replaces inner critic \
+with inner ally.
+
+Args:
+    situation: What the user is struggling with right now.
+"""
+        return (
+            f"# 💗 Self-Compassion Break (Kristin Neff)\n\n"
+            f"L'utilisateur traverse : *{situation or 'une difficulté'}*\n\n"
+            f"## La pratique en 3 étapes (90 secondes total)\n\n"
+            f"### Étape 1 — MINDFULNESS (30 sec)\n"
+            f"Pose ta main sur ton cœur.\n"
+            f"Dis-toi (à voix haute si possible) :\n"
+            f"> *\"C'est un moment de souffrance.\"*\n\n"
+            f"Ou variations :\n"
+            f"- *\"C'est difficile en ce moment.\"*\n"
+            f"- *\"Je traverse une épreuve.\"*\n"
+            f"- *\"Ça fait mal.\"*\n\n"
+            f"Tu reconnais TA souffrance sans la nier ni la minimiser.\n\n"
+            f"### Étape 2 — HUMANITÉ COMMUNE (30 sec)\n"
+            f"Dis-toi :\n"
+            f"> *\"La souffrance fait partie de la vie. Je ne suis pas seul.\"*\n\n"
+            f"Variations :\n"
+            f"- *\"Tout le monde traverse des moments difficiles.\"*\n"
+            f"- *\"Je suis humain, comme tout le monde.\"*\n"
+            f"- *\"Beaucoup d'autres personnes vivent la même chose.\"*\n\n"
+            f"Tu sors de l'isolement (\"c'est juste moi\") vers la connection humaine.\n\n"
+            f"### Étape 3 — SELF-KINDNESS (30 sec)\n"
+            f"Dis-toi (comme tu parlerais à un ami cher en peine) :\n"
+            f"> *\"Puis-je être tendre avec moi-même.\"*\n\n"
+            f"Variations selon besoin :\n"
+            f"- *\"Puis-je accepter ce qui est.\"*\n"
+            f"- *\"Puis-je être courageux/courageuse.\"*\n"
+            f"- *\"Puis-je trouver la paix.\"*\n"
+            f"- *\"Puis-je apprendre de cette épreuve.\"*\n\n"
+            f"## La science (Neff 2003-2020+)\n"
+            f"- Self-compassion > Self-esteem (qui dépend de réussites)\n"
+            f"- Réduit anxiété, dépression, stress\n"
+            f"- Améliore résilience\n"
+            f"- Augmente motivation (vs auto-flagellation qui paralyse)\n"
+            f"- Améliore relations (on traite mieux les autres quand on se traite bien)\n\n"
+            f"## Tes consignes Calo\n"
+            f"1. Guide l'utilisateur en TEMPS RÉEL à travers les 3 étapes\n"
+            f"2. Pause entre chaque étape\n"
+            f"3. Demande ce qu'il ressent après\n"
+            f"4. Encourage à le faire 1-3x/jour pendant 30 jours pour ancrer"
+        )
+
+    @beta_tool
+    def parts_work_inquiry(situation: str = "") -> str:
+        """Internal Family Systems (IFS) parts work. Identifies the inner \
+'parts' driving the user's reaction. Powerful for stuck patterns.
+
+Args:
+    situation: What's happening (the trigger or feeling).
+"""
+        return (
+            f"# 🧩 IFS Parts Work — Internal Family Systems\n\n"
+            f"Situation : *{situation}*\n\n"
+            f"## Le modèle IFS (Richard Schwartz)\n\n"
+            f"Tu n'es pas UNE personne. Tu es un système de PARTIES, comme une "
+            f"famille intérieure. Chaque partie a un rôle, une intention positive "
+            f"(même quand le comportement est désagréable).\n\n"
+            f"### Les 3 types de parties\n"
+            f"1. **MANAGERS** : protègent en prévenant le danger (perfectionniste, "
+            f"critique intérieur, contrôleur)\n"
+            f"2. **EXILES** : portent les blessures du passé (tristesse, honte, "
+            f"abandon, peur)\n"
+            f"3. **FIREFIGHTERS** : éteignent les émotions des exilés en urgence "
+            f"(addictions, dissociations, rage)\n\n"
+            f"### Le SELF\n"
+            f"Au centre, ton SELF (le vrai toi) avec ses qualités innées :\n"
+            f"- Curiosité · Calme · Compassion · Connexion · Clarté · "
+            f"Confiance · Courage · Créativité\n\n"
+            f"## La pratique : 6 étapes\n\n"
+            f"### 1. TROUVER la partie\n"
+            f"\"Quelle PARTIE de toi est activée maintenant ? Où la sens-tu dans le corps ?\"\n\n"
+            f"### 2. FOCALISER\n"
+            f"\"Tourne ton attention vers cette partie. Sans jugement.\"\n\n"
+            f"### 3. CHAIRER (Flesh out)\n"
+            f"\"Décris cette partie. Si elle avait un visage, un âge, une voix... lequel ?\"\n\n"
+            f"### 4. FEEL TOWARDS\n"
+            f"\"Comment te sens-tu ENVERS cette partie ?\" (cible : 8C = curiosité, "
+            f"compassion, calme, etc.)\n"
+            f"Si jugement / haine : il y a une AUTRE partie qui juge. Travaille avec elle d'abord.\n\n"
+            f"### 5. BEFRIEND\n"
+            f"\"Demande à cette partie : depuis quand es-tu là ? Quel rôle tu joues ? "
+            f"Qu'est-ce que tu CRAINS si tu ne le faisais pas ?\"\n"
+            f"Écoute SANS argumenter.\n\n"
+            f"### 6. FEAR → NEED\n"
+            f"Découvre ce dont la partie a besoin pour se sentir en sécurité.\n"
+            f"Le SELF (toi) peut maintenant prendre soin de cette partie.\n\n"
+            f"## Tes consignes Calo\n"
+            f"1. **C'est du travail PROFOND** : 30-60 min minimum\n"
+            f"2. **Bienveillance pure** : aucune partie n'est mauvaise\n"
+            f"3. **Si trauma émerge** : recommande therapie IFS pro (psychothérapeute "
+            f"formé IFS)\n"
+            f"4. **Sauvegarde les insights** via remember (importance 4)\n"
+            f"5. C'est révolutionnaire pour les patterns stuck depuis longtemps"
+        )
+
+    @beta_tool
+    def attachment_style_assessment() -> str:
+        """Identify the user's attachment style (Secure, Anxious, Avoidant, \
+Disorganized). Foundation for understanding relationship patterns."""
+        return (
+            "# 💕 Évaluation Style d'Attachement\n\n"
+            "Ton style d'attachement = comment tu te relies aux autres "
+            "(formé dans l'enfance, modifiable adulte).\n\n"
+            "## Les 4 styles (Bowlby, Ainsworth, Bartholomew)\n\n"
+            "### 🟢 SÉCURE (~50% population)\n"
+            "- Confortable avec intimité ET indépendance\n"
+            "- Confiance générale dans les autres\n"
+            "- Gère bien les conflits\n"
+            "- Demande de l'aide quand besoin\n\n"
+            "### 🔴 ANXIEUX-PRÉOCCUPÉ (~20%)\n"
+            "- Peur abandon constante\n"
+            "- Besoin réassurance permanent\n"
+            "- Hyper-vigilant signaux rejet\n"
+            "- 'Trop' dans les relations\n"
+            "- Origine : parents inconstants (parfois là, parfois pas)\n\n"
+            "### 🟡 ÉVITANT-DÉTACHÉ (~25%)\n"
+            "- Indépendance extrême\n"
+            "- Intimité = inconfort\n"
+            "- 'Je n'ai besoin de personne'\n"
+            "- Évite vulnérabilité\n"
+            "- Origine : parents froids, distants\n\n"
+            "### ⚫ DÉSORGANISÉ (Anxieux + Évitant) (~5%)\n"
+            "- Veut intimité ET craint intimité\n"
+            "- Patterns chaotiques\n"
+            "- Souvent trauma enfance\n"
+            "- Necesite therapie souvent\n\n"
+            "## Quiz rapide (12 questions)\n"
+            "Pose ces questions à l'utilisateur (oui/non) :\n\n"
+            "### Anxieux\n"
+            "1. Tu crains souvent que les autres ne t'aiment pas autant que tu les aimes\n"
+            "2. Tu as souvent besoin de réassurance dans les relations\n"
+            "3. Tu te sens mal si la personne ne répond pas vite à tes messages\n"
+            "4. Tu fais beaucoup pour être aimé(e)\n\n"
+            "### Évitant\n"
+            "5. Tu te sens étouffé(e) quand un partenaire devient trop proche\n"
+            "6. Tu préfères ne dépendre de personne\n"
+            "7. Tu trouves difficile de demander de l'aide\n"
+            "8. Tu te ferme quand on parle émotions profondes\n\n"
+            "### Sécure\n"
+            "9. Tu te sens à l'aise dans intimité ET indépendance\n"
+            "10. Tu fais confiance assez facilement\n"
+            "11. Tu gères bien les conflits sans drame\n"
+            "12. Tu peux exprimer tes besoins clairement\n\n"
+            "## Interprétation\n"
+            "- Plus de OUI 1-4 → tendance ANXIEUX\n"
+            "- Plus de OUI 5-8 → tendance ÉVITANT\n"
+            "- Plus de OUI 9-12 → tendance SÉCURE\n"
+            "- OUI dans plusieurs catégories → DÉSORGANISÉ ou mixte\n\n"
+            "## Réparation (devenir Earned Secure)\n"
+            "Le style ATTACHEMENT EST MODIFIABLE (concept Earned Secure) :\n"
+            "1. **Conscience** : reconnaître ton pattern (1ère étape)\n"
+            "2. **Therapie** (IFS, EFT, schema therapy) : -2 ans en moyenne pour secure\n"
+            "3. **Relation sécure** : partenaire stable peut healing\n"
+            "4. **Self-soothing** : apprendre à se réassurer soi-même\n"
+            "5. **Mindfulness** : observer le pattern sans réagir\n\n"
+            "## Consignes Calo\n"
+            "1. Pose les 12 questions UNE PAR UNE (jamais en bloc)\n"
+            "2. Calcule SCORE final pour identifier le style dominant\n"
+            "3. Présente l'interprétation AVEC BIENVEILLANCE\n"
+            "4. **Stocke** le style dans `update_mental_profile`\n"
+            "5. Si trauma profond émerge → therapie pro recommandée\n"
+            "6. Lectures : 'Attached' de Levine & Heller (top intro)"
+        )
+
+    @beta_tool
+    def flow_state_setup(task: str, duration_min: int = 90) -> str:
+        """Setup conditions for FLOW state (deep work, peak performance). Based \
+on Csikszentmihalyi research. Use when user wants focused deep work session.
+
+Args:
+    task: The task to flow into (writing, coding, training, creating).
+    duration_min: Target duration (60-180 min ideal).
+"""
+        return (
+            f"# 🌊 Flow State Protocol\n\n"
+            f"**Mission** : {task} pendant {duration_min} min en FLOW pur.\n\n"
+            f"## Les 8 conditions du FLOW (Csikszentmihalyi)\n\n"
+            f"1. **Objectif clair** : qu'est-ce que tu vas EXACTEMENT produire ?\n"
+            f"2. **Feedback immédiat** : tu sais en temps réel si ça marche\n"
+            f"3. **Challenge-skill balance** : difficulté 4% > tes compétences\n"
+            f"4. **Action + conscience fusion**\n"
+            f"5. **Concentration totale** : zéro distraction\n"
+            f"6. **Sens de contrôle**\n"
+            f"7. **Disparition du self** (tu oublies que tu existes)\n"
+            f"8. **Distorsion temps** (le temps file ou s'étire)\n\n"
+            f"## Setup AVANT (15 min)\n\n"
+            f"### Environnement\n"
+            f"- Phone en autre pièce / mode avion\n"
+            f"- Notifs OFF (computer + tablette)\n"
+            f"- Lieu DÉDIÉ (même endroit chaque fois = trigger conditioning)\n"
+            f"- Lumière : naturelle si possible\n"
+            f"- Casque musique : binaurale OU lo-fi OU classique sans paroles\n"
+            f"- Eau + snack pré-positionnés (zéro raison de sortir)\n\n"
+            f"### Mental\n"
+            f"- **Intention claire** écrite : \"Pendant 90 min je vais [X]\"\n"
+            f"- **Décharge cognitive** : note tout ce qui distrait sur papier (mind dump)\n"
+            f"- **Caféine + L-théanine** 30 min avant (200 mg + 200 mg)\n"
+            f"- **5 min cohérence cardiaque** pour stabiliser système nerveux\n\n"
+            f"### Corps\n"
+            f"- Pas affamé (mais pas en pleine digestion non plus)\n"
+            f"- 500 ml eau bue\n"
+            f"- Étirements rapides 2 min (épaules, cou)\n"
+            f"- Position confortable mais ÉVEILLÉE (pas avachie)\n\n"
+            f"## Pendant ({duration_min} min)\n\n"
+            f"- **TIMER** lancé\n"
+            f"- **Aucune interruption** (même 'juste 30 sec' = 23 min pour revenir au flow)\n"
+            f"- Si pensée parasite : note-la sur papier, reviens à la tâche\n"
+            f"- Si fatigue cognitive : pause 5 min marche (PAS écran)\n"
+            f"- Cycles ultradiens : 90 min focus + 20 min pause = optimal\n\n"
+            f"## Après\n\n"
+            f"- **Capture** ce que tu as accompli (sentiment de progrès = renforcement)\n"
+            f"- Pause CERVEAU (pas réseaux sociaux qui re-fragmente)\n"
+            f"- Marche 10 min OU yoga\n"
+            f"- Si plusieurs flow blocks : 30 min vrai repos entre\n\n"
+            f"## Triggers psychologiques qui aident\n"
+            f"- **Risque** : engagement public ('je publie ce soir')\n"
+            f"- **Nouveauté** : explore territoire inconnu\n"
+            f"- **Complexité** : tâche assez complexe pour absorber\n"
+            f"- **Unpredictabilité** : pas de pilote automatique\n"
+            f"- **Pattern recognition** : système entre les idées\n\n"
+            f"## Tes consignes Calo\n"
+            f"1. Setup juste AVANT, pas la veille (sinon tu oublies l'intention)\n"
+            f"2. Annonce-toi de revenir dans {duration_min} min\n"
+            f"3. Bonne séance, et capture ton résultat après !"
+        )
+
+    @beta_tool
+    def reparenting_inner_child(wound: str = "") -> str:
+        """Inner child reparenting work. Heals childhood wounds carried into \
+adulthood. Profound mental healing technique.
+
+Args:
+    wound: The wound/pattern from childhood being explored (abandonment, \
+criticism, neglect, perfectionism, lack of love, etc.).
+"""
+        return (
+            f"# 👶 Inner Child Reparenting\n\n"
+            f"Blessure explorée : *{wound or 'non précisée'}*\n\n"
+            f"## Le concept\n"
+            f"Tu portes en toi un ENFANT INTÉRIEUR (l'enfant que tu étais) qui a vécu "
+            f"certaines blessures. Adulte, tu peux devenir le PARENT IDÉAL que cet enfant "
+            f"n'a pas (toujours) eu.\n\n"
+            f"## Les blessures classiques (Lise Bourbeau)\n"
+            f"1. **REJET** (sentiment de ne pas avoir le droit d'exister)\n"
+            f"2. **ABANDON** (peur d'être laissé seul)\n"
+            f"3. **HUMILIATION** (sentiment d'être moins que les autres)\n"
+            f"4. **TRAHISON** (méfiance de base)\n"
+            f"5. **INJUSTICE** (rigidité, perfectionnisme)\n\n"
+            f"## La pratique (45-60 min, en privé)\n\n"
+            f"### Étape 1 — VISUALISATION (5 min)\n"
+            f"- Yeux fermés. Respire profondément.\n"
+            f"- Imagine TOI à 5-7 ans. Vois cet enfant clairement.\n"
+            f"- Note : posture, expression, ce qu'il/elle ressent.\n\n"
+            f"### Étape 2 — RENCONTRE (5 min)\n"
+            f"- Va vers cet enfant doucement\n"
+            f"- Présente-toi : \"Je suis toi, dans le futur. Je suis là.\"\n"
+            f"- Si l'enfant a peur, attends. Pas de force.\n\n"
+            f"### Étape 3 — ÉCOUTE (15 min)\n"
+            f"Pose ces questions à ton enfant intérieur :\n"
+            f"- \"De quoi as-tu peur ?\"\n"
+            f"- \"Qu'est-ce qui te manque ?\"\n"
+            f"- \"Qu'est-ce que tu aurais voulu entendre ?\"\n"
+            f"- \"Qu'est-ce qui t'a fait mal ?\"\n"
+            f"- \"Que veux-tu me dire ?\"\n\n"
+            f"Écoute sans juger.\n\n"
+            f"### Étape 4 — VALIDATION (10 min)\n"
+            f"Dis à l'enfant ce qu'il/elle aurait dû entendre :\n"
+            f"- \"Tu es aimé(e) pour qui tu es, pas pour ce que tu fais.\"\n"
+            f"- \"Tu n'es pas responsable des problèmes des adultes.\"\n"
+            f"- \"Tu as le droit d'exister, de prendre de la place.\"\n"
+            f"- \"Tu as le droit de te tromper.\"\n"
+            f"- \"Tu n'es pas seul(e). Je suis là, maintenant et toujours.\"\n"
+            f"- \"Je vais prendre soin de toi.\"\n\n"
+            f"### Étape 5 — ENGAGEMENT (5 min)\n"
+            f"Promets à l'enfant 1 action concrète cette semaine pour incarner "
+            f"ton nouveau rôle de parent intérieur :\n"
+            f"- Lui parler avec douceur quand tu te trompes (au lieu de te critiquer)\n"
+            f"- Lui offrir du temps (faire ce qu'il/elle aimait : dessiner, jouer, créer)\n"
+            f"- Le/la protéger (ne plus accepter d'être traité mal)\n\n"
+            f"### Étape 6 — INTÉGRATION (5 min)\n"
+            f"Imagine que tu accueilles l'enfant DANS ton cœur, IL/ELLE est en sécurité.\n"
+            f"Tu portes cet enfant avec toi tous les jours.\n"
+            f"Ouvre les yeux doucement.\n\n"
+            f"## Conseil Calo\n"
+            f"1. **Faire dans un espace SAFE** (pas en réunion!)\n"
+            f"2. Émotions PEUVENT remonter : c'est sain, laisse couler\n"
+            f"3. À répéter 1x/sem pendant plusieurs mois\n"
+            f"4. **Si trauma profond** : faire AVEC un thérapeute IFS ou ICF (Inner Child Focusing)\n"
+            f"5. Sauve les insights dans `update_mental_profile`"
+        )
+
+    @beta_tool
+    def loneliness_protocol() -> str:
+        """Structured protocol for loneliness epidemic. Loneliness is now \
+recognized as severe public health issue (US Surgeon General 2023 = mortality \
+equivalent to 15 cigarettes/day)."""
+        return (
+            "# 🤝 Protocole Solitude\n\n"
+            "La solitude chronique = équivalent santé : **fumer 15 cigarettes/jour** "
+            "(US Surgeon General 2023). Pas un problème mineur.\n\n"
+            "## Distinguer : SOLITUDE vs ISOLEMENT vs SOLITUDE CHOISIE\n"
+            "- **Solitude** (subjective) : douleur d'isolement, manque connection\n"
+            "- **Isolement** (objectif) : peu d'interactions sociales\n"
+            "- **Solitude choisie** : temps seul recherché, ressourçant\n\n"
+            "Tu peux être ENTOURÉ et SEUL. Ou seul et bien.\n\n"
+            "## Les 3 types de connection (Hawkley & Cacioppo)\n"
+            "1. **INTIMATE** : 1 personne très proche (partenaire, ami du cœur)\n"
+            "2. **RELATIONAL** : cercle de 4-6 amis significatifs\n"
+            "3. **COLLECTIVE** : sentiment d'appartenance (communauté, équipe, cause)\n\n"
+            "**Audit** : lequel des 3 te manque le plus ?\n\n"
+            "## Protocole 30 jours anti-solitude\n\n"
+            "### Sem 1 — INVENTAIRE\n"
+            "- Liste tes relations actuelles (5+ personnes)\n"
+            "- Note la fréquence de contact réel (pas réseaux sociaux)\n"
+            "- Identifie 1 personne avec qui reconnecter\n\n"
+            "### Sem 2 — RÉACTIVATION\n"
+            "- Contacte 3 personnes du passé (\"Je pensais à toi, on prend un café ?\")\n"
+            "- Ne mets pas de pression (\"ce serait sympa\")\n"
+            "- Suggère un MOMENT précis (pas \"un jour\")\n\n"
+            "### Sem 3 — NOUVELLES RENCONTRES\n"
+            "- Rejoins UN groupe (club sport, association, cours, meetup)\n"
+            "- Régularité = clef (1 fois isn't enough)\n"
+            "- Cherche un endroit où tes valeurs sont présentes\n\n"
+            "### Sem 4 — VULNÉRABILITÉ\n"
+            "- Avec 1 personne de confiance, partage qqch d'authentique\n"
+            "- \"Je traverse une période X\"\n"
+            "- La vulnérabilité INVITE la connection (Brené Brown)\n\n"
+            "## Pour les TRÈS SEULS (peu/pas de réseau)\n"
+            "- **Bénévolat** : crée connection ET sens (DOUBLE win)\n"
+            "- **Cohabitation** : colocation à tout âge (Cohabs, Roomies)\n"
+            "- **Groupes thérapeutiques** : sécure, validant, structuré\n"
+            "- **Application** : Bumble BFF, Meetup (rencontres amicales)\n"
+            "- **Lignes d'écoute** si urgence : SOS Amitié 09 72 39 40 50 (France 24/24)\n\n"
+            "## Si dépression associée\n"
+            "**Consultation pro indispensable**. La solitude chronique entraîne dépression "
+            "qui entraîne plus solitude (cercle vicieux). Couper le cercle nécessite "
+            "souvent therapie + médecine.\n\n"
+            "## Conseil Calo\n"
+            "1. Empathie d'abord : valide la souffrance de la solitude\n"
+            "2. Identifie quel type connection manque (1/2/3)\n"
+            "3. Plan d'action progressif (4 semaines)\n"
+            "4. Si dépression : suggère consultation pro douce\n"
+            "5. Re-checke 2 semaines après"
+        )
+
+    @beta_tool
+    def weekly_mental_review() -> str:
+        """Sunday evening protocol — structured weekly review of mental state. \
+Builds emotional intelligence + intentionality over time. Premium ritual."""
+        return (
+            "# 📓 Weekly Mental Review (Dimanche soir)\n\n"
+            "30-45 min de réflexion structurée. Pose à l'utilisateur ces questions "
+            "UNE PAR UNE (jamais en bloc) :\n\n"
+            "## 1. La semaine en émotions\n"
+            "- Quelle émotion DOMINANTE cette semaine ?\n"
+            "- Quel a été le HIGH point ?\n"
+            "- Quel a été le LOW point ?\n"
+            "- Note ton score moyen humeur (1-10)\n\n"
+            "## 2. Tes victoires\n"
+            "- 3 wins de la semaine (peu importe la taille)\n"
+            "- 1 chose dont tu es FIER(E)\n"
+            "- 1 progrès vers tes objectifs long terme\n\n"
+            "## 3. Tes apprentissages\n"
+            "- 1 chose que tu as comprise / apprise\n"
+            "- 1 pattern que tu vois se répéter (positif ou négatif)\n"
+            "- 1 surprise (sur toi ou les autres)\n\n"
+            "## 4. Tes frictions\n"
+            "- Qu'est-ce qui t'a frustré ?\n"
+            "- Quel pattern à changer ?\n"
+            "- Quelle conversation à avoir ?\n\n"
+            "## 5. Tes relations\n"
+            "- Avec qui tu t'es senti CONNECTÉ(E) ?\n"
+            "- Avec qui ça a frottĖ ?\n"
+            "- Qui mérite un message de reconnaissance ?\n\n"
+            "## 6. Ton corps\n"
+            "- Énergie globale (1-10)\n"
+            "- Sommeil (1-10)\n"
+            "- Stress (1-10)\n"
+            "- 1 chose à ajuster physique\n\n"
+            "## 7. La semaine prochaine\n"
+            "- 3 priorités CLAIRES (pas 10)\n"
+            "- 1 plaisir programmé\n"
+            "- 1 défi accepté\n"
+            "- 1 personne à contacter\n\n"
+            "## Conseil Calo\n"
+            "1. Pose UNE question à la fois, attends réponse\n"
+            "2. Reformule pour montrer que tu écoutes\n"
+            "3. Sauvegarde les insights majeurs via `remember` (importance 4)\n"
+            "4. Ne juge JAMAIS les réponses\n"
+            "5. Ferme avec encouragement : \"Belle semaine. Je suis là si besoin.\""
+        )
+
+    @beta_tool
+    def set_daily_intention() -> str:
+        """Morning intention setting protocol. 5 min ritual that transforms \
+how the day unfolds. Use as alternative or complement to morning_brief."""
+        return (
+            "# 🌅 Intention du jour\n\n"
+            "5 min, le matin, avant le téléphone.\n\n"
+            "## Pose ces 4 questions (1 par 1) :\n\n"
+            "### 1. État présent\n"
+            "*\"Comment je me sens MAINTENANT ?\"* (1-3 mots)\n"
+            "Pas de jugement. Juste constatation.\n\n"
+            "### 2. Aujourd'hui (factuel)\n"
+            "*\"Qu'est-ce qui doit absolument se faire aujourd'hui ?\"*\n"
+            "MAX 3 priorités. Si tu en mets 10, tu ne fais rien.\n\n"
+            "### 3. État voulu\n"
+            "*\"Comment je veux ME SENTIR ce soir au coucher ?\"*\n"
+            "Imagine la sensation cible.\n\n"
+            "### 4. Intention\n"
+            "*\"Quel ÉTAT D'ESPRIT je choisis aujourd'hui ?\"*\n"
+            "Un seul mot. Ex : Calme · Présent · Joyeux · Discipliné · Patient · "
+            "Confiant · Curieux · Reconnaissant · Brave · Bienveillant\n\n"
+            "## Ancrage\n"
+            "Écris l'intention sur post-it visible (frigo, miroir, écran).\n"
+            "Reviens y mentalement à 12h et 17h.\n\n"
+            "## Variation : Examen quotidien (stoïcien)\n"
+            "Soir : compare l'intention du matin avec comment ça s'est passé.\n"
+            "Pas culpabiliser, juste OBSERVER. Ajuste demain.\n\n"
+            "## Conseil Calo\n"
+            "1. Court mais PROFOND : pas 1 min en mode rush\n"
+            "2. Sauvegarde l'intention via remember (importance 2)\n"
+            "3. Reviens-y dans le soir (evening_reflection)\n"
+            "4. Tu peux le faire en vocal au lieu d'écrit"
+        )
+
+    @beta_tool
     def coach_dashboard_overview() -> str:
         """⚠️ DAMIEN ONLY. Generate a dashboard summary of ALL clients : at-risk, \
 top performers, those needing attention. Call ONLY if user is Damien (admin) \
@@ -5442,7 +6071,7 @@ Args:
         )
         tier_perks = {
             "plus": (
-                "✅ **Calo Plus 199 CHF/mois activé** 🎉\n\n"
+                "✅ **Calo Plus 99€/mois activé** 🎉\n\n"
                 "Tu débloques :\n"
                 "- Coaching IA 24/7 illimité\n"
                 "- Toutes les analyses (bilan, photo morpho, étiquettes)\n"
@@ -5454,7 +6083,7 @@ Args:
                 "- Voice in/out (Whisper + ElevenLabs)"
             ),
             "elite": (
-                "✅ **Calo Elite 499 CHF/mois activé** 💎\n\n"
+                "✅ **Calo Elite 299€/mois activé** 💎\n\n"
                 "Tout Plus +\n"
                 "- 1 call 30 min/mois avec Damien (visio)\n"
                 "- Bilan sanguin annuel inclus + interpretation\n"
@@ -5464,7 +6093,7 @@ Args:
                 "- Cohorte privée Telegram + group classes 1x/sem"
             ),
             "pro": (
-                "✅ **Calo Pro 999 CHF/mois activé** 👑\n\n"
+                "✅ **Calo Pro 999€/mois activé** 👑\n\n"
                 "Tout Elite +\n"
                 "- Calls illimités avec Damien (sur demande)\n"
                 "- Visioconférence 1x/mois minimum\n"
@@ -5483,37 +6112,41 @@ Args:
 'combien ça coûte', 'tarifs', 'tu fais quoi de plus', 'pricing'."""
         return (
             "# 💎 Tarifs Calo\n\n"
-            "## 🥈 Calo Plus — 199 CHF/mois\n"
+            "## 🥈 Calo Plus — 99€/mois\n"
             "L'expérience de base. Tout l'essentiel pour transformer ta santé.\n\n"
-            "- Coaching IA 24/7 illimité (texte + vocal)\n"
-            "- Vision : photos repas, body, étiquettes, machines salle, bilans sanguins\n"
-            "- 78 outils experts (nutrition + sport + mental)\n"
-            "- 145 exercices avec anti-injury\n"
-            "- 16 challenges structurés (boxe, marathon, postpartum, etc.)\n"
-            "- 8 programmes sport multi-semaines\n"
-            "- 30 recettes + recettes IA personnalisées illimitées\n"
-            "- Anamnèse 7 jours, plateau breaker, suivi métabolique\n"
-            "- Graphs progrès + reports mensuels PDF\n"
-            "- ~180 fiches knowledge pointu\n\n"
-            "## 💎 Calo Elite — 499 CHF/mois\n"
+            "- 🤖 **Coaching IA 24/7 illimité** (texte + vocal Whisper + ElevenLabs)\n"
+            "- 👁️ **Vision multi-modal** : repas, photo morpho, étiquettes, machines salle, bilans sanguins, frigo\n"
+            "- 🔧 **97+ outils experts** (nutrition + sport + mental)\n"
+            "- 🏋️ **145 exercices** avec anti-injury intelligent\n"
+            "- 🥊 **16 challenges** structurés (boxe, marathon, postpartum, etc.)\n"
+            "- 📋 **8 programmes sport** multi-semaines\n"
+            "- 🍳 **30 recettes** + recettes IA personnalisées illimitées\n"
+            "- 🔬 **Anamnèse 7 jours**, plateau breaker, profil métabolique adaptatif\n"
+            "- 🧠 **Module mental profond** : CBT, ACT, IFS, attachement, valeurs, parts work, reparenting\n"
+            "- 📊 **Graphes progrès + reports mensuels PDF luxueux**\n"
+            "- 📚 **~200 fiches knowledge** pointu (nutrition + sport + mental)\n"
+            "- 🎓 **11 micro-courses** Duolingo-style (5-14 jours)\n\n"
+            "## 💎 Calo Elite — 299€/mois\n"
             "Tout Plus + accès humain.\n\n"
-            "- ✨ 1 call visio 30 min/mois avec Damien\n"
-            "- ✨ Bilan sanguin annuel inclus (+ interpretation)\n"
-            "- ✨ Voice cloning : ta propre voix dans Calo\n"
-            "- ✨ Priority WhatsApp (<30 sec heures bureau)\n"
-            "- ✨ Programmes custom designed par Damien\n"
-            "- ✨ Cohorte privée Telegram\n"
-            "- ✨ Group classes virtuelles 1x/sem\n\n"
-            "## 👑 Calo Pro — 999 CHF/mois\n"
+            "- ✨ **1 visio 30 min/mois** avec Damien\n"
+            "- ✨ **Bilan sanguin annuel inclus** (+ interpretation pro)\n"
+            "- ✨ **Voice cloning** : ta propre voix dans Calo (effet miroir)\n"
+            "- ✨ **Priority WhatsApp** (<30 sec heures bureau)\n"
+            "- ✨ **Programmes custom designed** par Damien selon ton profil\n"
+            "- ✨ **Cohorte privée Telegram**\n"
+            "- ✨ **Group classes virtuelles** 1x/sem\n"
+            "- ✨ **Conciergerie standard** : booking kinés via Doctolib, recos suppléments\n\n"
+            "## 👑 Calo Pro — 999€/mois\n"
             "L'expérience VIP. Pour ceux qui veulent le maximum.\n\n"
-            "- 👑 Calls illimités avec Damien (sur demande)\n"
-            "- 👑 Visio 1x/mois minimum\n"
-            "- 👑 Bilans sanguins quarterly + interpretations approfondies\n"
-            "- 👑 Voyage concierge complet (ad hoc)\n"
-            "- 👑 Conciergerie réelle : booking kinés, suppléments, restos\n"
-            "- 👑 Réseau de pros (kiné, psy, médecin nutritionniste)\n"
-            "- 👑 Reports mensuels deep + recommandations personnalisées\n"
-            "- 👑 Pour : sportifs élite, entrepreneurs, public figures\n\n"
+            "- 👑 **Calls illimités avec Damien** (sur demande)\n"
+            "- 👑 **Visio 1x/mois** minimum (peut être hebdo)\n"
+            "- 👑 **Bilans sanguins quarterly** + interpretations approfondies\n"
+            "- 👑 **Voyage concierge complet** (restos, salles, kinés locaux, etc.)\n"
+            "- 👑 **Conciergerie réelle complète** : booking suppléments + livraison repas + restos via API\n"
+            "- 👑 **Réseau de pros partenaires** (kiné, psy, médecin nutritionniste, ostéo)\n"
+            "- 👑 **Reports mensuels deep** + recommandations personnalisées\n"
+            "- 👑 **Therapy IFS** ou ACT en visio (réseau de psy partenaires)\n"
+            "- 👑 **Pour** : sportifs élite, entrepreneurs, public figures, hauts revenus\n\n"
             "💡 Tu peux changer de tier à tout moment. "
             "**Pour upgrader** : dis 'je veux passer en Elite' ou 'Pro'. "
             "**Pour comparer** : pose-moi des questions sur les diffs."
@@ -5665,6 +6298,19 @@ Args:
         cognitive_reframe,
         burnout_assessment,
         update_mental_profile,
+        # Mental module DEEP (mega depth)
+        identify_emotion,
+        thought_record_cbt,
+        values_assessment,
+        gratitude_journal,
+        self_compassion_break,
+        parts_work_inquiry,
+        attachment_style_assessment,
+        flow_state_setup,
+        reparenting_inner_child,
+        loneliness_protocol,
+        weekly_mental_review,
+        set_daily_intention,
         # Premium features
         explain_gym_machine,
         find_safe_alternatives,

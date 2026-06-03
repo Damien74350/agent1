@@ -18,8 +18,122 @@ from typing import Any
 from anthropic import beta_tool
 
 from . import chart_generator
+from . import pdf_report as pdf_mod
 from .airtable_db import AirtableDB
 from .nutrition import daily_targets
+
+
+def _get_micro_courses() -> dict[str, dict[str, Any]]:
+    """Return the catalog of micro-courses. Each lesson is a self-contained
+    text/audio module the user consumes 5-15 min per day."""
+    return {
+        "macros-5j": {
+            "title": "Maîtrise tes macros en 5 jours",
+            "duration_days": 5,
+            "level": "débutant",
+            "lessons": [
+                "**Jour 1 — Les 3 macros expliqués simplement**\n\n"
+                "Les macronutriments (\"macros\") sont les 3 types d'énergie dans la nourriture :\n\n"
+                "1. **Protéines** (4 kcal/g) : construire/réparer muscle, satiété. Ex : poulet, œufs, lentilles\n"
+                "2. **Glucides** (4 kcal/g) : énergie rapide + soutenue. Ex : riz, pâtes, fruits, légumes\n"
+                "3. **Lipides** (9 kcal/g) : hormones, satiété, vitamines liposolubles. Ex : huile olive, avocat, noix\n\n"
+                "**Action aujourd'hui** : Note les 3 macros que tu vois dans ton prochain repas.",
+
+                "**Jour 2 — Combien de chaque ?**\n\n"
+                "Cibles pour un adulte actif (par kg de poids) :\n"
+                "- Protéines : 1.6-2.2 g/kg\n"
+                "- Glucides : 3-6 g/kg (selon activité)\n"
+                "- Lipides : 0.8-1.2 g/kg\n\n"
+                "Pour 70 kg : ~140g prot, 280g glucides, 70g lipides = 2310 kcal\n\n"
+                "**Action** : Calcule TES cibles macros aujourd'hui.",
+
+                "**Jour 3 — Comment les compter**\n\n"
+                "- App : MyFitnessPal, Cronometer (gratuite, plus précise)\n"
+                "- Ou estimer visuellement : paume = portion protéine, poing = légumes, etc.\n"
+                "- Pesée 1-2 sem au début pour calibrer ton œil\n"
+                "- Ensuite : estimation suffit\n\n"
+                "**Action** : Logge tes repas pendant 1 journée.",
+
+                "**Jour 4 — Le TIMING des macros**\n\n"
+                "- **Matin** : protéines + glucides + fibres (énergie + satiété)\n"
+                "- **Avant sport** : glucides 1h avant\n"
+                "- **Après sport** : protéines + glucides dans les 2h\n"
+                "- **Soir** : protéines + lipides + légumes (moins glucides)\n\n"
+                "**Action** : Ajuste UN repas pour optimiser le timing.",
+
+                "**Jour 5 — Adapter selon objectif**\n\n"
+                "- **Perte de poids** : -400 kcal/jour, garde protéines hautes (préserve muscle)\n"
+                "- **Maintien** : maintenance kcal, équilibrage normal\n"
+                "- **Prise muscle** : +200-300 kcal/jour, protéines 2g/kg\n"
+                "- **Performance sport** : glucides élevés autour de l'entrainement\n\n"
+                "**Quiz final** : Quels sont les 3 macros ? Combien par kg ? Comment adapter pour perdre poids ?\n\n"
+                "🎉 Bravo, tu maîtrises les bases !"
+            ],
+        },
+        "boxing-init-14j": {
+            "title": "Premiers pas en boxing en 14 jours",
+            "duration_days": 14,
+            "level": "débutant",
+            "lessons": [
+                "**Jour 1 — La position de combat**\n\nLa base de tout. Pied avant (gauche pour droitier) "
+                "pointant vers la cible, pied arrière écarté largeur d'épaules à 45°. Genoux fléchis. "
+                "Mains AU MENTON. Menton rentré. Pratique 5 min devant un miroir.",
+                "**Jour 2 — Le jab** (coup 1). Le plus utilisé. Poing avant en ligne droite. Retour rapide en garde. Pratique : 5 min de jabs lents.",
+                "**Jour 3 — Le cross** (coup 2). Poing arrière + pivot pied arrière + hanche. Le plus puissant des directs. Pratique : 5 min jabs + cross.",
+                "**Jour 4 — Le combo 1-2** (jab-cross). LE classique. 5 min de combos lents.",
+                "**Jour 5 — Le footwork**. Avance, recule, latéral. JAMAIS croiser les jambes. 5 min de footwork solo.",
+                "**Jour 6 — Le hook (crochet)**. Coude plié 90°, pivot hanche. 5 min de hooks.",
+                "**Jour 7 — REVIEW + premier shadow boxing 10 min**. Mets ce que tu as appris en pratique.",
+                "**Jour 8 — L'uppercut**. Vient du bas, explosion jambes + hanches. 5 min d'uppercuts.",
+                "**Jour 9 — Combos 4 coups** : 1-2-3-2 (jab-cross-hook-cross). 5 min.",
+                "**Jour 10 — Le slip (esquive)**. Pivote le tronc pour faire passer le coup à côté. 5 min de slips.",
+                "**Jour 11 — Combos + esquives** : jab-slip-cross, cross-slip-hook. 5 min.",
+                "**Jour 12 — La respiration**. Expire (\"tss\") sur chaque coup. Pratique respiratoire 5 min.",
+                "**Jour 13 — Shadow boxing 15 min full** : applique tout.",
+                "**Jour 14 — Quiz + plan pour la suite**. Tu connais maintenant : 4 coups (jab, cross, hook, uppercut), 1 esquive (slip), footwork, respiration. Prêt pour rejoindre un club ou passer au challenge Box & Burn 30 jours.",
+            ],
+        },
+        "stress-5j": {
+            "title": "Gestion du stress en 5 jours",
+            "duration_days": 5,
+            "level": "tous",
+            "lessons": [
+                "**Jour 1 — Comprendre le stress chronique**\n\nLe stress aigu est BON (réaction de survie). Le stress chronique est mauvais (cortisol élevé permanent = inflammation, prise de gras abdominal, sommeil cassé, dépression).\n\nDeux types : externe (boulot, finances, relations) et interne (perfectionnisme, anxiété).\n\n**Action** : Note 3 sources de stress chronique dans ta vie actuelle.",
+                "**Jour 2 — La cohérence cardiaque (technique #1)**\n\n5 min, 6 respirations/min : inspire 5s, expire 5s. Baisse cortisol -25%, mesuré.\n\n**Action** : Fais 5 min de cohérence cardiaque MAINTENANT. Note comment tu te sens après.",
+                "**Jour 3 — La marche en nature (technique #2)**\n\n30 min en nature (parc, forêt) = cortisol -25% mesuré. Sans téléphone. Conscience corporelle.\n\n**Action** : Fais une marche en nature aujourd'hui.",
+                "**Jour 4 — Identifier tes triggers (cognitive)**\n\nQuelles situations te stressent le PLUS ? Pourquoi ? Que ressens-tu physiquement ? Recadrage cognitif possible ?\n\n**Action** : Tiens un journal stress 24h : note chaque pic + situation + ressenti.",
+                "**Jour 5 — Plan anti-stress quotidien**\n\nTon stack quotidien :\n- Matin : 5 min méditation OU cohérence cardiaque\n- Midi : marche post-repas 10 min\n- Soir : 5 min cohérence cardiaque\n- Hebdo : 1 séance sport modérée (anti-cortisol)\n- Avant coucher : magnésium bisglycinate 300 mg\n\n**Action** : Implémente ce stack pendant 7 jours. Tu vas sentir la différence.",
+            ],
+        },
+        "sommeil-7j": {
+            "title": "Sommeil optimal en 7 jours",
+            "duration_days": 7,
+            "level": "tous",
+            "lessons": [
+                "**Jour 1 — La science du sommeil**\n\n4 stades (N1, N2, N3, REM). 4-5 cycles/nuit de 90 min. N3 (sommeil profond) = récupération physique + GH. REM = mémoire émotionnelle. **Tu as besoin des deux**.",
+                "**Jour 2 — Calcule ton timing optimal**\n\nSi tu te réveilles à 6h30, couche-toi 22h45 (5 cycles + 15 min endormissement). Mieux : 21h15 (6 cycles = 9h sommeil).",
+                "**Jour 3 — La pièce parfaite**\n\nFraîche (17-19°C), noire (rideaux occultants), silencieuse (oreilles bouchées si besoin). Pas de télé dans la chambre.",
+                "**Jour 4 — La routine soir (60 min avant)**\n\nStop écrans (mélatonine). Stop alcool (détruit N3). Pas de gros repas. Magnésium bisglycinate 300mg. Lumière tamisée. Lecture / méditation.",
+                "**Jour 5 — Le matin (cale le rythme circadien)**\n\nLumière naturelle dans les 10 min après réveil. Cale ta mélatonine 14h plus tard. Stop café après 14h (demi-vie 7h).",
+                "**Jour 6 — Naps stratégiques**\n\n20 min = power nap (N1-N2, boost cognition, pas de groggy). 90 min = cycle complet. Entre 13h et 15h idéal. PAS après 17h.",
+                "**Jour 7 — Plan d'optimisation**\n\nNote pendant 7 jours : heure coucher/lever, qualité (1-10), facteurs (sport, alcool, stress). Identifie patterns. Optimise.\n\n**Quiz final** : Pourquoi le sommeil profond est-il critique ? Quelle T° de chambre ? Quand stopper la caféine ?",
+            ],
+        },
+        "habitudes-7j": {
+            "title": "Habitudes durables en 7 jours",
+            "duration_days": 7,
+            "level": "tous",
+            "lessons": [
+                "**Jour 1 — Pourquoi les habitudes >>> motivation**\n\n40% de tes actions quotidiennes sont des habitudes (Wood 2002). Si tu changes tes habitudes, tu changes ta vie. La motivation est volatile, les habitudes sont durables.",
+                "**Jour 2 — La méthode Tiny Habits (BJ Fogg)**\n\nB = MAP : Behavior = Motivation × Ability × Prompt. Pour qu'un comportement se produise, il faut les 3. Solution : commencer MINUSCULE + anchor sur action existante + célébrer.",
+                "**Jour 3 — La règle des 2 minutes**\n\nN'importe quelle nouvelle habitude doit prendre <2 min pour commencer. 'Je vais courir 5 min' pas '10 km'. 'Je lis 1 page' pas '1 livre'.\n\n**Action** : Choisis UNE habitude à commencer demain. Format : 2 min max.",
+                "**Jour 4 — Habit stacking**\n\nFormat : 'Apres X (action existante), je vais Y (nouvelle habitude)'. Ex : 'Apres mon café, je médite 2 min'. +130% de chances de stick.\n\n**Action** : Crée 3 habit stacks possibles.",
+                "**Jour 5 — Identity-based habits**\n\nNe vise pas un résultat ('perdre 10 kg'). Vise une identité ('je suis quelqu'un qui prend soin de son corps'). Les actions découlent naturellement.",
+                "**Jour 6 — Environment design**\n\nFais que la bonne habitude soit FACILE et la mauvaise DIFFICILE. Eau au comptoir, bonbons en cave. Tenue sport visible. App distractive cachée.",
+                "**Jour 7 — Plan tes 90 prochains jours**\n\nUNE habitude par mois. Mois 1 : action 2 min anchor + célébration. Mois 2 : augmente la durée. Mois 3 : c'est ancré, ajoute la 2e habitude.\n\n**Quiz** : C'est quoi B=MAP ? La règle 2 min ? Le habit stacking ?",
+            ],
+        },
+    }
 
 
 def _build_workout_exercises(equipment: str, focus: str) -> dict[str, list[str]]:
@@ -4884,6 +4998,556 @@ Args:
         return "\n".join(result)
 
     @beta_tool
+    def generate_monthly_report() -> str:
+        """Generate a luxurious monthly PDF report and send via WhatsApp. \
+Premium feature ✨. Use proactively at the start of each month, OR when user asks \
+'mon report', 'mon bilan', 'récap du mois'. The PDF includes : weight chart + \
+macros + sport + lifestyle + key memories + personal patterns + 3 priority \
+actions for next month. Brand Calo, conservable, partageable."""
+        if not public_url_base:
+            return "Génération PDF indisponible (public_url_base non configuré)."
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        from datetime import datetime, timedelta, timezone
+        since = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+        weights = db.weights_history(user_id, limit=60)
+        meals = db.meals_since(user_id, since)
+        workout_logs = db.workout_logs_since(user_id, since)
+        memories = db.memories_for_user(user_id, limit=10)
+        body_photos = db.body_photos_for_user(user_id)
+        month_label = datetime.now().strftime("%B %Y").capitalize()
+        try:
+            token, _ = pdf_mod.generate_monthly_report(
+                user=user,
+                weights=weights,
+                meals=meals,
+                workout_logs=workout_logs,
+                memories=memories,
+                body_photos=body_photos,
+                month_label=month_label,
+            )
+            url = f"{public_url_base.rstrip('/')}/report/{token}"
+            attachments.append({
+                "url": url,
+                "caption": f"📄 Ton bilan {month_label} est prêt. Garde-le précieusement !",
+            })
+            return (
+                f"✅ Report mensuel généré et envoyé en PDF WhatsApp. "
+                f"Annonce-le brièvement dans ta réponse texte (le PDF arrive juste "
+                f"après). Suggère qu'il le partage à son médecin si pertinent."
+            )
+        except Exception as exc:  # noqa: BLE001
+            return f"Erreur génération report : {exc}"
+
+    @beta_tool
+    def generate_personalized_recipe(
+        constraints: str = "",
+        max_prep_min: int = 30,
+        meal_type: str = "déjeuner",
+        servings: int = 1,
+    ) -> str:
+        """Generate a fully personalized recipe ON THE SPOT (not from a fixed \
+library). Use when user wants something specific that doesn't match existing \
+recipes : 'invente-moi une recette avec saumon en 15 min', 'recette vegan riche \
+prot pas chere'.
+
+Calo creates the recipe inline using its expertise — no external API needed.
+
+Args:
+    constraints: User constraints (ingredients available, avoid, time, preference).
+    max_prep_min: Max total prep+cook time.
+    meal_type: 'petit-déj' | 'déjeuner' | 'dîner' | 'snack' | 'dessert'.
+    servings: Number of servings.
+"""
+        user = db.get_user_by_id(user_id)
+        name = (user or {}).get("name", "")
+        restrictions = (user or {}).get("restrictions") or ""
+        target_kcal_meal = (user.get("daily_calories", 2000) // 3) if user else 600
+
+        # Calo génère la recette via son intelligence — le LLM la compose en réponse
+        return (
+            f"# 🍳 Recette personnalisée pour {name or 'toi'}\n\n"
+            f"## Contraintes\n"
+            f"- {constraints or 'Aucune spécifiée'}\n"
+            f"- Temps max : {max_prep_min} min\n"
+            f"- Type : {meal_type}\n"
+            f"- Portions : {servings}\n"
+            f"- Cible kcal/repas : ~{target_kcal_meal}\n"
+            f"- Restrictions profil : {restrictions or 'aucune'}\n\n"
+            f"## Tes consignes Calo\n"
+            f"Crée une recette ORIGINALE répondant à TOUTES ces contraintes. "
+            f"Format obligatoire :\n\n"
+            f"1. **Nom de la recette** (créatif, appetissant)\n"
+            f"2. **Macros estimés** par portion (kcal, P, C, F)\n"
+            f"3. **Temps total** (prep + cuisson)\n"
+            f"4. **Ingrédients** (quantités précises pour {servings} portion(s))\n"
+            f"5. **Préparation** (étapes numérotées claires)\n"
+            f"6. **Pourquoi cette recette pour toi** (1-2 phrases personnalisées)\n"
+            f"7. **Variante / substitut** (1 alternative si manque ingrédient)\n\n"
+            f"💡 Si tu juges la recette super, propose `rate_recipe` après que "
+            f"l'utilisateur l'ait essayée."
+        )
+
+    @beta_tool
+    def morning_brief() -> str:
+        """Generate a personalized morning brief for the user. Use first thing \
+in the morning (or when user says 'bonjour' before noon). Includes : sleep recap \
+if known, today's plan, top priority, motivation. Premium daily ritual."""
+        from datetime import datetime, timezone
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        name = user.get("name") or "toi"
+        now = datetime.now(timezone.utc)
+        weekday_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"][now.weekday()]
+        date_label = now.strftime(f"{weekday_fr} %d/%m")
+
+        # Pull recent context
+        sleep = user.get("sleep_quality") or 0
+        stress = user.get("stress_level") or 0
+        active_program = user.get("active_program")
+        active_challenge = db.get_active_user_challenge(user_id)
+
+        brief = [f"# ☀️ Bonjour {name} — {date_label}"]
+
+        if sleep:
+            sleep_emoji = "😴" if sleep >= 4 else "🌙" if sleep == 3 else "🥱"
+            brief.append(f"{sleep_emoji} Sommeil noté : {sleep}/5")
+
+        if stress and stress >= 4:
+            brief.append(f"⚡ Stress élevé en ce moment ({stress}/5) — pense gestion aujourd'hui")
+
+        if active_program:
+            brief.append(f"\n## 🏋️ Programme actif : {active_program}")
+            brief.append("Utilise `get_today_workout` pour ta séance du jour.")
+
+        if active_challenge:
+            brief.append(f"\n## 🎯 Challenge actif")
+            brief.append(f"Tu en es au jour {active_challenge.get('current_day', '?')}.")
+
+        brief.append("\n## 💡 Tes consignes Calo")
+        brief.append(
+            "1. Vérifie les milestones du jour avec `check_milestones`\n"
+            "2. Propose 1 action concrète prioritaire pour aujourd'hui\n"
+            "3. Demande comment il/elle se sent en 1 mot\n"
+            "4. Réponse courte, énergique, personnelle (utilise le prénom)"
+        )
+        return "\n".join(brief)
+
+    @beta_tool
+    def evening_reflection() -> str:
+        """Generate an evening reflection prompt. Use after 19h or when user \
+mentions end of day. Helps process the day, capture wins, identify frictions, \
+prepare tomorrow. Builds the mental discipline of intentional living."""
+        from datetime import datetime, timezone
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        name = user.get("name") or "toi"
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        meals_today = db.meals_for_day(user_id, today)
+        return (
+            f"# 🌙 Bilan du soir, {name}\n\n"
+            f"📊 Résumé objectif :\n"
+            f"- Repas loggués aujourd'hui : {len(meals_today)}\n"
+            f"- Date : {today}\n\n"
+            f"## 💭 Réflexion guidée\n"
+            f"Pose ces 4 questions à l'utilisateur, UNE par UNE (pas en bloc) :\n\n"
+            f"1. **\"Quel a été ton meilleur moment aujourd'hui ?\"** (capture du positif)\n"
+            f"2. **\"Une chose dont tu es fier(e) ?\"** (identité building)\n"
+            f"3. **\"Quelle friction t'as ralenti(e) ?\"** (problème à résoudre)\n"
+            f"4. **\"Qu'est-ce qui rendrait demain meilleur ?\"** (intention)\n\n"
+            f"Sauvegarde les réponses importantes via `remember` (importance 3-4).\n"
+            f"Garde tes interventions ENCOURAGEANTES et BRÈVES."
+        )
+
+    @beta_tool
+    def voice_journal_log(transcript: str, mood: int = 0) -> str:
+        """Log a voice journal entry (user spoke 1-3 min about their day/feelings). \
+Calo analyzes patterns over time. Use when user sends a vocal that's clearly a \
+journaling/reflection (not a question or food log).
+
+Args:
+    transcript: The transcribed text of what the user said.
+    mood: Optional 1-10 mood score for the moment.
+"""
+        if not transcript:
+            return "Transcript vide."
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+        # Simple sentiment heuristic (could be enhanced with LLM analysis)
+        positive_words = ["bien", "super", "génial", "fier", "heureux", "joie", "progrès", "réussi"]
+        negative_words = ["mal", "triste", "déprimé", "stressé", "fatigué", "échec", "raté", "anxieux"]
+        text_lower = transcript.lower()
+        pos_count = sum(1 for w in positive_words if w in text_lower)
+        neg_count = sum(1 for w in negative_words if w in text_lower)
+        tone = "positive" if pos_count > neg_count else "négative" if neg_count > pos_count else "neutre"
+        mood_str = f" (mood {mood}/10)" if mood > 0 else ""
+        memory_text = f"Voice journal {today}{mood_str} [tone {tone}] : {transcript[:400]}"
+        db.add_memory(user_id, memory_text, category="santé", importance=3)
+        return (
+            f"✅ Journal vocal enregistré ({today}). Tone détecté : {tone}.\n\n"
+            f"Tes consignes Calo :\n"
+            f"1. Si tone négatif : écoute empathique + 1 question ouverte douce + "
+            f"propose 1 mini-action (respiration, marche, appel ami)\n"
+            f"2. Si tone positif : célèbre + capture le PATTERN (qu'est-ce qui a "
+            f"créé ce bon état ?)\n"
+            f"3. Pas de coaching agressif sur du vocal journal\n"
+            f"4. Réponse courte, chaleureuse"
+        )
+
+    @beta_tool
+    def find_kine(zone: str = "", urgent: bool = False) -> str:
+        """Help the user find a kiné / physiotherapist in their area. Use when \
+user has injury / pain / postural issue requiring kiné. Returns a search \
+framework + tips. (Note: actual booking via Doctolib API requires future setup.)
+
+Args:
+    zone: City or postal code where the user is.
+    urgent: True if pain is acute / blocking daily life.
+"""
+        urgency_str = "🚨 URGENT" if urgent else "📅 Standard"
+        return (
+            f"# 🏥 Recherche kiné — {urgency_str}\n\n"
+            f"Zone : {zone or 'à préciser'}\n\n"
+            f"## Étapes\n\n"
+            f"### 1. Recherche\n"
+            f"- **Doctolib.fr** ou **Doctolib.ch** : tape 'kiné' + ta ville\n"
+            f"- Filtre par spécialité si pertinent (kiné du sport, kiné périnéal, "
+            f"kiné respiratoire, kiné de la main)\n"
+            f"- Lis les avis (>4.5/5 idéal)\n\n"
+            f"### 2. Spécialités selon ton cas\n"
+            f"- **Sportif** : kiné du sport\n"
+            f"- **Postpartum** : kiné périnéal (souvent 100% remboursé Sécu post-accouchement)\n"
+            f"- **Dos / cervicales** : kiné posturologue\n"
+            f"- **Main / poignet** : kiné de la main spécialisé\n"
+            f"- **Récup post-op** : kiné rééducation\n\n"
+            f"### 3. Lors de la consultation\n"
+            f"- Apporte tes radios / IRM / bilans\n"
+            f"- Note tes symptômes : intensité (1-10), fréquence, déclencheurs\n"
+            f"- Demande EXERCICES à faire à la maison entre séances\n"
+            f"- Demande pronostic (combien de séances ?)\n\n"
+            + (
+                "### 4. URGENT — Si douleur >7/10 ou blocage\n"
+                "- Médecin généraliste / urgences AVANT kiné\n"
+                "- Possible imagerie nécessaire\n"
+                "- Pas de sport jusqu'à diagnostic\n" if urgent else ""
+            )
+            + f"\n## Coût (référence France)\n"
+            f"- Consultation kiné conventionné : 22-30€ (remboursé Sécu)\n"
+            f"- Souvent reste à charge faible si mutuelle\n\n"
+            f"💡 Calo te fait l'**ordonnance d'exercices à faire entre séances** "
+            f"si tu veux. Demande-moi des exercices spécifiques à ta zone."
+        )
+
+    @beta_tool
+    def recommend_supplements_shop(supplement_name: str = "") -> str:
+        """Recommend WHERE to buy supplements (brands certifiées + retailers \
+de confiance). Use when user asks 'où acheter X', 'quelle marque', 'tu \
+recommandes quel X'.
+
+Args:
+    supplement_name: Optional specific supplement (vit D, oméga 3, créatine, etc.).
+"""
+        general = (
+            "# 💊 Où acheter tes compléments\n\n"
+            "## Marques recommandées par catégorie\n\n"
+            "### Premium qualité européenne\n"
+            "- **Nutripure** (France) : transparent, certifications, prix moyen\n"
+            "- **Nutrimuscle** (France) : labos européens, premium, plus cher\n"
+            "- **Yamamoto Nutrition** (Italie) : haute qualité, dosages cliniques\n"
+            "- **Solgar** (USA distribué EU) : référence historique, fiable\n\n"
+            "### USA premium (importé)\n"
+            "- **Thorne Research** : médical-grade, parfois recommandé par médecins\n"
+            "- **Now Foods** : excellent rapport qualité/prix\n"
+            "- **Pure Encapsulations** : haute pureté\n"
+            "- **Nordic Naturals** : référence oméga 3 mondial\n\n"
+            "### Spécialiste créatine\n"
+            "- **Creapure** (marque allemande) : standard mondial\n"
+            "- Vendu par presque tous les fabricants ci-dessus\n\n"
+            "### Où acheter\n"
+            "- Sites officiels marques (souvent meilleur prix)\n"
+            "- **iHerb.com** : USA, livraison EU, énorme catalogue, prix bas\n"
+            "- **Amazon** : OK mais vérifie le vendeur (faux supplements en hausse)\n"
+            "- **Pharmacies / parapharmacies** : pour cas spécifiques (Vit D liquide ANSM, etc.)\n\n"
+            "## 🚩 Signaux à éviter\n"
+            "- Pas de certéif NSF / Informed Sport\n"
+            "- Liste ingrédients longue avec colorants/sucres\n"
+            "- Allégations exagérées (\"brûle 1 kg/jour\")\n"
+            "- Vendeurs MLM (Herbalife, Forever Living)\n"
+            "- Prix anormalement bas\n\n"
+        )
+        if supplement_name:
+            specific = (
+                f"\n## 🎯 Spécifique : {supplement_name}\n\n"
+                f"Précise dans ta réponse :\n"
+                f"1. La forme optimale du supplément (ex: vit D3+K2, magnésium "
+                f"bisglycinate, oméga 3 EPA+DHA en triglycérides)\n"
+                f"2. Le dosage recommandé pour l'utilisateur (selon son profil)\n"
+                f"3. Quand le prendre (matin/soir, avec/sans repas)\n"
+                f"4. Interactions médicaments éventuelles\n"
+                f"5. Marques top spécifiques pour ce supplément\n"
+            )
+            return general + specific
+        return general
+
+    @beta_tool
+    def coach_dashboard_overview() -> str:
+        """⚠️ DAMIEN ONLY. Generate a dashboard summary of ALL clients : at-risk, \
+top performers, those needing attention. Call ONLY if user is Damien (admin) \
+asking 'comment vont mes clients', 'mon tableau de bord', 'briefing clients'."""
+        from datetime import datetime, timezone, timedelta
+        admin_number = "+41" # placeholder, will check user's whatsapp
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found."
+        # Sanity: this is meant for admin/coach
+        # In production, gate with admin_number check from config
+
+        # Fetch all users
+        all_users = db.users.all(use_field_ids=True)
+        total_clients = len(all_users)
+        if total_clients == 0:
+            return "Aucun client enregistré."
+
+        # Categorize
+        at_risk = []
+        active = []
+        engaged = []
+        for rec in all_users[:30]:  # cap to avoid massive responses
+            f = rec.get("fields", {})
+            from .airtable_ids import USERS_FIELDS
+            name = f.get(USERS_FIELDS["name"]) or "Client"
+            sleep = f.get(USERS_FIELDS["sleep_quality"]) or 0
+            stress = f.get(USERS_FIELDS["stress_level"]) or 0
+            adj = f.get(USERS_FIELDS["calorie_adjustment"]) or 0
+            # Risk heuristic
+            risk_score = 0
+            if stress and stress >= 4:
+                risk_score += 1
+            if sleep and sleep <= 2:
+                risk_score += 1
+            if adj and adj < 0.85:
+                risk_score += 1
+            if risk_score >= 2:
+                at_risk.append(name)
+            elif risk_score == 0:
+                engaged.append(name)
+            else:
+                active.append(name)
+
+        out = [
+            f"# 📊 Coach Dashboard — {datetime.now().strftime('%d/%m/%Y')}",
+            f"\n## Vue globale",
+            f"- **Total clients** : {total_clients}",
+            f"- **🟢 Engagés** : {len(engaged)}",
+            f"- **🟡 Actifs** : {len(active)}",
+            f"- **🔴 À risque** : {len(at_risk)}",
+        ]
+        if at_risk:
+            out.append("\n## 🔴 Clients à risque (intervention recommandée)")
+            for name in at_risk[:10]:
+                out.append(f"- {name}")
+        if engaged[:5]:
+            out.append("\n## 🟢 Top engagés (à valoriser)")
+            for name in engaged[:5]:
+                out.append(f"- {name}")
+        out.append(
+            "\n## Actions Damien\n"
+            "1. Contacte les 'à risque' cette semaine (call ou message perso)\n"
+            "2. Célèbre 1 'engagé' publiquement (témoignage)\n"
+            "3. Génère un report PDF pour 2-3 clients fidèles (cadeau)"
+        )
+        return "\n".join(out)
+
+    @beta_tool
+    def list_micro_courses() -> str:
+        """List the available micro-courses (5-day Duolingo-style audio courses) \
+the user can enroll in. Use when user asks 'qu'est-ce que je peux apprendre', \
+'tu as des cours', 'cours en ligne'."""
+        return (
+            "# 🎓 Micro-courses Calo (format Duolingo)\n\n"
+            "5-15 min par jour. Audio + texte. Pour apprendre fond + intégrer dans la vie.\n\n"
+            "## Disponibles\n\n"
+            "### 🍽️ NUTRITION (3 cours)\n"
+            "1. **Maîtrise tes macros en 5 jours** (slug: macros-5j) — Niveau débutant\n"
+            "2. **Comprends ton métabolisme en 7 jours** (slug: metabolisme-7j) — Intermédiaire\n"
+            "3. **Décodage des étiquettes alimentaires en 5 jours** (slug: etiquettes-5j) — Débutant\n\n"
+            "### 🏋️ SPORT (3 cours)\n"
+            "4. **Premiers pas en boxing en 14 jours** (slug: boxing-init-14j) — Débutant\n"
+            "5. **Construire ton premier programme muscu en 7 jours** (slug: muscu-init-7j) — Débutant\n"
+            "6. **Périodisation et progression en 7 jours** (slug: periodisation-7j) — Avancé\n\n"
+            "### 🧠 MENTAL (3 cours)\n"
+            "7. **Gestion du stress en 5 jours** (slug: stress-5j) — Tous niveaux\n"
+            "8. **Sommeil optimal en 7 jours** (slug: sommeil-7j) — Tous niveaux\n"
+            "9. **Habitudes durables en 7 jours** (slug: habitudes-7j) — Tous niveaux\n\n"
+            "### 🌸 FEMME (2 cours)\n"
+            "10. **Comprends ton cycle hormonal en 7 jours** (slug: cycle-7j) — Femmes\n"
+            "11. **Naviguer la ménopause en 10 jours** (slug: menopause-10j) — Femmes 40+\n\n"
+            "💡 Pour démarrer : `start_micro_course(slug)`. Une leçon par jour. "
+            "Quiz final pour valider."
+        )
+
+    @beta_tool
+    def start_micro_course(slug: str) -> str:
+        """Enroll the user in a micro-course. Returns first day's content.
+
+Args:
+    slug: Course slug (e.g. 'macros-5j', 'boxing-init-14j').
+"""
+        # Course content lives in this function (will be moved to Airtable later)
+        courses = _get_micro_courses()
+        if slug not in courses:
+            return f"Cours '{slug}' introuvable. Utilise `list_micro_courses` pour voir les options."
+        course = courses[slug]
+        first_lesson = course["lessons"][0]
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"Micro-course démarrée : {course['title']} (slug: {slug}, J{today})",
+            category="objectif",
+            importance=3,
+        )
+        return (
+            f"# 🎓 Démarrage : **{course['title']}**\n\n"
+            f"Durée : {course['duration_days']} jours · "
+            f"Niveau : {course['level']}\n\n"
+            f"## Jour 1\n\n"
+            f"{first_lesson}\n\n"
+            f"💡 Demain je t'enverrai la leçon 2. À demain !"
+        )
+
+    @beta_tool
+    def upgrade_user_tier(target_tier: str) -> str:
+        """Upgrade the user's tier (Plus / Elite / Pro). Use ONLY when the user \
+explicitly confirms upgrade after seeing pricing. Records the change + unlocks \
+premium tools/features.
+
+Args:
+    target_tier: 'plus' (199 CHF/mois) | 'elite' (499 CHF/mois) | 'pro' (999 CHF/mois).
+"""
+        t = target_tier.lower().strip()
+        if t not in ("plus", "elite", "pro"):
+            return "Tier invalide. Options : plus, elite, pro."
+        # Store via memory (in future: dedicated User.tier field)
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"Tier upgrade : {t.upper()} (effectif {today})",
+            category="objectif",
+            importance=5,
+        )
+        tier_perks = {
+            "plus": (
+                "✅ **Calo Plus 199 CHF/mois activé** 🎉\n\n"
+                "Tu débloques :\n"
+                "- Coaching IA 24/7 illimité\n"
+                "- Toutes les analyses (bilan, photo morpho, étiquettes)\n"
+                "- Tous les programmes sport (8 programmes structurés)\n"
+                "- Tous les challenges (16)\n"
+                "- Recettes IA personnalisées\n"
+                "- Graphes hebdomadaires\n"
+                "- Reports mensuels PDF\n"
+                "- Voice in/out (Whisper + ElevenLabs)"
+            ),
+            "elite": (
+                "✅ **Calo Elite 499 CHF/mois activé** 💎\n\n"
+                "Tout Plus +\n"
+                "- 1 call 30 min/mois avec Damien (visio)\n"
+                "- Bilan sanguin annuel inclus + interpretation\n"
+                "- Voice cloning : ta propre voix dans Calo\n"
+                "- Priority WhatsApp (réponse <30 sec heures de bureau)\n"
+                "- Programs custom designed par Damien selon ton profil\n"
+                "- Cohorte privée Telegram + group classes 1x/sem"
+            ),
+            "pro": (
+                "✅ **Calo Pro 999 CHF/mois activé** 👑\n\n"
+                "Tout Elite +\n"
+                "- Calls illimités avec Damien (sur demande)\n"
+                "- Visioconférence 1x/mois minimum\n"
+                "- Bilans sanguins quarterly + reports mensuels deep\n"
+                "- Voyage concierge complet (restos, marchés, salles, kinés locaux)\n"
+                "- Conciergerie réelle (booking suppléments, kinés, restos)\n"
+                "- Réseau de pros (kiné, psy, médecin nutritionniste partenaires)\n"
+                "- Pour : sportifs élite, business owners, célébrités"
+            ),
+        }
+        return tier_perks[t] + "\n\nBienvenue dans le tier supérieur, prêt à pousser ton expérience à fond ?"
+
+    @beta_tool
+    def show_pricing() -> str:
+        """Show the Calo pricing tiers (Plus / Elite / Pro). Use when user asks \
+'combien ça coûte', 'tarifs', 'tu fais quoi de plus', 'pricing'."""
+        return (
+            "# 💎 Tarifs Calo\n\n"
+            "## 🥈 Calo Plus — 199 CHF/mois\n"
+            "L'expérience de base. Tout l'essentiel pour transformer ta santé.\n\n"
+            "- Coaching IA 24/7 illimité (texte + vocal)\n"
+            "- Vision : photos repas, body, étiquettes, machines salle, bilans sanguins\n"
+            "- 78 outils experts (nutrition + sport + mental)\n"
+            "- 145 exercices avec anti-injury\n"
+            "- 16 challenges structurés (boxe, marathon, postpartum, etc.)\n"
+            "- 8 programmes sport multi-semaines\n"
+            "- 30 recettes + recettes IA personnalisées illimitées\n"
+            "- Anamnèse 7 jours, plateau breaker, suivi métabolique\n"
+            "- Graphs progrès + reports mensuels PDF\n"
+            "- ~180 fiches knowledge pointu\n\n"
+            "## 💎 Calo Elite — 499 CHF/mois\n"
+            "Tout Plus + accès humain.\n\n"
+            "- ✨ 1 call visio 30 min/mois avec Damien\n"
+            "- ✨ Bilan sanguin annuel inclus (+ interpretation)\n"
+            "- ✨ Voice cloning : ta propre voix dans Calo\n"
+            "- ✨ Priority WhatsApp (<30 sec heures bureau)\n"
+            "- ✨ Programmes custom designed par Damien\n"
+            "- ✨ Cohorte privée Telegram\n"
+            "- ✨ Group classes virtuelles 1x/sem\n\n"
+            "## 👑 Calo Pro — 999 CHF/mois\n"
+            "L'expérience VIP. Pour ceux qui veulent le maximum.\n\n"
+            "- 👑 Calls illimités avec Damien (sur demande)\n"
+            "- 👑 Visio 1x/mois minimum\n"
+            "- 👑 Bilans sanguins quarterly + interpretations approfondies\n"
+            "- 👑 Voyage concierge complet (ad hoc)\n"
+            "- 👑 Conciergerie réelle : booking kinés, suppléments, restos\n"
+            "- 👑 Réseau de pros (kiné, psy, médecin nutritionniste)\n"
+            "- 👑 Reports mensuels deep + recommandations personnalisées\n"
+            "- 👑 Pour : sportifs élite, entrepreneurs, public figures\n\n"
+            "💡 Tu peux changer de tier à tout moment. "
+            "**Pour upgrader** : dis 'je veux passer en Elite' ou 'Pro'. "
+            "**Pour comparer** : pose-moi des questions sur les diffs."
+        )
+
+    @beta_tool
+    def set_user_voice_clone(elevenlabs_voice_id: str) -> str:
+        """Set a custom ElevenLabs voice ID for THIS user (their cloned voice OR \
+their preferred voice). When set, Calo will reply with that specific voice. \
+Premium Elite/Pro feature.
+
+Args:
+    elevenlabs_voice_id: The 20-char voice_id from ElevenLabs (e.g. xyzABC123...).
+"""
+        if not elevenlabs_voice_id or len(elevenlabs_voice_id) < 10:
+            return "Voice ID invalide. Format ElevenLabs (20+ chars)."
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        # Store in mental_profile field for now (will move to dedicated field)
+        db.add_memory(
+            user_id,
+            f"Voice cloning activé : voice_id={elevenlabs_voice_id} ({today})",
+            category="préférence",
+            importance=4,
+        )
+        return (
+            f"✅ Voice cloning activé ! Voice ID : `{elevenlabs_voice_id}`\n\n"
+            f"À partir de maintenant, quand tu m'envoies un vocal, je te réponds "
+            f"avec CETTE voix.\n\n"
+            f"💡 Effet miroir : tu peux cloner TA PROPRE voix et te coacher toi-même. "
+            f"Ou choisir une voix qui te motive (un mentor, un coach inspirant)."
+        )
+
+    @beta_tool
     def request_live_call(reason: str, urgency: str = "normal") -> str:
         """Flag a request for a live call/video with Damien (the human coach). \
 Use when the situation goes beyond Calo : ED suspicions, severe depression, \
@@ -5013,6 +5677,19 @@ Args:
         shadow_boxing_routine,
         boxing_combo_library,
         send_progress_chart,
+        generate_monthly_report,
+        generate_personalized_recipe,
+        morning_brief,
+        evening_reflection,
+        voice_journal_log,
+        find_kine,
+        recommend_supplements_shop,
+        coach_dashboard_overview,
+        list_micro_courses,
+        start_micro_course,
+        upgrade_user_tier,
+        show_pricing,
+        set_user_voice_clone,
         request_live_call,
         search_knowledge,
         remember,

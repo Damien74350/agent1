@@ -12,3 +12,4 @@ sqlmodel>=0.0.22
 pyairtable>=3.0.0
 matplotlib>=3.8.0
 pillow>=10.0.0
+reportlab>=4.0.0

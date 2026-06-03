@@ -12,6 +12,7 @@ from twilio.request_validator import RequestValidator
 from calo.chart_generator import CHART_DIR
 from calo.coach import CaloCoach, TurnInput
 from calo.config import CaloConfig
+from calo.pdf_report import REPORT_DIR
 from calo import voice as voice_mod
 
 from .twilio_client import TwilioWhatsApp
@@ -43,6 +44,18 @@ def get_chart(token: str):
     if not path.is_file():
         raise HTTPException(status_code=404, detail="not found")
     return FileResponse(path, media_type="image/png", filename="calo-chart.png")
+
+
+@app.get("/report/{token}")
+def get_report(token: str):
+    """Serves a generated monthly PDF report to Twilio (and the client)."""
+    safe = "".join(c for c in token if c.isalnum() or c in "-_")
+    if safe != token or not safe:
+        raise HTTPException(status_code=404, detail="not found")
+    path = REPORT_DIR / f"{safe}.pdf"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(path, media_type="application/pdf", filename="calo-report.pdf")
 
 
 @app.get("/audio/{token}")

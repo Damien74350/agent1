@@ -6220,6 +6220,169 @@ crises + perte poids rapide, suspect de TCA').
         )
 
     @beta_tool
+    def build_transformation_vision(
+        current_weight_kg: float,
+        target_weight_kg: float,
+        age: int,
+        training_days_per_week: int,
+        sex: str = "",
+        desired_timeframe_months: float | None = None,
+        was_lean_before: str = "",
+        what_was_different: str = "",
+        goal_type: str = "perte de poids",
+    ) -> str:
+        """Construit une PROJECTION calibrée et RÉALISTE de la transformation : \
+combien de temps, à quel rythme, jalons mois par mois, et corps probable à \
+l'arrivée — personnalisé selon l'âge, le passé (mémoire musculaire) et le \
+volume d'entraînement. À appeler APRÈS avoir mené le tunnel de questions \
+(entonnoir) pour avoir des réponses précises. C'est la couche 'data' de la \
+projection (honnête, motivante, sans fausse promesse). Ne JAMAIS promettre un \
+corps précis : on donne des fourchettes et on relie au passé de la personne.
+
+Args:
+    current_weight_kg: Poids actuel.
+    target_weight_kg: Poids cible.
+    age: Âge.
+    training_days_per_week: Nombre de séances/semaine prévues.
+    sex: 'homme' | 'femme' (ajuste les attentes de recomposition).
+    desired_timeframe_months: Délai souhaité par l'utilisateur (pour dire si \
+réaliste ou non).
+    was_lean_before: A-t-il/elle déjà été mince/musclé(e) avant ? (texte libre, \
+ex 'oui à 25 ans j'étais à 75kg sec', 'jamais'). Active la mémoire musculaire.
+    what_was_different: Ce qui était différent à l'époque (ex 'je faisais du \
+foot 3x/sem', 'je cuisinais maison', 'moins de stress').
+    goal_type: 'perte de poids' | 'prise de muscle' | 'recomposition' | 'sèche'.
+"""
+        delta = current_weight_kg - target_weight_kg  # >0 = perte visée
+        losing = delta > 0
+        abs_delta = abs(delta)
+
+        # Rythme sûr & soutenable : 0.5–1 %/sem du poids de corps (perte),
+        # plafonné à 1 kg/sem. Pour la prise de muscle : ~0.25–0.5 kg/mois.
+        had_history = bool(was_lean_before) and "jamais" not in was_lean_before.lower() \
+            and "non" not in was_lean_before.lower()[:4]
+
+        notes: list[str] = []
+
+        if losing:
+            low_wk = round(current_weight_kg * 0.005, 2)
+            high_wk = min(1.0, round(current_weight_kg * 0.01, 2))
+            # mois réalistes (high_wk = rapide, low_wk = prudent)
+            months_fast = abs_delta / (high_wk * 4.33) if high_wk else 0
+            months_slow = abs_delta / (low_wk * 4.33) if low_wk else 0
+            rate_line = (f"Rythme sain et **durable** : {low_wk}–{high_wk} kg/semaine "
+                         f"(0,5–1 % de ton poids).")
+            duration_line = (f"≈ **{months_fast:.1f} à {months_slow:.1f} mois** pour "
+                             f"perdre {abs_delta:.1f} kg sans craquer ni fonte musculaire.")
+        elif abs_delta > 0:  # prise
+            months_fast = abs_delta / 0.5  # 0.5 kg muscle/mois (optimiste, débutant)
+            months_slow = abs_delta / 0.25
+            rate_line = "Prise de muscle réaliste : **0,25–0,5 kg/mois** (le muscle se construit lentement, c'est normal)."
+            duration_line = f"≈ **{months_slow:.0f} à {months_fast:.0f} mois** pour +{abs_delta:.1f} kg de muscle de qualité."
+        else:
+            months_fast = months_slow = 3
+            rate_line = "Objectif de **recomposition** (même poids, plus de muscle / moins de gras)."
+            duration_line = "Les premiers changements visibles en 6–8 semaines, nets en 3–4 mois."
+
+        # Mémoire musculaire (le facteur 'passé').
+        if had_history:
+            notes.append(
+                "🧬 **Mémoire musculaire activée** : tu as déjà été en forme par le "
+                "passé. Tes muscles gardent leurs 'myonoyaux' à vie → tu vas "
+                "regagner du muscle et retrouver ta forme **bien plus vite** qu'un "
+                "débutant total. Avantage énorme, on capitalise dessus."
+            )
+            if months_slow:
+                months_slow *= 0.8  # retour plus rapide
+                months_fast *= 0.85
+        else:
+            notes.append(
+                "💪 Première vraie transformation : la progression sera régulière. "
+                "On installe les bases proprement, elles te serviront à vie."
+            )
+
+        if what_was_different:
+            notes.append(
+                f"🔁 Tu m'as dit qu'avant c'était différent ({what_was_different}). "
+                f"On va ré-injecter ce qui marchait pour toi à l'époque — c'est "
+                f"souvent la clé la plus rapide."
+            )
+
+        # Âge.
+        if age >= 50:
+            notes.append("⏳ Après 50 ans : récupération + hormones demandent un peu "
+                         "plus de patience, mais la force et la composition s'améliorent "
+                         "à TOUT âge. Sommeil + protéines + force = tes priorités.")
+        elif age >= 40:
+            notes.append("⏳ La quarantaine : tout reste très atteignable. On soigne la "
+                         "récupération, le sommeil et les protéines (≥1,8 g/kg).")
+        elif age <= 25:
+            notes.append("🚀 Avant 25 ans : hormones et récupération au top, tu vas "
+                         "progresser vite si tu es régulier.")
+
+        # Volume d'entraînement.
+        if training_days_per_week <= 1:
+            notes.append("📅 1 séance/sem : on maximisera la nutrition + le NEAT "
+                         "(marche). Passer à 2-3 séances accélérerait nettement.")
+        elif training_days_per_week >= 5:
+            notes.append("📅 5+ séances/sem : excellent, mais on planifie la "
+                         "récupération pour éviter le surentraînement.")
+        else:
+            notes.append(f"📅 {training_days_per_week} séances/sem : le sweet spot "
+                         f"pour des résultats réguliers et tenables.")
+
+        # Réalisme du délai souhaité.
+        verdict = ""
+        if desired_timeframe_months:
+            if losing and desired_timeframe_months < months_fast * 0.9:
+                verdict = (f"⚠️ Ton délai de {desired_timeframe_months:.0f} mois est "
+                           f"**trop serré** pour {abs_delta:.1f} kg sans risquer l'effet "
+                           f"yo-yo et la perte de muscle. Vise plutôt {months_fast:.1f} "
+                           f"mois minimum — tu garderas tes résultats.")
+            else:
+                verdict = (f"✅ Ton objectif en {desired_timeframe_months:.0f} mois est "
+                           f"**réaliste et tenable**. On y va.")
+
+        # Jalons.
+        milestones = (
+            "## 🗓️ Tes jalons (ce que tu vas VRAIMENT ressentir)\n"
+            "- **Semaine 1-2** : énergie + sommeil meilleurs, -1 à -2 kg (eau + démarrage)\n"
+            "- **Semaine 3-4** : vêtements plus amples, premiers compliments\n"
+            "- **Mois 2** : changement visible dans le miroir, force en hausse\n"
+            "- **Mois 3** : transformation nette, nouvelles habitudes ancrées\n"
+            "- **Mois 4-6** : tu ne te reconnais plus sur les vieilles photos 🔥"
+        )
+
+        objectif_label = f"{current_weight_kg:.0f} kg → {target_weight_kg:.0f} kg"
+        notes_block = "\n".join(f"- {n}" for n in notes)
+
+        # Persiste la vision pour suivi.
+        db.add_memory(
+            user_id,
+            f"[VISION] {objectif_label}, {goal_type}, {age} ans, "
+            f"{training_days_per_week}j/sem, passé mince: {was_lean_before or 'n/a'}",
+            category="objectif",
+            importance=5,
+        )
+
+        return (
+            f"# 🎯 Ta projection personnalisée — {objectif_label}\n\n"
+            f"{rate_line}\n**{duration_line}**\n\n"
+            f"{verdict + chr(10) + chr(10) if verdict else ''}"
+            f"## 🔍 Calibré pour TOI\n{notes_block}\n\n"
+            f"{milestones}\n\n"
+            f"---\n"
+            f"💡 *Présente cette projection avec enthousiasme MAIS honnêteté : ce "
+            f"sont des fourchettes réalistes, pas une promesse magique. Relie au "
+            f"passé de la personne (mémoire musculaire) pour la motiver. Enchaîne "
+            f"en proposant de lancer le programme adapté (`list_programs` / "
+            f"`generate_workout`) + plan repas (`generate_meal_plan`), et propose "
+            f"une photo de référence aujourd'hui (`analyze_morphotype`) pour "
+            f"comparer dans 4 semaines. Note : la projection-image visuelle "
+            f"arrivera comme illustration motivante optionnelle.*"
+        )
+
+    @beta_tool
     def analyze_morphotype(
         storage_zones: str,
         morphotype: str = "mixte",
@@ -6713,6 +6876,7 @@ Args:
         set_user_voice_clone,
         request_live_call,
         # Morphotype / body-composition vision
+        build_transformation_vision,
         analyze_morphotype,
         # Growth engine (acquisition virale)
         get_referral_link,

@@ -35,6 +35,9 @@ class CaloConfig:
     twilio_whatsapp_from: str = field(
         default_factory=lambda: os.environ.get("TWILIO_WHATSAPP_FROM", "")
     )
+    twilio_sms_from: str = field(
+        default_factory=lambda: os.environ.get("CALO_TWILIO_SMS_FROM", "")
+    )
 
     public_url: str = field(default_factory=lambda: os.environ.get("CALO_PUBLIC_URL", ""))
     admin_number: str = field(default_factory=lambda: os.environ.get("CALO_ADMIN_NUMBER", ""))

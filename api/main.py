@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from twilio.request_validator import RequestValidator
 
@@ -15,6 +16,7 @@ from calo.config import CaloConfig
 from calo.pdf_report import REPORT_DIR
 from calo import voice as voice_mod
 
+from .app_api import build_app_router
 from .twilio_client import TwilioWhatsApp
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -25,6 +27,18 @@ config = CaloConfig()
 coach = CaloCoach(config)
 twilio = TwilioWhatsApp(config)
 validator = RequestValidator(config.twilio_auth_token)
+
+# CORS — the mobile app (Expo) and any web client call the /app/* JSON API.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount the app-facing JSON API (auth, chat, profile, progress).
+app.include_router(build_app_router(coach, twilio, config))
 
 
 @app.get("/")

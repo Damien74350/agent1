@@ -6220,6 +6220,381 @@ crises + perte poids rapide, suspect de TCA').
         )
 
     @beta_tool
+    def analyze_morphotype(
+        storage_zones: str,
+        morphotype: str = "mixte",
+        sex_context: str = "",
+        notes: str = "",
+    ) -> str:
+        """Analyse une photo corporelle pour identifier les ZONES DE STOCKAGE de \
+graisse et le MORPHOTYPE, puis adapte ENTRAÎNEMENT + ALIMENTATION en conséquence. \
+À appeler quand l'utilisateur envoie une photo de lui (corps) et a consenti au \
+suivi photo. TOI (vision) tu observes la photo et tu remplis les arguments — ce \
+tool transforme tes observations en plan personnalisé + lecture hormonale, et \
+enregistre l'analyse. Ne jamais juger le corps : factuel, bienveillant, orienté \
+solution.
+
+Args:
+    storage_zones: Zones de stockage dominantes que TU observes, séparées par \
+virgules. Vocabulaire : 'abdominal-viscéral' (ventre dur/android), \
+'abdominal-sous-cutané' (ventre mou), 'poignées-d-amour' (obliques/lombaires), \
+'hanches-cuisses-fesses' (gynoïde/culotte de cheval), 'bras-triceps', \
+'soutien-gorge-dos', 'rétention-oedème', 'réparti-global'.
+    morphotype: 'ectomorphe' (fin, peu de stockage, métabolisme rapide) | \
+'mésomorphe' (musclé naturel, répond vite) | 'endomorphe' (stockage facile, \
+métabolisme lent) | 'mixte' (ecto-méso / méso-endo — précise si possible).
+    sex_context: contexte hormonal utile si connu ('homme', 'femme', \
+'femme péri-ménopause', 'femme post-partum', 'SOPK', etc.).
+    notes: toute observation pertinente (posture, masse musculaire visible, \
+tonus, asymétries, signes de rétention).
+"""
+        if not incoming_photo_ref:
+            return ("Error: aucune photo sur ce tour. Demande à l'utilisateur "
+                    "d'envoyer une photo corps entier (de préférence face + profil).")
+
+        zones = [z.strip().lower() for z in storage_zones.split(",") if z.strip()]
+
+        # Lecture hormonale + leviers par zone de stockage.
+        ZONE_MAP = {
+            "abdominal-viscéral": (
+                "Ventre ferme/android → marqueur n°1 d'**insulino-résistance + "
+                "cortisol élevé** (stress chronique, manque de sommeil).",
+                ["Couper les sucres rapides et les pics de glycémie (ordre des "
+                 "aliments : fibres → protéines/lipides → féculents en dernier)",
+                 "Marche 10-15 min APRÈS chaque repas (vide le glucose musculaire)",
+                 "Prioriser sommeil 7-8h + gestion stress (cortisol = stockage abdo)",
+                 "Café noir sans sucre, vinaigre de cidre avant repas glucidiques"],
+                ["Renforcement musculaire lourd 3x/sem (muscle = puits à glucose)",
+                 "HIIT court 1-2x/sem (15-20 min, sensibilité insuline)",
+                 "Éviter le cardio à jeun épuisant qui monte le cortisol"],
+            ),
+            "abdominal-sous-cutané": (
+                "Ventre mou/sous-cutané → déficit calorique global + tonus "
+                "abdominal profond (transverse) à reconstruire.",
+                ["Déficit calorique modéré et soutenu (-300/-400 kcal)",
+                 "Protéines ↑ (1.8-2.2 g/kg) pour préserver le muscle",
+                 "Fibres + hydratation pour le confort digestif"],
+                ["Gainage profond (vacuum, planche, dead-bug) avant les crunchs",
+                 "Full-body force + cardio zone 2 régulier"],
+            ),
+            "poignées-d-amour": (
+                "Poignées d'amour / lombaires → souvent **insuline + alcool** + "
+                "sédentarité. Zone tenace, part en dernier.",
+                ["Réduire/supprimer l'alcool (stockage prioritaire sur les flancs)",
+                 "Glucides plutôt autour de l'entraînement",
+                 "Patience : c'est une zone 'récalcitrante', elle suit le bilan global"],
+                ["Rotations/anti-rotations (Pallof press, wood-chop, side plank)",
+                 "Force + déficit — pas de 'spot reduction', le local n'existe pas"],
+            ),
+            "hanches-cuisses-fesses": (
+                "Hanches/cuisses/fesses (gynoïde, 'poire') → terrain **œstrogénique** "
+                "+ parfois rétention/lymphatique. Stockage plus 'sain' métaboliquement.",
+                ["Oméga-3 ↑ (poissons gras, lin) + fibres pour l'équilibre œstrogénique",
+                 "Réduire perturbateurs endocriniens (plastiques, alcool)",
+                 "Sodium maîtrisé + potassium (légumes) si rétention associée"],
+                ["Cardio régulier zone 2 (vélo, marche rapide, natation)",
+                 "Renforcement bas du corps (fentes, hip thrust, squats) — tonifie",
+                 "Drainage : finir par mobilité/jambes surélevées"],
+            ),
+            "bras-triceps": (
+                "Arrière des bras → souvent profil féminin et/ou baisse de masse "
+                "musculaire (sarcopénie débutante, âge, sous-protéination).",
+                ["Protéines ↑ à chaque repas (3-4 prises de 25-35 g)",
+                 "Assez de calories pour soutenir la construction musculaire"],
+                ["Travail spécifique triceps + dos (extensions, dips, rowing)",
+                 "Force progressive : la masse maigre 'remplit' la zone"],
+            ),
+            "soutien-gorge-dos": (
+                "Plis du dos / soutien-gorge → posture + masse grasse globale + "
+                "fréquent en péri-ménopause.",
+                ["Approche globale (déficit doux + protéines)",
+                 "Soutien hormonal si péri-ménopause (voir fiche dédiée)"],
+                ["Renforcement dos/posture (tirages, rowing, face-pull)",
+                 "Mobilité thoracique"],
+            ),
+            "rétention-oedème": (
+                "Aspect gonflé/rétention → eau plus que graisse : sodium, hormones, "
+                "sédentarité, parfois lymphatique.",
+                ["Équilibre sodium/potassium (↓ ultra-transformé, ↑ légumes)",
+                 "Hydratation suffisante (paradoxalement, boire MOINS retient PLUS)",
+                 "Limiter alcool + repas ultra-salés du soir"],
+                ["Mouvement régulier + marche (pompe musculaire)",
+                 "Jambes surélevées, fin de séance en mobilité"],
+            ),
+            "réparti-global": (
+                "Stockage réparti → profil **endomorphe** : métabolisme économe, "
+                "stockage facile sur tout le corps.",
+                ["Déficit modéré + protéines hautes + glucides cyclés autour du sport",
+                 "NEAT ↑ (10-12k pas/jour) — l'arme secrète des endomorphes"],
+                ["Mix force lourde + cardio (HIIT 1-2x + zone 2 régulier)",
+                 "Volume d'entraînement élevé soutenable"],
+            ),
+        }
+
+        # Stratégie de fond par morphotype.
+        MORPHO_MAP = {
+            "ectomorphe": "Métabolisme rapide, stockage faible. **Calories ↑, "
+            "glucides généreux**, force lourde, peu de cardio. Objectif souvent "
+            "prise de masse / recomposition.",
+            "mésomorphe": "Répond vite à l'entraînement, prend du muscle et perd du "
+            "gras facilement. **Équilibre** force + cardio, ajustements fins suffisent.",
+            "endomorphe": "Stockage facile, métabolisme économe. **Déficit + "
+            "protéines hautes + NEAT élevé + cardio régulier**. Surveiller les "
+            "glucides (autour du sport).",
+            "mixte": "Profil hybride — on calibre au fil des résultats (pesées, "
+            "photos, énergie).",
+        }
+
+        mt = morphotype.lower().strip()
+        morpho_line = MORPHO_MAP.get(mt, MORPHO_MAP["mixte"])
+
+        nutri_actions: list[str] = []
+        sport_actions: list[str] = []
+        readings: list[str] = []
+        for z in zones:
+            match = ZONE_MAP.get(z)
+            if not match:
+                # tolérance : matching partiel sur mot-clé
+                for key, val in ZONE_MAP.items():
+                    if any(part in z for part in key.split("-")):
+                        match = val
+                        break
+            if match:
+                reading, nutri, sport = match
+                readings.append(f"- **{z}** : {reading}")
+                nutri_actions.extend(nutri)
+                sport_actions.extend(sport)
+
+        if not readings:
+            readings.append("- (zones non reconnues — décris-les en clair et "
+                            "applique la logique générale du morphotype)")
+
+        # Dédoublonnage en gardant l'ordre.
+        def _dedup(items: list[str]) -> list[str]:
+            seen: set[str] = set()
+            out: list[str] = []
+            for it in items:
+                if it not in seen:
+                    seen.add(it)
+                    out.append(it)
+            return out
+
+        nutri_actions = _dedup(nutri_actions) or [
+            "Déficit modéré, protéines hautes, fibres, hydratation."]
+        sport_actions = _dedup(sport_actions) or [
+            "Force full-body + cardio zone 2 régulier."]
+
+        # Persiste l'analyse (mémoire + photo).
+        summary = (
+            f"Morphotype: {morphotype} | zones: {', '.join(zones) or 'n/a'}"
+            f"{' | ' + sex_context if sex_context else ''}"
+            f"{' | ' + notes if notes else ''}"
+        )
+        db.add_memory(
+            user_id,
+            f"[MORPHOTYPE] {summary}",
+            category="santé",
+            importance=4,
+        )
+        try:
+            db.add_body_photo(user_id, incoming_photo_ref, None,
+                              f"Analyse morphotype — {summary}", "face")
+        except Exception:  # noqa: BLE001
+            pass
+
+        nutri_block = "\n".join(f"- {a}" for a in nutri_actions)
+        sport_block = "\n".join(f"- {a}" for a in sport_actions)
+        readings_block = "\n".join(readings)
+
+        return (
+            f"# 🧬 Analyse morphotype & zones de stockage\n\n"
+            f"**Morphotype** : {morphotype}\n{morpho_line}\n\n"
+            f"## 📍 Lecture de tes zones de stockage\n{readings_block}\n\n"
+            f"## 🍽️ Alimentation adaptée\n{nutri_block}\n\n"
+            f"## 🏋️ Entraînement adapté\n{sport_block}\n\n"
+            f"---\n"
+            f"💡 *Présente à l'utilisateur de façon bienveillante et motivante. "
+            f"Rappelle que le 'spot reduction' (perte ciblée) n'existe pas : on "
+            f"agit sur le bilan global + l'hormonal, et les zones tenaces partent "
+            f"en dernier. Propose ensuite de lancer un programme adapté via "
+            f"`list_programs`/`generate_workout` et un plan repas via "
+            f"`generate_meal_plan`. Pour un suivi, reprends une photo dans 3-4 "
+            f"semaines (même angle/lumière) et compare via `compare_body_photos`. "
+            f"Si signes hormonaux (péri-ménopause, SOPK, post-partum), croise avec "
+            f"`search_knowledge` et propose `interpret_bloodwork` si pertinent.*"
+        )
+
+    # ──────────────────────────────────────────────────────────────────────
+    # GROWTH ENGINE — la machine à aller chercher des millions (viralité +
+    # parrainage + preuve sociale). Codes déterministes par user, persistés
+    # en mémoire ; les conversions remontent dans growth_metrics (coach).
+    # ──────────────────────────────────────────────────────────────────────
+
+    def _referral_code(uid: str) -> str:
+        """Deterministic, human-friendly referral code derived from the user id."""
+        import hashlib
+
+        digest = hashlib.sha1(uid.encode("utf-8")).hexdigest().upper()
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no ambiguous 0/O/1/I
+        raw = int(digest[:10], 16)
+        code = ""
+        for _ in range(5):
+            raw, idx = divmod(raw, len(alphabet))
+            code += alphabet[idx]
+        return "CALO-" + code
+
+    @beta_tool
+    def get_referral_link() -> str:
+        """Generate the user's personal referral code + a ready-to-forward \
+WhatsApp invitation. Use when the user says 'parrainage', 'inviter un ami', \
+'code promo', 'je veux faire découvrir Calo', 'partager', 'recommander'. \
+Each successful referral gives BOTH people 1 month offert (parrain + filleul)."""
+        user = db.get_user_by_id(user_id)
+        name = user.get("name", "").split(" ")[0] if user.get("name") else ""
+        code = _referral_code(user_id)
+        signature = f" — {name}" if name else ""
+        share_message = (
+            f"Hey ! Je me fais coacher par *Calo* 🤖 — un coach IA nutrition + "
+            f"sport + mental dispo 24/7 sur WhatsApp. Ça a changé mon quotidien. "
+            f"Avec mon code *{code}* tu as ton *1er mois offert* 🎁\n\n"
+            f"Tu réponds juste \"{code}\" à Calo pour l'activer.{signature}"
+        )
+        return (
+            f"# 🎁 Ton programme de parrainage\n\n"
+            f"**Ton code perso : `{code}`**\n\n"
+            f"Pour chaque ami qui s'abonne avec ton code :\n"
+            f"- 🎉 **Lui** : 1er mois offert\n"
+            f"- 🎉 **Toi** : 1 mois offert aussi (cumulable à l'infini)\n\n"
+            f"Parraine 12 amis → 1 an de Calo gratuit. 🚀\n\n"
+            f"## Message prêt à transférer 👇\n\n"
+            f"{share_message}\n\n"
+            f"---\n"
+            f"💡 *Présente à l'utilisateur : invite-le à copier-coller ce message "
+            f"à ses contacts WhatsApp. Propose aussi de partager ses résultats "
+            f"via `share_my_progress` pour plus d'impact.*"
+        )
+
+    @beta_tool
+    def redeem_referral_code(code: str) -> str:
+        """Apply a referral code that a NEW user received from a friend. Use when \
+the user sends something that looks like a code ('CALO-XXXXX', 'mon code c'est…', \
+'un ami m'a donné…'). Credits the new user with 1 month offert and records the \
+referral for the referrer's reward.
+
+Args:
+    code: The referral code the user received (e.g. 'CALO-7K2MN').
+"""
+        cleaned = code.strip().upper().replace(" ", "")
+        if not cleaned.startswith("CALO-"):
+            cleaned = "CALO-" + cleaned.lstrip("-")
+        if len(cleaned) != 10:  # 'CALO-' + 5 chars
+            return (
+                f"Hmm, '{code}' ne ressemble pas à un code Calo valide "
+                f"(format `CALO-XXXXX`). Vérifie auprès de la personne qui te l'a donné."
+            )
+        if cleaned == _referral_code(user_id):
+            return "😅 C'est ton propre code ! Partage-le à tes amis pour gagner des mois offerts."
+        # Prevent double-redeem.
+        existing = db.memories_for_user(user_id, limit=50)
+        if any("[REFERRAL REDEEMED]" in (m.get("memory") or "") for m in existing):
+            return "Tu as déjà utilisé un code de parrainage 🙂. Un seul par compte."
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        db.add_memory(
+            user_id,
+            f"[REFERRAL REDEEMED] Code parrain {cleaned} utilisé le {today}. "
+            f"→ Créditer 1 mois offert au filleul + 1 mois au parrain ({cleaned}).",
+            category="objectif",
+            importance=5,
+        )
+        return (
+            f"✅ Code **{cleaned}** activé ! 🎉\n\n"
+            f"Tu as **1 mois de Calo offert** 🎁. Ton parrain reçoit aussi son "
+            f"mois offert — merci de faire grandir la communauté !\n\n"
+            f"💡 *Présente chaleureusement, puis enchaîne sur le démarrage du "
+            f"profil si l'onboarding n'est pas fait.*"
+        )
+
+    @beta_tool
+    def share_my_progress() -> str:
+        """Create a shareable, brag-worthy recap of the user's results (a viral \
+card they can forward). Use when user says 'partager mes résultats', 'je suis \
+fier', 'montrer ma transfo', or after hitting a milestone. Pulls real data \
+(weight delta, streak, wins) into a clean shareable block + their referral code."""
+        user = db.get_user_by_id(user_id)
+        name = user.get("name", "").split(" ")[0] if user.get("name") else "Moi"
+        weights = db.weights_history(user_id, limit=60)
+        delta_line = ""
+        if len(weights) >= 2:
+            first = weights[-1].get("kg")
+            last = weights[0].get("kg")
+            if first and last:
+                diff = last - first
+                arrow = "📉" if diff < 0 else "📈"
+                delta_line = f"{arrow} {abs(diff):.1f} kg sur {len(weights)} pesées\n"
+        code = _referral_code(user_id)
+        return (
+            f"# 📣 Carte de partage de {name}\n\n"
+            f"```\n"
+            f"💪 Ma transformation avec Calo\n"
+            f"{delta_line}"
+            f"🔥 Coaching IA 24/7 — nutrition + sport + mental\n"
+            f"🎁 Code 1er mois offert : {code}\n"
+            f"```\n\n"
+            f"💡 *Présente cette carte à l'utilisateur, félicite-le sincèrement "
+            f"sur ses résultats, et invite-le à la transférer à ses amis. "
+            f"Si tu peux générer un graphe via `send_progress_chart`, propose-le "
+            f"en complément visuel — une image vaut mille mots et booste le partage.*"
+        )
+
+    @beta_tool
+    def request_testimonial() -> str:
+        """Invite the user to leave a testimonial / NPS rating. Use after a clear \
+win (milestone, goal reached, user expresses gratitude) or when user says \
+'je suis content', 'ça marche super'. Captures social proof for acquisition."""
+        return (
+            "# ⭐ Ton avis vaut de l'or\n\n"
+            "💡 *Présente à l'utilisateur, avec gratitude :*\n\n"
+            "1. Demande-lui sur 0-10 : « à quel point recommanderais-tu Calo à "
+            "un ami ? » (NPS)\n"
+            "2. S'il répond 9-10 → demande une phrase de témoignage + s'il "
+            "accepte qu'on l'utilise (anonyme ou prénom).\n"
+            "3. S'il répond ≤6 → remercie, demande ce qui manque, marque un "
+            "`request_live_call` si frustration réelle.\n\n"
+            "Quand il répond, enregistre via `remember` avec catégorie 'objectif' "
+            "et le tag [TESTIMONIAL] ou [NPS:score]. Ces avis nourrissent "
+            "l'acquisition (preuve sociale)."
+        )
+
+    @beta_tool
+    def growth_metrics() -> str:
+        """COACH-ONLY funnel/growth dashboard. Use when Damien asks 'mes chiffres', \
+'MRR', 'combien de clients', 'tunnel', 'croissance', 'parrainages'. Aggregates \
+users, referrals and an estimated MRR snapshot to steer growth toward millions."""
+        try:
+            users = db.users.all(fields=[])  # record ids only, lightweight
+            total_users = len(users)
+        except Exception:
+            total_users = 0
+        return (
+            f"# 📊 Growth dashboard Calo\n\n"
+            f"- 👥 **Comptes WhatsApp** : {total_users}\n"
+            f"- 🎯 Cible court terme : 25 clients payants (lancement)\n\n"
+            f"## Tunnel à piloter\n"
+            f"1. **Acquisition** : parrainage (`get_referral_link`), partage de "
+            f"résultats (`share_my_progress`), preuve sociale (`request_testimonial`)\n"
+            f"2. **Activation** : onboarding profil complété < 24h\n"
+            f"3. **Rétention** : streak, micro-courses, reports mensuels\n"
+            f"4. **Revenu** : conversion Plus 99€ → Elite 299€ → Pro 999€\n\n"
+            f"## Modèle vers le million 💰\n"
+            f"- 1 000 abonnés Plus (99€) = **99 000 €/mois** soit ~1,2 M€/an\n"
+            f"- Levier viral (k-factor) : chaque parrainage réussi = -coût "
+            f"d'acquisition + 1 mois offert des deux côtés\n\n"
+            f"💡 *Présente à Damien les chiffres bruts + la prochaine action de "
+            f"croissance la plus rentable selon l'étape du tunnel.*"
+        )
+
+    @beta_tool
     def search_knowledge(query: str) -> str:
         """Search Calo's knowledge base for relevant guidance. Call this when the \
 user mentions a topic like 'plateau', 'restaurant', 'sommeil', 'cycle', \
@@ -6337,6 +6712,14 @@ Args:
         show_pricing,
         set_user_voice_clone,
         request_live_call,
+        # Morphotype / body-composition vision
+        analyze_morphotype,
+        # Growth engine (acquisition virale)
+        get_referral_link,
+        redeem_referral_code,
+        share_my_progress,
+        request_testimonial,
+        growth_metrics,
         search_knowledge,
         remember,
     ]

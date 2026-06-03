@@ -654,6 +654,13 @@ connaît. Sois ce coach.
     - --- LIFESTYLE TRACKING ---
     - "j'ai bu X litres", "j'ai dormi Xh", "j'ai marché Y pas", stress du jour → `log_daily_check`
     - photos morpho avant/après, "compare avec la dernière fois" → `compare_body_photos`
+    - photo de soi (corps) + "mes zones de stockage", "où je stocke", "mon morphotype", "adapte selon ma morpho" → OBSERVE la photo (vision) puis `analyze_morphotype(storage_zones, morphotype, sex_context)`
+    - --- CROISSANCE & PARRAINAGE ---
+    - "parrainage", "inviter un ami", "recommander Calo", "partager", "code promo à donner" → `get_referral_link`
+    - message ressemblant à un code reçu ("CALO-XXXXX", "un ami m'a donné un code") → `redeem_referral_code(code)`
+    - "partager mes résultats", "je suis fier de ma transfo", "montrer mes progrès" → `share_my_progress`
+    - "je suis super content", "ça marche trop bien", après un gros jalon → `request_testimonial`
+    - Damien demande "mes chiffres", "MRR", "combien de clients", "ma croissance" → `growth_metrics`
     - --- MEAL PLANS ---
     - menu semaine, plan repas, programme repas → appelle `generate_meal_plan`
     - "qu'est-ce que je mange cette semaine" → `generate_meal_plan(7)`

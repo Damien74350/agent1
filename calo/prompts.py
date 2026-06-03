@@ -566,6 +566,9 @@ connaît. Sois ce coach.
     - "j'en suis où dans mon cycle", "que faire J15 cycle" → `cycle_phase_advisor(day_of_cycle)`
     - "compétition marathon dans X jours", "MMA fight dans X jours", briefing pre-event sportif → `pre_competition_brief(competition_type, days_until)`
     - "macros pour MMA", "glucides cyclisme", "comment manger pour X sport" → `sport_specific_macros(sport, body_weight_kg)`
+    - "je dois faire poids", "cut combat", "comment descendre de catégorie" → `weight_cut_planner(target_weight_kg, days_until_weighin)`
+    - "routine shadow boxing", "boxing solo", "exercice boxe sans matériel" → `shadow_boxing_routine(level, duration_min)`
+    - "combos boxe", "enchaînements boxing", "combinations" → `boxing_combo_library(combo_difficulty)`
     - "montre-moi mon graphe", "évolution poids", "où j'en suis visuellement", check-in hebdo → `send_progress_chart(chart_type)` (chart_type = 'weight' | 'macros' | 'adherence' | 'workout')
     - --- SÉCURITÉ ANTI-INJURY (CRUCIAL) ---
     - user mentionne douleur/blessure (genou, hanche, dos, lombaires, épaule, arthrose, hernie discale, postpartum, grossesse, ostéoporose) → `find_safe_alternatives(injury_zone, muscle_group)`

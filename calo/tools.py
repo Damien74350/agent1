@@ -4594,6 +4594,296 @@ Args:
         )
 
     @beta_tool
+    def weight_cut_planner(
+        target_weight_kg: float,
+        days_until_weighin: int,
+    ) -> str:
+        """Plan a safe weight cut for combat sports (boxing, MMA, kickboxing). \
+Use when user has fight/competition with weight category. Returns a structured \
+protocol with phases : long-term fat loss + short-term water cut + post-weigh-in \
+rehydration. SAFETY first.
+
+Args:
+    target_weight_kg: Target weight (the category weight).
+    days_until_weighin: Days until the official weigh-in.
+"""
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return "User not found. Calo a besoin de ton profil pour calculer."
+        current = float(user.get("current_weight_kg") or 0)
+        if current <= 0:
+            return "Poids actuel manquant. Met-le à jour dans ton profil."
+        kg_to_lose = current - target_weight_kg
+        if kg_to_lose <= 0:
+            return f"Tu es déjà à ou en dessous de {target_weight_kg} kg. Aucune cut requise."
+
+        pct_to_lose = (kg_to_lose / current) * 100
+
+        warnings = []
+        if pct_to_lose > 8 and days_until_weighin < 30:
+            warnings.append(
+                "⚠️ **CUT >8% du poids corporel** sur courte période = "
+                "DANGER (insuffisance rénale, hyponatremia). Reconsidère ta catégorie."
+            )
+        if pct_to_lose > 5 and days_until_weighin < 7:
+            warnings.append(
+                "⚠️ **Cut >5% en moins d'1 semaine** = water cut "
+                "drastique. Risque perf catastrophique + santé."
+            )
+
+        # Phase planning
+        phases = []
+        if days_until_weighin > 30:
+            kg_fat_loss = max(0, kg_to_lose - 2)  # leave 1.5-2kg for water cut
+            phases.append(
+                f"## Phase 1 - FAT LOSS ({days_until_weighin - 7} jours)\n"
+                f"- Cible : perdre **{kg_fat_loss:.1f} kg gras** durablement\n"
+                f"- Déficit calorique : -500 kcal/jour\n"
+                f"- Protéines : 2.2 g/kg poids actuel = {int(current * 2.2)}g\n"
+                f"- Glucides : 3-4 g/kg + cyclisme (boost jours d'entrainement)\n"
+                f"- Lipides : 0.8-1 g/kg\n"
+                f"- Hydratation : 40 ml/kg ({int(current * 40)} ml/jour)\n"
+                f"- Sport : combat 4x/sem + cardio HIIT 2x/sem + muscu 1x\n"
+                f"- Sommeil 8h+ obligatoire\n"
+                f"- 0 alcool"
+            )
+
+        if days_until_weighin >= 7:
+            kg_water_cut = min(2, kg_to_lose)
+            phases.append(
+                f"## Phase 2 - WATER CUT (dernière semaine)\n"
+                f"- Cible : perdre **{kg_water_cut:.1f} kg eau**\n\n"
+                f"### J-7 à J-5\n"
+                f"- Hydratation MAX 5-6 L/jour (corps s'habitue à éliminer)\n"
+                f"- Sodium NORMAL (2-3g)\n\n"
+                f"### J-4 à J-3\n"
+                f"- Hydratation 3 L\n"
+                f"- Sodium réduit à 1g\n"
+                f"- Glucides baisses (deplete glycogène = -1 kg)\n\n"
+                f"### J-2\n"
+                f"- Hydratation 1.5 L\n"
+                f"- Sodium très bas\n"
+                f"- Glucides quasi nulles\n"
+                f"- Fibres réduites (vide tube digestif)\n\n"
+                f"### J-1 (veille pesee)\n"
+                f"- Hydratation 500 ml MAX\n"
+                f"- Sodium 0 ajouté\n"
+                f"- 1-2 vrais repas (prot + légumes peu)\n"
+                f"- Option : sauna 10-15 min dernière sweat\n\n"
+                f"### Jour pesee\n"
+                f"- Pesee tot le matin\n"
+                f"- Tu dois être à **{target_weight_kg} kg** exactement"
+            )
+
+        phases.append(
+            f"## Phase 3 - REHYDRATATION (post-pesee)\n\n"
+            f"### IMMÉDIATEMENT après pesee\n"
+            f"- 500 ml-1L liquide électrolyté (Pedialyte)\n"
+            f"- Sips toutes les 5-10 min (PAS d'un coup = vomissement)\n"
+            f"- 30g glucides simples (jus dilué, miel)\n\n"
+            f"### Entre pesee et combat (24-36h)\n"
+            f"- 6-8 L liquide (eau + boissons électrolytes)\n"
+            f"- 4-6g sodium\n"
+            f"- 3g potassium\n"
+            f"- 3-4 vrais repas\n"
+            f"- 6-10 g glucides/kg poids\n"
+            f"- 2 g/kg protéines\n"
+            f"- Lipides modérés\n"
+            f"- TESTER d'avance, RIEN de nouveau"
+        )
+
+        return (
+            f"# ⚖️ Plan Cut Combat\n\n"
+            f"**Poids actuel** : {current} kg\n"
+            f"**Poids cible** : {target_weight_kg} kg\n"
+            f"**À perdre** : {kg_to_lose:.1f} kg ({pct_to_lose:.1f}% poids corporel)\n"
+            f"**Jours restants** : {days_until_weighin}\n\n"
+            + ("\n".join(warnings) + "\n\n" if warnings else "")
+            + "\n\n".join(phases)
+            + "\n\n## RÈGLES D'OR\n"
+            "1. **JAMAIS sans coach expérimenté** combat sport\n"
+            "2. **Bilan medical** avant cut majeure\n"
+            "3. **STOP IMMÉDIAT** si vertige / lipotymie\n"
+            "4. **Hydratation post-pesee CRITIQUE** (mauvaise = perf nulle)\n"
+            "5. **0 nouvel aliment** post-pesee\n"
+            "6. **Visualisation mental** = 30% du résultat\n\n"
+            "💡 Ce protocole est INDICATIF. Ton coach + ton experience "
+            "ajustent. Santé > toute catégorie."
+        )
+
+    @beta_tool
+    def shadow_boxing_routine(
+        level: str = "débutant",
+        duration_min: int = 15,
+    ) -> str:
+        """Generate a structured shadow boxing routine. Use when user wants \
+boxing workout solo or asks for a shadow boxing routine.
+
+Args:
+    level: 'débutant' | 'intermédiaire' | 'avancé'.
+    duration_min: Total duration in minutes (5-45).
+"""
+        duration = max(5, min(45, int(duration_min)))
+        level = level.lower().strip()
+
+        # Build routine based on duration
+        if level == "débutant":
+            rounds_specs = [
+                ("Échauffement épaules + cervicales", 2),
+                ("Footwork : avance/recule/lateral", 2),
+                ("Jab seul à rythme constant", 2),
+                ("Cross seul à rythme constant", 2),
+                ("Combo 1-2 (jab-cross)", 2),
+                ("Combo 1-2 + footwork", 2),
+                ("Finish : core (planche 30s + crunch)", 1),
+            ]
+            tips = (
+                "## Conseils débutant\n"
+                "- **Technique > Vitesse** : ralenti OK\n"
+                "- Mains hautes au menton constamment\n"
+                "- Expire (\"tss\") sur chaque coup\n"
+                "- Pas trop fort : tu apprends d'abord"
+            )
+        elif level == "intermédiaire":
+            rounds_specs = [
+                ("Échauffement complet + corde 2 min", 3),
+                ("Footwork + slips technique", 2),
+                ("Combos 1-2-3 (jab-cross-hook)", 3),
+                ("Combos 1-2-5-2 (uppercut intégré)", 3),
+                ("Slips + counters", 3),
+                ("Combos libres + intensité", 3),
+                ("HIIT round (10s full + 20s contrôle x 6)", 3),
+                ("Finish : core boxer (planche, crunch, mountain climbers)", 2),
+            ]
+            tips = (
+                "## Conseils intermédiaire\n"
+                "- Variations vitesse / power\n"
+                "- Footwork constant\n"
+                "- Slips + counters bien intégrés\n"
+                "- Cherche le rythme et la fluidité"
+            )
+        else:  # avancé
+            rounds_specs = [
+                ("Échauffement complet + corde 3 min", 5),
+                ("Footwork complexe + pivots", 3),
+                ("Combos 5-8 coups avec esquives", 3),
+                ("Setup combos (jab-feinte-cross)", 3),
+                ("Counter-puncher style", 3),
+                ("Pressure fighter style", 3),
+                ("Movement + angles changeants", 3),
+                ("Tabata round (20s explosif + 10s repos x 8)", 4),
+                ("Finish : core + cardio 5 min", 3),
+            ]
+            tips = (
+                "## Conseils avancé\n"
+                "- Sparring simulation (imagine adversaire qui contre)\n"
+                "- Footwork = priorité max\n"
+                "- Test combos qui marchent en spar réel\n"
+                "- Records vidéo tes séances pour analyser"
+            )
+
+        # Fit total to duration
+        total = sum(r[1] for r in rounds_specs)
+        scale = duration / total if total > 0 else 1
+        scaled_rounds = [(name, max(1, round(t * scale))) for name, t in rounds_specs]
+
+        out = [f"# 🥊 Shadow Boxing : {level} ({duration} min)\n"]
+        cumulative = 0
+        for i, (name, t) in enumerate(scaled_rounds, 1):
+            cumulative += t
+            out.append(f"**Round {i}** ({t} min, t={cumulative} min) : {name}")
+        out.append("\n## Repos\n30 sec entre rounds (1 min entre blocs si fatigue)")
+        out.append(f"\n{tips}")
+        out.append(
+            "\n## Équipement minimum\n"
+            "- Tenue confortable\n"
+            "- Espace 1.5m² minimum\n"
+            "- Eau + sel\n"
+            "- Music up (playlist combat = bonus +30% intensité)\n"
+            "- Timer (app : Boxing Timer Pro, Round Timer)"
+        )
+        return "\n".join(out)
+
+    @beta_tool
+    def boxing_combo_library(combo_difficulty: str = "intermédiaire") -> str:
+        """Return a library of boxing combinations from beginner to advanced. \
+Use when user asks for boxing combos, wants to learn combinations, or needs \
+variety in shadow boxing.
+
+Args:
+    combo_difficulty: 'débutant' | 'intermédiaire' | 'avancé' | 'champion'.
+"""
+        d = combo_difficulty.lower().strip()
+
+        combos = {
+            "débutant": [
+                "**1-1** : double jab (range + setup)",
+                "**1-2** : jab-cross (LE classique)",
+                "**1-2-1** : jab-cross-jab (range control)",
+                "**1-2-3** : jab-cross-hook avant",
+                "**1-1-2** : double jab + cross (decoit l'adversaire)",
+                "**2-3** : cross-hook (puissance directe)",
+            ],
+            "intermédiaire": [
+                "**1-2-3-2** : jab-cross-hook-cross",
+                "**1-2-5-2** : jab-cross-uppercut avant-cross",
+                "**1-2-3-4** : jab-cross-hook avant-hook arrière",
+                "**3-2** : hook avant-cross (counter)",
+                "**1-2-slip-2** : jab-cross-slip-cross (esquive + counter)",
+                "**1-6** : jab + uppercut droit (surprise)",
+                "**5-2** : uppercut avant-cross (push up combo)",
+                "**1-2-3b** : jab-cross-hook body (changement niveau)",
+            ],
+            "avancé": [
+                "**1-2-3-2-1** : jab-cross-hook-cross-jab (5 hits)",
+                "**1-2-slip-3-2** : jab-cross-slip-hook-cross",
+                "**1-2-3b-2-3** : jab-cross-hook body-cross-hook head (changement niveau)",
+                "**1-1-2-roll-3** : double jab-cross-roll-hook",
+                "**5-6-3-2** : uppercut combo + hook + cross (intensité max)",
+                "**Feint 1-2-3** : feinte jab + jab-cross-hook (deception)",
+                "**1-2-5-3-2** : combo 5 coups changement plans",
+                "**Slip-2-3-2-1** : esquive + cross-hook-cross-jab (counter-puncher)",
+            ],
+            "champion": [
+                "**1-1-2-3-2-roll-2** : double jab + cross + hook + cross + roll + cross",
+                "**Feint 1-2-step-3-2** : feinte + cross + step away + hook + cross",
+                "**1-2-3b-uppercut-3h** : 5 coups changement niveau complet",
+                "**Roll-2-3-roll-2-3** : counter-puncher continu",
+                "**Footwork 360 + 1-2-3** : pivot complet puis combo",
+                "**Setup combinations** (étude adversaire) - personnalisées par fight",
+            ],
+        }
+
+        if d not in combos:
+            d = "intermédiaire"
+
+        result = [f"# 🥊 Combos boxing : **{combo_difficulty}**\n"]
+        for combo in combos[d]:
+            result.append(f"- {combo}")
+        result.append(
+            "\n## Légende numérique\n"
+            "- **1** : Jab (poing avant)\n"
+            "- **2** : Cross (poing arrière)\n"
+            "- **3** : Hook avant (crochet gauche pour droitier)\n"
+            "- **4** : Hook arrière (crochet droit)\n"
+            "- **5** : Uppercut avant\n"
+            "- **6** : Uppercut arrière\n"
+            "- **b** : suffix body (au corps) ex : 3b = hook body\n"
+            "- **slip** : esquive latérale\n"
+            "- **roll** : esquive circulaire\n"
+            "- **step** : déplacement\n"
+            "- **feint** : feinte sans frapper"
+        )
+        result.append(
+            "\n## 💡 Pratique\n"
+            "- Chaque combo 10x lent (technique)\n"
+            "- Puis 10x vitesse normale\n"
+            "- Puis 10x explosif\n"
+            "- Combine 2-3 combos dans rounds shadow boxing"
+        )
+        return "\n".join(result)
+
+    @beta_tool
     def request_live_call(reason: str, urgency: str = "normal") -> str:
         """Flag a request for a live call/video with Damien (the human coach). \
 Use when the situation goes beyond Calo : ED suspicions, severe depression, \
@@ -4719,6 +5009,9 @@ Args:
         cycle_phase_advisor,
         pre_competition_brief,
         sport_specific_macros,
+        weight_cut_planner,
+        shadow_boxing_routine,
+        boxing_combo_library,
         send_progress_chart,
         request_live_call,
         search_knowledge,

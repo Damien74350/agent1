@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Calo",
+    "slug": "calo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "calo",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1F4E79"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.calo.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Calo utilise l'appareil photo pour analyser tes repas et ta morphologie.",
+        "NSPhotoLibraryUsageDescription": "Calo accède à tes photos pour analyser tes repas et ton suivi.",
+        "NSMicrophoneUsageDescription": "Calo utilise le micro pour tes messages vocaux avec ton coach."
+      }
+    },
+    "android": {
+      "package": "com.calo.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1F4E79"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Calo accède à tes photos pour analyser tes repas et ton suivi."
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "https://coachwarrior-production.up.railway.app"
+    }
+  }
+}

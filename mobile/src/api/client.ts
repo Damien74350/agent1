@@ -31,8 +31,15 @@ export type Progress = {
 };
 
 let authToken: string | null = null;
+let onUnauthorized: (() => void) | null = null;
+
 export function setToken(token: string | null) {
   authToken = token;
+}
+
+/** Wire a callback fired on 401 so the AuthProvider can auto-sign-out. */
+export function setUnauthorizedHandler(cb: (() => void) | null) {
+  onUnauthorized = cb;
 }
 
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
@@ -42,13 +49,19 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   };
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...opts, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { ...opts, headers });
+  } catch {
+    throw new ApiError('Connexion impossible. Vérifie ton réseau.', 0);
+  }
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
       const body = await res.json();
       detail = body?.detail ?? detail;
     } catch {}
+    if (res.status === 401 && onUnauthorized) onUnauthorized();
     throw new ApiError(detail, res.status);
   }
   return (await res.json()) as T;

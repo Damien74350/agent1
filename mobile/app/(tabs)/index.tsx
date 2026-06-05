@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { api, ApiError, ChatMedia } from '@/api/client';
+import { TypingDots } from '@/components/TypingDots';
 import { colors, radius, spacing } from '@/theme';
 
 type Msg = {
@@ -34,6 +35,13 @@ const WELCOME: Msg = {
     "Envoie-moi une photo de ton repas, parle-moi de ta journée, ou pose-moi " +
     'une question. On avance ensemble 💪',
 };
+
+const QUICK_PROMPTS = [
+  '📸 Analyse mon repas',
+  '🏋️ Programme de la semaine',
+  '😴 J\'ai mal dormi',
+  '📊 Mon bilan du jour',
+];
 
 export default function Chat() {
   const [messages, setMessages] = useState<Msg[]>([WELCOME]);
@@ -63,6 +71,7 @@ export default function Chat() {
             : msg,
         ),
       );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
       const detail = e instanceof ApiError ? e.message : 'Connexion impossible';
       setMessages((m) =>
@@ -106,6 +115,17 @@ export default function Chat() {
           contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.lg }}
           renderItem={({ item }) => <Bubble msg={item} />}
           onContentSizeChange={scrollToEnd}
+          ListFooterComponent={
+            messages.length === 1 ? (
+              <View style={styles.quickWrap}>
+                {QUICK_PROMPTS.map((q) => (
+                  <Pressable key={q} style={styles.quick} onPress={() => send(q.replace(/^\S+\s/, ''))}>
+                    <Text style={styles.quickText}>{q}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null
+          }
         />
         <View style={styles.inputBar}>
           <Pressable onPress={pickPhoto} style={styles.iconBtn} hitSlop={8}>
@@ -145,7 +165,7 @@ function Bubble({ msg }: { msg: Msg }) {
       >
         {msg.imageUri && <Image source={{ uri: msg.imageUri }} style={styles.bubbleImage} />}
         {msg.pending ? (
-          <Text style={[styles.bubbleText, { color: colors.textMuted }]}>Calo réfléchit…</Text>
+          <TypingDots />
         ) : (
           <Text style={[styles.bubbleText, isUser && { color: colors.white }]}>{msg.text}</Text>
         )}
@@ -217,4 +237,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  quickWrap: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm,
+    paddingHorizontal: spacing.sm, paddingTop: spacing.md,
+  },
+  quick: {
+    backgroundColor: colors.card, borderRadius: radius.pill,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  quickText: { color: colors.text, fontSize: 14, fontWeight: '600' },
 });

@@ -2,7 +2,7 @@
  * login/logout + the current user across the app. */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { api, setToken, PublicUser } from '@/api/client';
+import { api, setToken, setUnauthorizedHandler, PublicUser } from '@/api/client';
 
 const TOKEN_KEY = 'calo.token';
 
@@ -58,6 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTok(null);
     setUser(null);
   }, []);
+
+  // Auto-sign-out if the backend ever returns 401 (token expired/revoked).
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void signOut();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [signOut]);
 
   const refreshUser = useCallback(async () => {
     try {

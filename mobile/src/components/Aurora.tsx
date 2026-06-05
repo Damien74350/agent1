@@ -30,8 +30,9 @@ export function Aurora() {
   }, []);
 
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.blob,
           {
@@ -46,6 +47,7 @@ export function Aurora() {
         ]}
       />
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.blob,
           {
@@ -60,7 +62,7 @@ export function Aurora() {
           },
         ]}
       />
-      <View style={styles.veil} />
+      <View pointerEvents="none" style={styles.veil} />
     </View>
   );
 }

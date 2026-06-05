@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '@/store/auth';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { ToastHost } from '@/components/Toast';
 import { shouldShowOnboarding } from './onboarding';
 import { colors } from '@/theme';
@@ -45,14 +46,16 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
-    </Stack>
+    <ScreenContainer>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+      </Stack>
+    </ScreenContainer>
   );
 }
 

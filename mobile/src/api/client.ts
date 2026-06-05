@@ -72,12 +72,31 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
     let detail = `HTTP ${res.status}`;
     try {
       const body = await res.json();
-      detail = body?.detail ?? detail;
+      detail = extractDetail(body) ?? detail;
     } catch {}
     if (res.status === 401 && onUnauthorized) onUnauthorized();
     throw new ApiError(detail, res.status);
   }
   return (await res.json()) as T;
+}
+
+/** FastAPI's `detail` can be a string (manual HTTPException), an array of
+ * validation errors, or a single object. Normalise to a readable string so we
+ * never render "[object Object]" anywhere. */
+function extractDetail(body: any): string | null {
+  if (!body) return null;
+  const d = body.detail ?? body.message ?? body.error;
+  if (typeof d === 'string') return d;
+  if (Array.isArray(d)) {
+    return d
+      .map((e) => (typeof e === 'string' ? e : e?.msg ?? JSON.stringify(e)))
+      .filter(Boolean)
+      .join(', ');
+  }
+  if (d && typeof d === 'object') {
+    return d.msg ?? JSON.stringify(d);
+  }
+  return null;
 }
 
 export class ApiError extends Error {

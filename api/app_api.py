@@ -316,17 +316,29 @@ def build_app_router(coach: CaloCoach, twilio: Any, config: CaloConfig) -> APIRo
                 photo_bytes = base64.b64decode(body.image_base64)
             except Exception:
                 raise HTTPException(status_code=400, detail="invalid image_base64")
-        out = coach.handle_turn(
-            TurnInput(
-                user_id=user_id,
-                text=body.text or "",
-                photo_bytes=photo_bytes,
-                photo_media_type=body.image_media_type,
+        try:
+            out = coach.handle_turn(
+                TurnInput(
+                    user_id=user_id,
+                    text=body.text or "",
+                    photo_bytes=photo_bytes,
+                    photo_media_type=body.image_media_type,
+                )
             )
-        )
+        except Exception as exc:  # noqa: BLE001
+            log.exception("app /chat failed: %s", exc)
+            return {
+                "reply": (
+                    "Désolé, j'ai eu un souci technique en traitant ton message. "
+                    "Réessaye dans un instant 🙏"
+                ),
+                "tool_calls": [],
+                "media": [],
+                "error": str(exc)[:200],
+            }
         return {
-            "reply": out.reply_text,
-            "tool_calls": out.tool_calls,
+            "reply": str(out.reply_text or "…"),
+            "tool_calls": list(out.tool_calls or []),
             "media": [{"url": u, "caption": c}
                       for u, c in zip(out.media_urls, out.media_captions)],
         }

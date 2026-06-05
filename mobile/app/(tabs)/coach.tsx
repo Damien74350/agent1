@@ -181,7 +181,9 @@ function Bubble({ msg }: { msg: Msg }) {
         {msg.pending ? (
           <TypingDots />
         ) : (
-          <Text style={[styles.bubbleText, isUser && { color: colors.white }]}>{msg.text}</Text>
+          <Text style={[styles.bubbleText, isUser && { color: colors.white }]}>
+            {typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text)}
+          </Text>
         )}
         {msg.media?.map((m, i) => (
           <Image key={i} source={{ uri: m.url }} style={styles.mediaImage} />

@@ -1,5 +1,5 @@
-/** "Aujourd'hui" — the premium home dashboard. Pull-to-refresh, lots of
- * animated motion, sourced from /app/home. */
+/** Aujourd'hui — premium dashboard. Hero greeting, bento grid, insight card,
+ * heatmap, quick actions, floating Ask Calo CTA. Refonte premium 2026. */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -16,11 +16,12 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { api, ApiError, Home as HomeData } from '@/api/client';
-import { Card, Muted, Pill } from '@/components/ui';
+import { Aurora } from '@/components/Aurora';
+import { Card, Eyebrow, Hero, Muted } from '@/components/ui';
 import { Ring } from '@/components/Ring';
 import { showToast } from '@/components/Toast';
 import { setPendingPrompt } from '@/store/pendingPrompt';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, shadow, spacing } from '@/theme';
 
 export default function Home() {
   const router = useRouter();
@@ -41,13 +42,13 @@ export default function Home() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     await load();
     setRefreshing(false);
   };
 
   const goCoach = (prompt?: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     if (prompt) setPendingPrompt(prompt);
     router.push('/(tabs)/coach');
   };
@@ -59,98 +60,134 @@ export default function Home() {
   const fatProgress = t?.targets.fat ? (t.consumed.fat / t.targets.fat) : 0;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
-        }
-      >
-        <Text style={styles.greeting}>{data?.greeting ?? 'Bienvenue ✨'}</Text>
-        {!!data?.goal && <Muted style={{ marginBottom: spacing.lg }}>Objectif : {data.goal}</Muted>}
+    <View style={styles.root}>
+      <Aurora />
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 140 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+          }
+        >
+          {/* HERO */}
+          <Eyebrow>Aujourd'hui</Eyebrow>
+          <Hero style={{ marginTop: 4 }}>{data?.greeting ?? 'Bienvenue ✨'}</Hero>
+          {!!data?.goal && (
+            <Muted style={{ marginTop: spacing.sm, marginBottom: spacing.lg }}>
+              Objectif · <Text style={{ color: colors.accentSoft, fontWeight: '700' }}>{data.goal}</Text>
+            </Muted>
+          )}
 
-        {data?.insight ? <InsightCard insight={data.insight} onPress={() => goCoach(`Développe : ${data.insight.title}`)} /> : null}
+          {/* INSIGHT CARD */}
+          {data?.insight && (
+            <InsightCard insight={data.insight} onPress={() => goCoach(`Développe : ${data.insight.title}`)} />
+          )}
 
-        {/* Big calorie ring + 3 small macro rings */}
-        <Card style={{ marginTop: spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ring
-              size={140}
-              stroke={14}
-              progress={kcalProgress}
-              valueText={`${t?.consumed.kcal ?? 0}`}
-              unit={`/ ${t?.targets.kcal || '—'} kcal`}
-              label="Aujourd'hui"
-            />
-            <View style={{ flex: 1, marginLeft: spacing.lg, gap: spacing.sm }}>
-              <MacroLine label="Protéines" consumed={t?.consumed.protein ?? 0} target={t?.targets.protein ?? 0} unit="g" progress={proteinProgress} color="#4FC3A1" />
-              <MacroLine label="Glucides" consumed={t?.consumed.carbs ?? 0} target={t?.targets.carbs ?? 0} unit="g" progress={carbsProgress} color="#F4A24C" />
-              <MacroLine label="Lipides" consumed={t?.consumed.fat ?? 0} target={t?.targets.fat ?? 0} unit="g" progress={fatProgress} color="#E07B00" />
+          {/* MAIN BENTO : big ring + macros */}
+          <Card variant="elevated" style={{ marginTop: spacing.md }}>
+            <Eyebrow>Nutrition</Eyebrow>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm }}>
+              <Ring
+                size={140}
+                stroke={14}
+                progress={kcalProgress}
+                valueText={`${t?.consumed.kcal ?? 0}`}
+                unit={`/ ${t?.targets.kcal || '—'} kcal`}
+                label="Calories"
+              />
+              <View style={{ flex: 1, marginLeft: spacing.lg, gap: spacing.md }}>
+                <MacroLine label="Protéines" consumed={t?.consumed.protein ?? 0} target={t?.targets.protein ?? 0} unit="g" progress={proteinProgress} color={colors.mint} />
+                <MacroLine label="Glucides" consumed={t?.consumed.carbs ?? 0} target={t?.targets.carbs ?? 0} unit="g" progress={carbsProgress} color={colors.violet} />
+                <MacroLine label="Lipides" consumed={t?.consumed.fat ?? 0} target={t?.targets.fat ?? 0} unit="g" progress={fatProgress} color={colors.accent} />
+              </View>
             </View>
-          </View>
-        </Card>
-
-        {/* Streak + weight side by side */}
-        <View style={styles.row2}>
-          <Card style={[styles.statCard, { borderColor: (data?.streak ?? 0) >= 3 ? colors.accent : colors.border }]}>
-            <Text style={styles.statEmoji}>🔥</Text>
-            <Text style={styles.statValue}>{data?.streak ?? 0}</Text>
-            <Muted>{(data?.streak ?? 0) <= 1 ? 'jour de streak' : 'jours d\'affilée'}</Muted>
           </Card>
-          <Card style={styles.statCard}>
-            <Text style={styles.statEmoji}>⚖️</Text>
-            <Text style={styles.statValue}>
-              {data?.weight.latest_kg != null ? `${data.weight.latest_kg.toFixed(1)}` : '—'}
-            </Text>
-            <Muted>
-              {data?.weight.delta_30d_kg != null
+
+          {/* BENTO STATS : 2x */}
+          <View style={styles.row2}>
+            <StatCard
+              emoji="🔥"
+              value={`${data?.streak ?? 0}`}
+              label={(data?.streak ?? 0) <= 1 ? 'jour de streak' : 'jours d\'affilée'}
+              highlight={(data?.streak ?? 0) >= 3}
+            />
+            <StatCard
+              emoji="⚖️"
+              value={data?.weight.latest_kg != null ? data.weight.latest_kg.toFixed(1) : '—'}
+              label={data?.weight.delta_30d_kg != null
                 ? `${data.weight.delta_30d_kg > 0 ? '+' : ''}${data.weight.delta_30d_kg} kg / 30j`
                 : 'kg actuels'}
-            </Muted>
-          </Card>
-        </View>
-
-        {/* 30-day heatmap */}
-        <Card style={{ marginTop: spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
-            <Text style={styles.sectionLabel}>30 derniers jours</Text>
-            <Muted>{data?.heatmap_30d.filter(c => c.active).length ?? 0} jours actifs</Muted>
+            />
           </View>
-          <Heatmap cells={data?.heatmap_30d ?? []} />
-        </Card>
 
-        {/* Quick actions */}
-        <Text style={[styles.sectionLabel, { marginTop: spacing.lg, marginBottom: spacing.sm }]}>
-          Action rapide
-        </Text>
-        <View style={styles.quickGrid}>
-          <QuickAction icon="camera" label="Photo repas" onPress={() => goCoach('Analyse ce repas (j\'envoie une photo)')} />
-          <QuickAction icon="scale" label="Log poids" onPress={() => goCoach('Je pèse :')} />
-          <QuickAction icon="barbell" label="Programme" onPress={() => goCoach('Donne-moi mon programme du jour')} />
-          <QuickAction icon="moon" label="J\'ai mal dormi" onPress={() => goCoach('J\'ai mal dormi cette nuit, comment rattraper la journée ?')} />
+          {/* 30-DAY HEATMAP */}
+          <Card variant="elevated" style={{ marginTop: spacing.md }}>
+            <View style={styles.cardHeader}>
+              <Eyebrow>30 derniers jours</Eyebrow>
+              <Muted style={{ color: colors.accentSoft, fontWeight: '700' }}>
+                {data?.heatmap_30d.filter(c => c.active).length ?? 0} actifs
+              </Muted>
+            </View>
+            <Heatmap cells={data?.heatmap_30d ?? []} />
+          </Card>
+
+          {/* QUICK ACTIONS */}
+          <Eyebrow style={{ marginTop: spacing.xl, marginBottom: spacing.sm }}>Action rapide</Eyebrow>
+          <View style={styles.quickGrid}>
+            <QuickAction icon="camera" label="Photo repas" onPress={() => goCoach('Analyse ce repas (j\'envoie une photo)')} />
+            <QuickAction icon="scale" label="Log poids" onPress={() => goCoach('Je pèse :')} />
+            <QuickAction icon="barbell" label="Programme" onPress={() => goCoach('Donne-moi mon programme du jour')} />
+            <QuickAction icon="moon" label="J\'ai mal dormi" onPress={() => goCoach('J\'ai mal dormi cette nuit, comment rattraper la journée ?')} />
+          </View>
+        </ScrollView>
+
+        {/* FLOATING ASK CALO BUTTON */}
+        <View style={styles.fabWrap} pointerEvents="box-none">
+          <Pressable onPress={() => goCoach()} style={({ pressed }) => [styles.fab, pressed && { opacity: 0.9 }]}>
+            <Ionicons name="sparkles" size={20} color={colors.white} />
+            <Text style={styles.fabText}>Demande à Calo</Text>
+          </Pressable>
         </View>
+      </SafeAreaView>
+    </View>
+  );
+}
 
-        <Pressable onPress={() => goCoach()} style={styles.askBtn}>
-          <Ionicons name="sparkles" size={20} color={colors.white} />
-          <Text style={styles.askText}>Demande à Calo</Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+function StatCard({ emoji, value, label, highlight }: { emoji: string; value: string; label: string; highlight?: boolean }) {
+  return (
+    <View style={[styles.statCard, highlight && styles.statCardHi]}>
+      <Text style={styles.statEmoji}>{emoji}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+      <Muted style={{ marginTop: 2 }}>{label}</Muted>
+    </View>
   );
 }
 
 function MacroLine({ label, consumed, target, unit, progress, color }: {
   label: string; consumed: number; target: number; unit: string; progress: number; color: string;
 }) {
-  const pct = Math.max(0, Math.min(progress, 1)) * 100;
+  const animatedW = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(animatedW, {
+      toValue: Math.max(0, Math.min(progress, 1)) * 100,
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [progress]);
   return (
     <View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
         <Text style={styles.macroLabel}>{label}</Text>
         <Text style={styles.macroValue}>{consumed} / {target || '—'} {unit}</Text>
       </View>
       <View style={styles.macroTrack}>
-        <View style={[styles.macroFill, { width: `${pct}%`, backgroundColor: color }]} />
+        <Animated.View
+          style={[
+            styles.macroFill,
+            { backgroundColor: color, width: animatedW.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }) },
+          ]}
+        />
       </View>
     </View>
   );
@@ -159,23 +196,26 @@ function MacroLine({ label, consumed, target, unit, progress, color }: {
 function InsightCard({ insight, onPress }: { insight: { icon: string; title: string; body: string }; onPress: () => void }) {
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(anim, { toValue: 1, duration: 480, useNativeDriver: true, easing: Easing.out(Easing.cubic) }).start();
+    Animated.timing(anim, { toValue: 1, duration: 560, useNativeDriver: true, easing: Easing.out(Easing.cubic) }).start();
   }, [insight.title]);
   return (
     <Animated.View
       style={{
         opacity: anim,
-        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
+        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
       }}
     >
-      <Pressable onPress={onPress}>
-        <Card style={styles.insightCard}>
-          <Text style={styles.insightIcon}>{insight.icon}</Text>
+      <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.85 }}>
+        <Card variant="elevated" style={styles.insightCard}>
+          <View style={styles.insightIconWrap}>
+            <Text style={styles.insightIcon}>{insight.icon}</Text>
+          </View>
           <View style={{ flex: 1 }}>
+            <Eyebrow style={{ color: colors.accentSoft }}>Insight du moment</Eyebrow>
             <Text style={styles.insightTitle}>{insight.title}</Text>
             <Text style={styles.insightBody}>{insight.body}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
         </Card>
       </Pressable>
     </Animated.View>
@@ -210,30 +250,43 @@ function QuickAction({ icon, label, onPress }: { icon: any; label: string; onPre
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  greeting: { color: colors.text, fontSize: 28, fontWeight: '900', marginBottom: spacing.xs },
-  sectionLabel: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  root: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1 },
+
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
 
   row2: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  statCard: { flex: 1, alignItems: 'center', paddingVertical: spacing.lg },
-  statEmoji: { fontSize: 24, marginBottom: 4 },
-  statValue: { color: colors.text, fontSize: 28, fontWeight: '900' },
+  statCard: {
+    flex: 1, padding: spacing.lg, borderRadius: radius.lg,
+    backgroundColor: colors.cardHi,
+    borderWidth: 1, borderColor: colors.border,
+    alignItems: 'flex-start',
+    ...shadow.soft,
+  },
+  statCardHi: { borderColor: colors.accent },
+  statEmoji: { fontSize: 24, marginBottom: spacing.sm },
+  statValue: { color: colors.text, fontSize: 36, fontWeight: '900', letterSpacing: -1 },
 
   insightCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     borderColor: colors.accent, borderWidth: 1,
   },
+  insightIconWrap: {
+    width: 52, height: 52, borderRadius: radius.md,
+    backgroundColor: 'rgba(255,120,73,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
   insightIcon: { fontSize: 28 },
-  insightTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 2 },
-  insightBody: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
+  insightTitle: { color: colors.text, fontSize: 18, fontWeight: '900', marginTop: 2, letterSpacing: -0.3 },
+  insightBody: { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 4 },
 
-  macroLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
-  macroValue: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  macroLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  macroValue: { color: colors.text, fontSize: 13, fontWeight: '800' },
   macroTrack: { height: 6, backgroundColor: colors.bgElevated, borderRadius: 3, overflow: 'hidden' },
   macroFill: { height: 6, borderRadius: 3 },
 
-  heatRow: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
-  heatCell: { width: 18, height: 18, borderRadius: 4 },
+  heatRow: { flexDirection: 'row', gap: 5, flexWrap: 'wrap' },
+  heatCell: { width: 18, height: 18, borderRadius: 5 },
 
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   quickAction: {
@@ -247,9 +300,16 @@ const styles = StyleSheet.create({
   },
   quickLabel: { color: colors.text, fontSize: 14, fontWeight: '700', flexShrink: 1 },
 
-  askBtn: {
-    marginTop: spacing.lg, flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    gap: spacing.sm, backgroundColor: colors.primary, height: 56, borderRadius: radius.md,
+  fabWrap: {
+    position: 'absolute', left: 0, right: 0, bottom: spacing.md,
+    alignItems: 'center',
   },
-  askText: { color: colors.white, fontSize: 17, fontWeight: '800' },
+  fab: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.xl, paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    ...shadow.glow,
+  },
+  fabText: { color: colors.white, fontSize: 16, fontWeight: '900', letterSpacing: 0.3 },
 });

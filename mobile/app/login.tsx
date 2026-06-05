@@ -10,7 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, ApiError } from '@/api/client';
 import { useAuth } from '@/store/auth';
-import { Button, Muted, Title } from '@/components/ui';
+import { Aurora } from '@/components/Aurora';
+import { Button, Eyebrow, Hero, Muted } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
 
 export default function Login() {
@@ -27,7 +28,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.authStart(phone);
-      setHint(res.sent ? null : 'Code envoyé (voir logs serveur en dev).');
+      setHint(res.sent ? null : 'Code généré côté serveur (logs Railway).');
       setStep('code');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Erreur réseau');
@@ -50,76 +51,91 @@ export default function Login() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
-        <View style={styles.brandBlock}>
-          <Text style={styles.logo}>Calo</Text>
-          <Muted style={{ textAlign: 'center', marginTop: spacing.sm }}>
-            Ton coach nutrition · sport · mental, disponible 24/7
-          </Muted>
-        </View>
-
-        {step === 'phone' ? (
-          <View>
-            <Title style={{ fontSize: 22, marginBottom: spacing.md }}>Bienvenue 👋</Title>
-            <Muted style={{ marginBottom: spacing.sm }}>Entre ton numéro de téléphone</Muted>
-            <TextInput
-              style={styles.input}
-              placeholder="+41 79 123 45 67"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="phone-pad"
-              autoFocus
-              value={phone}
-              onChangeText={setPhone}
-            />
-            <Button title="Recevoir mon code" onPress={sendCode} loading={loading} style={{ marginTop: spacing.md }} />
-          </View>
-        ) : (
-          <View>
-            <Title style={{ fontSize: 22, marginBottom: spacing.md }}>Code de vérification</Title>
-            <Muted style={{ marginBottom: spacing.sm }}>
-              Envoyé au {phone}
+    <View style={styles.root}>
+      <Aurora />
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.container}
+        >
+          <View style={styles.brandBlock}>
+            <Eyebrow>Coach IA · 24/7</Eyebrow>
+            <Hero style={styles.logo}>Calo</Hero>
+            <Muted style={{ textAlign: 'center', marginTop: spacing.sm, maxWidth: 320 }}>
+              Nutrition · Sport · Mental, tout en un. Le compagnon que tu mérites.
             </Muted>
-            <TextInput
-              style={[styles.input, styles.codeInput]}
-              placeholder="000000"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              maxLength={6}
-              autoFocus
-              value={code}
-              onChangeText={setCode}
-            />
-            <Button title="Se connecter" onPress={verify} loading={loading} variant="accent" style={{ marginTop: spacing.md }} />
-            <Button title="Changer de numéro" onPress={() => setStep('phone')} variant="ghost" style={{ marginTop: spacing.sm }} />
           </View>
-        )}
 
-        {hint && <Muted style={{ marginTop: spacing.md, textAlign: 'center' }}>{hint}</Muted>}
-        {error && <Text style={styles.error}>{error}</Text>}
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          {step === 'phone' ? (
+            <View style={styles.form}>
+              <Eyebrow style={{ marginBottom: spacing.sm }}>Ton numéro</Eyebrow>
+              <TextInput
+                style={styles.input}
+                placeholder="+41 79 123 45 67"
+                placeholderTextColor={colors.textDim}
+                keyboardType="phone-pad"
+                autoFocus
+                value={phone}
+                onChangeText={setPhone}
+              />
+              <Button
+                title="Recevoir mon code"
+                onPress={sendCode}
+                loading={loading}
+                variant="accent"
+                size="lg"
+                style={{ marginTop: spacing.md }}
+              />
+              <Muted style={{ textAlign: 'center', marginTop: spacing.md }}>
+                Tes données restent privées, et tu peux supprimer ton compte à tout moment.
+              </Muted>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <Eyebrow style={{ marginBottom: spacing.sm }}>Code reçu</Eyebrow>
+              <TextInput
+                style={[styles.input, styles.codeInput]}
+                placeholder="••••••"
+                placeholderTextColor={colors.textDim}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+                value={code}
+                onChangeText={setCode}
+              />
+              <Button title="Se connecter" onPress={verify} loading={loading} variant="accent" size="lg" style={{ marginTop: spacing.md }} />
+              <Button title="Changer de numéro" onPress={() => setStep('phone')} variant="ghost" style={{ marginTop: spacing.sm }} />
+              <Muted style={{ textAlign: 'center', marginTop: spacing.md }}>
+                Envoyé au {phone}
+              </Muted>
+            </View>
+          )}
+
+          {hint && <Muted style={{ marginTop: spacing.md, textAlign: 'center' }}>{hint}</Muted>}
+          {error && <Text style={styles.error}>{error}</Text>}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1 },
   container: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
-  brandBlock: { alignItems: 'center', marginBottom: spacing.xxl },
-  logo: { color: colors.white, fontSize: 52, fontWeight: '900', letterSpacing: 1 },
+  brandBlock: { alignItems: 'center', marginBottom: spacing.xxl, gap: spacing.xs },
+  logo: { fontSize: 76, letterSpacing: -3 },
+  form: { gap: spacing.xs },
   input: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.glassOverlay,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     color: colors.text,
     fontSize: 18,
     paddingHorizontal: spacing.md,
-    height: 56,
+    height: 58,
   },
-  codeInput: { textAlign: 'center', letterSpacing: 8, fontSize: 28 },
-  error: { color: colors.danger, marginTop: spacing.md, textAlign: 'center' },
+  codeInput: { textAlign: 'center', letterSpacing: 12, fontSize: 28, fontWeight: '900' },
+  error: { color: colors.danger, marginTop: spacing.md, textAlign: 'center', fontWeight: '600' },
 });

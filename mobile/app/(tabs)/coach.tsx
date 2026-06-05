@@ -78,19 +78,33 @@ export default function Chat() {
     scrollToEnd();
     try {
       const res = await api.chat(text, imageBase64);
+      // DEBUG: log the full response so we can diagnose any rendering issue.
+      console.log('[CALO chat response]', res);
+      const rawReply: any = res?.reply;
+      const reply: string =
+        typeof rawReply === 'string'
+          ? rawReply
+          : rawReply == null
+            ? '(réponse vide du serveur)'
+            : `(format inattendu: ${JSON.stringify(rawReply).slice(0, 200)})`;
       setMessages((m) =>
         m.map((msg) =>
           msg.id === typing.id
-            ? { ...msg, text: res.reply, media: res.media, pending: false }
+            ? { ...msg, text: reply, media: res.media ?? [], pending: false }
             : msg,
         ),
       );
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
     } catch (e) {
-      const detail = e instanceof ApiError ? e.message : 'Connexion impossible';
+      console.log('[CALO chat error]', e);
+      const detail =
+        e instanceof ApiError ? e.message :
+        e instanceof Error ? e.message :
+        'Connexion impossible';
+      const safeDetail = typeof detail === 'string' ? detail : JSON.stringify(detail);
       setMessages((m) =>
         m.map((msg) =>
-          msg.id === typing.id ? { ...msg, text: `⚠️ ${detail}`, pending: false } : msg,
+          msg.id === typing.id ? { ...msg, text: `⚠️ ${safeDetail}`, pending: false } : msg,
         ),
       );
     } finally {
@@ -114,7 +128,10 @@ export default function Chat() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Calo</Text>
+        <View>
+          <Text style={styles.headerEyebrow}>EN LIGNE</Text>
+          <Text style={styles.headerTitle}>Calo</Text>
+        </View>
         <View style={styles.statusDot} />
       </View>
       <KeyboardAvoidingView
@@ -198,29 +215,34 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  headerTitle: { color: colors.white, fontSize: 22, fontWeight: '900' },
+  headerEyebrow: { color: colors.success, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
+  headerTitle: { color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -0.8 },
   statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: colors.success,
-    marginLeft: spacing.sm,
+    shadowColor: colors.success,
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
   },
-  row: { flexDirection: 'row', marginVertical: 5 },
-  bubble: { borderRadius: radius.lg, padding: spacing.md },
-  bubbleUser: { backgroundColor: colors.bubbleUser, borderBottomRightRadius: 4 },
+  row: { flexDirection: 'row', marginVertical: 6 },
+  bubble: { borderRadius: 22, padding: spacing.md, paddingHorizontal: spacing.lg },
+  bubbleUser: { backgroundColor: colors.bubbleUser, borderBottomRightRadius: 6 },
   bubbleCalo: {
     backgroundColor: colors.bubbleCalo,
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  bubbleText: { color: colors.text, fontSize: 16, lineHeight: 22 },
+  bubbleText: { color: colors.text, fontSize: 16, lineHeight: 23, fontWeight: '500' },
   bubbleImage: { width: 200, height: 200, borderRadius: radius.md, marginBottom: spacing.sm },
   mediaImage: { width: 220, height: 220, borderRadius: radius.md, marginTop: spacing.sm },
   inputBar: {
@@ -246,10 +268,10 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   sendBtn: {
-    backgroundColor: colors.primary,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    backgroundColor: colors.accent,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
   },

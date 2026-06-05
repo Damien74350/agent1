@@ -50,10 +50,9 @@ export default function Profile() {
           <Button title="Voir les abonnements" variant="accent" onPress={() => router.push('/paywall')} />
         </Card>
 
+        <Row icon="settings" label="Réglages" onPress={() => router.push('/settings')} />
         <Row icon="person-circle" label="Mes informations" onPress={() => Alert.alert('Mes informations', 'Édite ton profil directement via le chat avec Calo : il garde tout à jour pour toi.')} />
-        <Row icon="notifications" label="Notifications" onPress={() => Alert.alert('Notifications', 'Bientôt disponible : rappels personnalisés, jalons, check-ins.')} />
-        <Row icon="logo-whatsapp" label="Lier WhatsApp" onPress={() => Alert.alert('Lier WhatsApp', `Ton numéro est déjà lié à WhatsApp Calo. Tu peux nous écrire indifféremment depuis l'app ou depuis WhatsApp, c'est le même compte.`)} />
-        <Row icon="shield-checkmark" label="Confidentialité" onPress={() => Alert.alert('Confidentialité', `Tes données sont chiffrées, jamais partagées, et tu peux demander leur suppression à tout moment via Calo.`)} />
+        <Row icon="logo-whatsapp" label="WhatsApp lié" onPress={() => Alert.alert('Lier WhatsApp', `Ton numéro est déjà lié à WhatsApp Calo. App et WhatsApp = même compte, synchronisés.`)} />
 
         <Button title="Se déconnecter" variant="ghost" onPress={signOut} style={{ marginTop: spacing.lg }} />
         <Muted style={{ textAlign: 'center', marginTop: spacing.md }}>Calo v1.0.0</Muted>

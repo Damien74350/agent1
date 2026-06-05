@@ -1,264 +1,255 @@
-import React, { useCallback, useRef, useState } from 'react';
+/** "Aujourd'hui" — the premium home dashboard. Pull-to-refresh, lots of
+ * animated motion, sourced from /app/home. */
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
+  Animated,
+  Easing,
   Pressable,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { useFocusEffect } from 'expo-router';
-import { api, ApiError, ChatMedia } from '@/api/client';
-import { TypingDots } from '@/components/TypingDots';
-import { takePendingPrompt, subscribePending } from '@/store/pendingPrompt';
+import { api, ApiError, Home as HomeData } from '@/api/client';
+import { Card, Muted, Pill } from '@/components/ui';
+import { Ring } from '@/components/Ring';
+import { showToast } from '@/components/Toast';
+import { setPendingPrompt } from '@/store/pendingPrompt';
 import { colors, radius, spacing } from '@/theme';
 
-type Msg = {
-  id: string;
-  role: 'user' | 'calo';
-  text: string;
-  media?: ChatMedia[];
-  imageUri?: string;
-  pending?: boolean;
-};
+export default function Home() {
+  const router = useRouter();
+  const [data, setData] = useState<HomeData | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-const WELCOME: Msg = {
-  id: 'welcome',
-  role: 'calo',
-  text:
-    "Salut ! 👋 Je suis Calo, ton coach nutrition · sport · mental. " +
-    "Envoie-moi une photo de ton repas, parle-moi de ta journée, ou pose-moi " +
-    'une question. On avance ensemble 💪',
-};
-
-const QUICK_PROMPTS = [
-  '📸 Analyse mon repas',
-  '🏋️ Programme de la semaine',
-  '😴 J\'ai mal dormi',
-  '📊 Mon bilan du jour',
-];
-
-export default function Chat() {
-  const [messages, setMessages] = useState<Msg[]>([WELCOME]);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const listRef = useRef<FlatList<Msg>>(null);
-
-  const scrollToEnd = useCallback(() => {
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+  const load = useCallback(async () => {
+    try {
+      setData(await api.home());
+    } catch (e) {
+      if (e instanceof ApiError && e.status !== 401) {
+        showToast(`Chargement impossible : ${e.message}`);
+      }
+    }
   }, []);
 
-  // Other tabs (Learn) can hand us a prompt to send when we focus.
-  useFocusEffect(
-    useCallback(() => {
-      const drain = () => {
-        const pending = takePendingPrompt();
-        if (pending) send(pending);
-      };
-      drain();
-      return subscribePending(drain);
-    }, []),
-  );
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
-  async function send(text: string, imageBase64?: string, imageUri?: string) {
-    if (!text.trim() && !imageBase64) return;
+  const onRefresh = async () => {
+    setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const userMsg: Msg = { id: `u-${Date.now()}`, role: 'user', text, imageUri };
-    const typing: Msg = { id: `t-${Date.now()}`, role: 'calo', text: '', pending: true };
-    setMessages((m) => [...m, userMsg, typing]);
-    setInput('');
-    setSending(true);
-    scrollToEnd();
-    try {
-      const res = await api.chat(text, imageBase64);
-      setMessages((m) =>
-        m.map((msg) =>
-          msg.id === typing.id
-            ? { ...msg, text: res.reply, media: res.media, pending: false }
-            : msg,
-        ),
-      );
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e) {
-      const detail = e instanceof ApiError ? e.message : 'Connexion impossible';
-      setMessages((m) =>
-        m.map((msg) =>
-          msg.id === typing.id ? { ...msg, text: `⚠️ ${detail}`, pending: false } : msg,
-        ),
-      );
-    } finally {
-      setSending(false);
-      scrollToEnd();
-    }
-  }
+    await load();
+    setRefreshing(false);
+  };
 
-  async function pickPhoto() {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-      base64: true,
-    });
-    if (!res.canceled && res.assets[0]?.base64) {
-      const asset = res.assets[0];
-      send(input || 'Voici une photo 📸', asset.base64!, asset.uri);
-    }
-  }
+  const goCoach = (prompt?: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (prompt) setPendingPrompt(prompt);
+    router.push('/(tabs)/coach');
+  };
+
+  const t = data?.today;
+  const kcalProgress = t?.targets.kcal ? (t.consumed.kcal / t.targets.kcal) : 0;
+  const proteinProgress = t?.targets.protein ? (t.consumed.protein / t.targets.protein) : 0;
+  const carbsProgress = t?.targets.carbs ? (t.consumed.carbs / t.targets.carbs) : 0;
+  const fatProgress = t?.targets.fat ? (t.consumed.fat / t.targets.fat) : 0;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Calo</Text>
-        <View style={styles.statusDot} />
-      </View>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+      <ScrollView
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+        }
       >
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(m) => m.id}
-          contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.lg }}
-          renderItem={({ item }) => <Bubble msg={item} />}
-          onContentSizeChange={scrollToEnd}
-          ListFooterComponent={
-            messages.length === 1 ? (
-              <View style={styles.quickWrap}>
-                {QUICK_PROMPTS.map((q) => (
-                  <Pressable key={q} style={styles.quick} onPress={() => send(q.replace(/^\S+\s/, ''))}>
-                    <Text style={styles.quickText}>{q}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null
-          }
-        />
-        <View style={styles.inputBar}>
-          <Pressable onPress={pickPhoto} style={styles.iconBtn} hitSlop={8}>
-            <Ionicons name="camera" size={24} color={colors.accentSoft} />
-          </Pressable>
-          <TextInput
-            style={styles.input}
-            placeholder="Écris à Calo…"
-            placeholderTextColor={colors.textMuted}
-            value={input}
-            onChangeText={setInput}
-            multiline
-          />
-          <Pressable
-            onPress={() => send(input)}
-            disabled={sending || !input.trim()}
-            style={[styles.sendBtn, { opacity: sending || !input.trim() ? 0.4 : 1 }]}
-          >
-            <Ionicons name="send" size={20} color={colors.white} />
-          </Pressable>
+        <Text style={styles.greeting}>{data?.greeting ?? 'Bienvenue ✨'}</Text>
+        {!!data?.goal && <Muted style={{ marginBottom: spacing.lg }}>Objectif : {data.goal}</Muted>}
+
+        {data?.insight ? <InsightCard insight={data.insight} onPress={() => goCoach(`Développe : ${data.insight.title}`)} /> : null}
+
+        {/* Big calorie ring + 3 small macro rings */}
+        <Card style={{ marginTop: spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ring
+              size={140}
+              stroke={14}
+              progress={kcalProgress}
+              valueText={`${t?.consumed.kcal ?? 0}`}
+              unit={`/ ${t?.targets.kcal || '—'} kcal`}
+              label="Aujourd'hui"
+            />
+            <View style={{ flex: 1, marginLeft: spacing.lg, gap: spacing.sm }}>
+              <MacroLine label="Protéines" consumed={t?.consumed.protein ?? 0} target={t?.targets.protein ?? 0} unit="g" progress={proteinProgress} color="#4FC3A1" />
+              <MacroLine label="Glucides" consumed={t?.consumed.carbs ?? 0} target={t?.targets.carbs ?? 0} unit="g" progress={carbsProgress} color="#F4A24C" />
+              <MacroLine label="Lipides" consumed={t?.consumed.fat ?? 0} target={t?.targets.fat ?? 0} unit="g" progress={fatProgress} color="#E07B00" />
+            </View>
+          </View>
+        </Card>
+
+        {/* Streak + weight side by side */}
+        <View style={styles.row2}>
+          <Card style={[styles.statCard, { borderColor: (data?.streak ?? 0) >= 3 ? colors.accent : colors.border }]}>
+            <Text style={styles.statEmoji}>🔥</Text>
+            <Text style={styles.statValue}>{data?.streak ?? 0}</Text>
+            <Muted>{(data?.streak ?? 0) <= 1 ? 'jour de streak' : 'jours d\'affilée'}</Muted>
+          </Card>
+          <Card style={styles.statCard}>
+            <Text style={styles.statEmoji}>⚖️</Text>
+            <Text style={styles.statValue}>
+              {data?.weight.latest_kg != null ? `${data.weight.latest_kg.toFixed(1)}` : '—'}
+            </Text>
+            <Muted>
+              {data?.weight.delta_30d_kg != null
+                ? `${data.weight.delta_30d_kg > 0 ? '+' : ''}${data.weight.delta_30d_kg} kg / 30j`
+                : 'kg actuels'}
+            </Muted>
+          </Card>
         </View>
-      </KeyboardAvoidingView>
+
+        {/* 30-day heatmap */}
+        <Card style={{ marginTop: spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
+            <Text style={styles.sectionLabel}>30 derniers jours</Text>
+            <Muted>{data?.heatmap_30d.filter(c => c.active).length ?? 0} jours actifs</Muted>
+          </View>
+          <Heatmap cells={data?.heatmap_30d ?? []} />
+        </Card>
+
+        {/* Quick actions */}
+        <Text style={[styles.sectionLabel, { marginTop: spacing.lg, marginBottom: spacing.sm }]}>
+          Action rapide
+        </Text>
+        <View style={styles.quickGrid}>
+          <QuickAction icon="camera" label="Photo repas" onPress={() => goCoach('Analyse ce repas (j\'envoie une photo)')} />
+          <QuickAction icon="scale" label="Log poids" onPress={() => goCoach('Je pèse :')} />
+          <QuickAction icon="barbell" label="Programme" onPress={() => goCoach('Donne-moi mon programme du jour')} />
+          <QuickAction icon="moon" label="J\'ai mal dormi" onPress={() => goCoach('J\'ai mal dormi cette nuit, comment rattraper la journée ?')} />
+        </View>
+
+        <Pressable onPress={() => goCoach()} style={styles.askBtn}>
+          <Ionicons name="sparkles" size={20} color={colors.white} />
+          <Text style={styles.askText}>Demande à Calo</Text>
+        </Pressable>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Bubble({ msg }: { msg: Msg }) {
-  const isUser = msg.role === 'user';
+function MacroLine({ label, consumed, target, unit, progress, color }: {
+  label: string; consumed: number; target: number; unit: string; progress: number; color: string;
+}) {
+  const pct = Math.max(0, Math.min(progress, 1)) * 100;
   return (
-    <View style={[styles.row, { justifyContent: isUser ? 'flex-end' : 'flex-start' }]}>
-      <View
-        style={[
-          styles.bubble,
-          isUser ? styles.bubbleUser : styles.bubbleCalo,
-          { maxWidth: '82%' },
-        ]}
-      >
-        {msg.imageUri && <Image source={{ uri: msg.imageUri }} style={styles.bubbleImage} />}
-        {msg.pending ? (
-          <TypingDots />
-        ) : (
-          <Text style={[styles.bubbleText, isUser && { color: colors.white }]}>{msg.text}</Text>
-        )}
-        {msg.media?.map((m, i) => (
-          <Image key={i} source={{ uri: m.url }} style={styles.mediaImage} />
-        ))}
+    <View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+        <Text style={styles.macroLabel}>{label}</Text>
+        <Text style={styles.macroValue}>{consumed} / {target || '—'} {unit}</Text>
+      </View>
+      <View style={styles.macroTrack}>
+        <View style={[styles.macroFill, { width: `${pct}%`, backgroundColor: color }]} />
       </View>
     </View>
   );
 }
 
+function InsightCard({ insight, onPress }: { insight: { icon: string; title: string; body: string }; onPress: () => void }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, { toValue: 1, duration: 480, useNativeDriver: true, easing: Easing.out(Easing.cubic) }).start();
+  }, [insight.title]);
+  return (
+    <Animated.View
+      style={{
+        opacity: anim,
+        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
+      }}
+    >
+      <Pressable onPress={onPress}>
+        <Card style={styles.insightCard}>
+          <Text style={styles.insightIcon}>{insight.icon}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.insightTitle}>{insight.title}</Text>
+            <Text style={styles.insightBody}>{insight.body}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+        </Card>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function Heatmap({ cells }: { cells: { date: string; active: boolean }[] }) {
+  return (
+    <View style={styles.heatRow}>
+      {cells.map((c) => (
+        <View
+          key={c.date}
+          style={[
+            styles.heatCell,
+            { backgroundColor: c.active ? colors.accent : colors.bgElevated },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+function QuickAction({ icon, label, onPress }: { icon: any; label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.quickAction, pressed && { opacity: 0.7 }]}>
+      <View style={styles.quickIconWrap}>
+        <Ionicons name={icon} size={22} color={colors.accentSoft} />
+      </View>
+      <Text style={styles.quickLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  greeting: { color: colors.text, fontSize: 28, fontWeight: '900', marginBottom: spacing.xs },
+  sectionLabel: { color: colors.text, fontSize: 16, fontWeight: '700' },
+
+  row2: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  statCard: { flex: 1, alignItems: 'center', paddingVertical: spacing.lg },
+  statEmoji: { fontSize: 24, marginBottom: 4 },
+  statValue: { color: colors.text, fontSize: 28, fontWeight: '900' },
+
+  insightCard: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    borderColor: colors.accent, borderWidth: 1,
   },
-  headerTitle: { color: colors.white, fontSize: 22, fontWeight: '900' },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.success,
-    marginLeft: spacing.sm,
-  },
-  row: { flexDirection: 'row', marginVertical: 5 },
-  bubble: { borderRadius: radius.lg, padding: spacing.md },
-  bubbleUser: { backgroundColor: colors.bubbleUser, borderBottomRightRadius: 4 },
-  bubbleCalo: {
-    backgroundColor: colors.bubbleCalo,
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  bubbleText: { color: colors.text, fontSize: 16, lineHeight: 22 },
-  bubbleImage: { width: 200, height: 200, borderRadius: radius.md, marginBottom: spacing.sm },
-  mediaImage: { width: 220, height: 220, borderRadius: radius.md, marginTop: spacing.sm },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    padding: spacing.sm,
-    gap: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.bgElevated,
-  },
-  iconBtn: { padding: spacing.sm },
-  input: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    color: colors.text,
-    fontSize: 16,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    maxHeight: 120,
-  },
-  sendBtn: {
-    backgroundColor: colors.primary,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickWrap: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm,
-    paddingHorizontal: spacing.sm, paddingTop: spacing.md,
-  },
-  quick: {
-    backgroundColor: colors.card, borderRadius: radius.pill,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+  insightIcon: { fontSize: 28 },
+  insightTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 2 },
+  insightBody: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
+
+  macroLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  macroValue: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  macroTrack: { height: 6, backgroundColor: colors.bgElevated, borderRadius: 3, overflow: 'hidden' },
+  macroFill: { height: 6, borderRadius: 3 },
+
+  heatRow: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
+  heatCell: { width: 18, height: 18, borderRadius: 4 },
+
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  quickAction: {
+    flexBasis: '47%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md,
     borderWidth: 1, borderColor: colors.border,
   },
-  quickText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  quickIconWrap: {
+    width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.bgElevated,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  quickLabel: { color: colors.text, fontSize: 14, fontWeight: '700', flexShrink: 1 },
+
+  askBtn: {
+    marginTop: spacing.lg, flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: spacing.sm, backgroundColor: colors.primary, height: 56, borderRadius: radius.md,
+  },
+  askText: { color: colors.white, fontSize: 17, fontWeight: '800' },
 });

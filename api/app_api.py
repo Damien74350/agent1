@@ -187,6 +187,124 @@ def build_app_router(coach: CaloCoach, twilio: Any, config: CaloConfig) -> APIRo
             "meals_today": len(meals),
         }
 
+    @router.get("/home")
+    def home(user_id: Annotated[str, Depends(current_user_id)]) -> dict[str, Any]:
+        """All-in-one dashboard payload: today macros, streak, recent activity
+        heatmap (30 days), an insight, the latest weight delta."""
+        from datetime import datetime, timezone, timedelta
+
+        now = datetime.now(timezone.utc)
+        user = coach.db.get_user_by_id(user_id) or {}
+        today_iso = now.strftime("%Y-%m-%d")
+
+        # Today macros
+        meals_today = coach.db.meals_for_day(user_id, today_iso)
+        consumed = {
+            "kcal": sum(int(m.get("total_calories") or 0) for m in meals_today),
+            "protein": sum(int(m.get("total_protein_g") or 0) for m in meals_today),
+            "carbs": sum(int(m.get("total_carbs_g") or 0) for m in meals_today),
+            "fat": sum(int(m.get("total_fat_g") or 0) for m in meals_today),
+        }
+        targets = {
+            "kcal": int(user.get("daily_calories") or 0),
+            "protein": int(user.get("daily_protein_g") or 0),
+            "carbs": int(user.get("daily_carbs_g") or 0),
+            "fat": int(user.get("daily_fat_g") or 0),
+        }
+
+        # 30-day activity heatmap (any meal logged on a given day → counts)
+        since = (now - timedelta(days=29)).strftime("%Y-%m-%d")
+        try:
+            recent_meals = coach.db.meals_since(user_id, since)
+        except Exception:
+            recent_meals = []
+        active_days: set[str] = set()
+        for m in recent_meals:
+            day = (m.get("eaten_at") or "")[:10]
+            if day:
+                active_days.add(day)
+        heatmap = []
+        cur = now - timedelta(days=29)
+        while cur.date() <= now.date():
+            d = cur.strftime("%Y-%m-%d")
+            heatmap.append({"date": d, "active": d in active_days})
+            cur += timedelta(days=1)
+
+        # Streak: contiguous active days ending today (or yesterday if no log today yet)
+        streak = 0
+        cursor = now.date()
+        if today_iso not in active_days:
+            cursor -= timedelta(days=1)
+        while cursor.strftime("%Y-%m-%d") in active_days:
+            streak += 1
+            cursor -= timedelta(days=1)
+
+        # Weight delta (latest vs 30 days ago)
+        weights = coach.db.weights_history(user_id, limit=60)
+        weight_delta = None
+        latest_kg = None
+        if weights:
+            latest_kg = weights[0].get("weight_kg")
+            if len(weights) >= 2:
+                oldest_kg = weights[-1].get("weight_kg")
+                if latest_kg is not None and oldest_kg is not None:
+                    weight_delta = round(latest_kg - oldest_kg, 1)
+
+        # Friendly greeting tied to the hour
+        hour = now.hour
+        first = (user.get("name") or "").split(" ")[0]
+        if 5 <= hour < 11:
+            greeting = f"Bonjour {first}".strip() + " ☀️"
+        elif 11 <= hour < 14:
+            greeting = f"Salut {first}".strip() + " 👋"
+        elif 14 <= hour < 18:
+            greeting = f"Hello {first}".strip() + " 💪"
+        elif 18 <= hour < 23:
+            greeting = f"Bonsoir {first}".strip() + " 🌙"
+        else:
+            greeting = f"Coucou {first}".strip() + " ✨"
+
+        # Pick a contextual insight (a tiny rule engine — no LLM call here).
+        insight = _build_insight(consumed, targets, streak, weight_delta, user, len(meals_today))
+
+        return {
+            "greeting": greeting,
+            "today": {
+                "consumed": consumed,
+                "targets": targets,
+                "meals_count": len(meals_today),
+            },
+            "streak": streak,
+            "heatmap_30d": heatmap,
+            "weight": {"latest_kg": latest_kg, "delta_30d_kg": weight_delta},
+            "goal": user.get("goal") or "",
+            "insight": insight,
+        }
+
+    @router.get("/knowledge/search")
+    def knowledge_search(
+        user_id: Annotated[str, Depends(current_user_id)],
+        q: str = "",
+        limit: int = 8,
+    ) -> dict[str, Any]:
+        """Search the Calo knowledge base — feeds the in-app search bar."""
+        q = (q or "").strip()
+        if not q:
+            return {"hits": []}
+        try:
+            hits = coach.db.search_knowledge(q, max_results=max(1, min(limit, 20)))
+        except Exception:
+            hits = []
+        out = []
+        for h in hits:
+            text = (h.get("content") or "").strip()
+            out.append({
+                "title": h.get("title", ""),
+                "topic": h.get("topic", ""),
+                "snippet": text[:240] + ("…" if len(text) > 240 else ""),
+            })
+        return {"hits": out}
+
     @router.post("/chat")
     def chat(
         user_id: Annotated[str, Depends(current_user_id)],
@@ -214,6 +332,77 @@ def build_app_router(coach: CaloCoach, twilio: Any, config: CaloConfig) -> APIRo
         }
 
     return router
+
+
+def _build_insight(
+    consumed: dict[str, int],
+    targets: dict[str, int],
+    streak: int,
+    weight_delta: float | None,
+    user: dict[str, Any],
+    meals_count: int,
+) -> dict[str, str]:
+    """Tiny rule-based insight engine — never blocks on an LLM, always cheerful,
+    always actionable. Returns {title, body, icon}."""
+    kcal_t = targets.get("kcal") or 0
+    kcal_c = consumed.get("kcal") or 0
+    prot_t = targets.get("protein") or 0
+    prot_c = consumed.get("protein") or 0
+    name = (user.get("name") or "").split(" ")[0] or "champion"
+
+    if streak >= 7:
+        return {
+            "icon": "🔥",
+            "title": f"{streak} jours de suite",
+            "body": f"{name}, t'es en feu. La régularité bat l'intensité — continue exactement comme ça.",
+        }
+    if not user.get("onboarding_complete"):
+        return {
+            "icon": "🎯",
+            "title": "Démarre ton profil",
+            "body": "Pose-moi tes infos (poids, objectif, dispo sport) et je calibre ton plan sur-mesure.",
+        }
+    if kcal_t and kcal_c == 0:
+        return {
+            "icon": "🍽️",
+            "title": "Pas encore de repas aujourd'hui",
+            "body": "Envoie une photo de ton prochain repas, je l'analyse direct.",
+        }
+    if kcal_t and kcal_c < kcal_t * 0.4 and meals_count <= 1:
+        return {
+            "icon": "⚡",
+            "title": "Énergie un peu basse",
+            "body": f"Tu en es à {kcal_c} / {kcal_t} kcal. Une collation protéinée maintenant éviterait le craquage du soir.",
+        }
+    if kcal_t and kcal_c > kcal_t * 1.05:
+        return {
+            "icon": "🚶",
+            "title": "Petit débord aujourd'hui",
+            "body": "Une marche de 30 min compense très bien — et tu reviens en kiff demain.",
+        }
+    if prot_t and prot_c < prot_t * 0.5:
+        return {
+            "icon": "💪",
+            "title": "Protéines à booster",
+            "body": f"Tu es à {prot_c} g / {prot_t} g. Œufs, yaourt grec, poulet, légumineuses — pioche.",
+        }
+    if weight_delta is not None and weight_delta <= -0.5:
+        return {
+            "icon": "📉",
+            "title": f"-{abs(weight_delta)} kg sur 30 jours",
+            "body": "Progression saine. On garde le rythme et on ajoute du sommeil de qualité.",
+        }
+    if weight_delta is not None and weight_delta >= 0.5:
+        return {
+            "icon": "📈",
+            "title": f"+{weight_delta} kg sur 30 jours",
+            "body": "Si c'est de la masse → top. Sinon on regarde ensemble sommeil, stress et fenêtres glucidiques.",
+        }
+    return {
+        "icon": "✨",
+        "title": "Une petite action aujourd'hui",
+        "body": "Hydratation, marche, sommeil : choisis-en une et écris-la moi, je te tiens responsable.",
+    }
 
 
 def _public_user(user: dict[str, Any]) -> dict[str, Any]:

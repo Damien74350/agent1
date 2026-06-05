@@ -30,6 +30,19 @@ export type Progress = {
   meals_today: number;
 };
 
+export type Macros = { kcal: number; protein: number; carbs: number; fat: number };
+export type Insight = { title: string; body: string; icon: string };
+export type Home = {
+  greeting: string;
+  today: { consumed: Macros; targets: Macros; meals_count: number };
+  streak: number;
+  heatmap_30d: { date: string; active: boolean }[];
+  weight: { latest_kg: number | null; delta_30d_kg: number | null };
+  goal: string;
+  insight: Insight;
+};
+export type KnowledgeHit = { title: string; topic: string; snippet: string };
+
 let authToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
@@ -91,6 +104,9 @@ export const api = {
   me: () => request<{ user: PublicUser }>('/app/me'),
   profile: () => request<{ user: PublicUser }>('/app/profile'),
   progress: () => request<Progress>('/app/progress'),
+  home: () => request<Home>('/app/home'),
+  searchKnowledge: (q: string) =>
+    request<{ hits: KnowledgeHit[] }>(`/app/knowledge/search?q=${encodeURIComponent(q)}`),
 
   chat: (text: string, imageBase64?: string) =>
     request<ChatResponse>('/app/chat', {

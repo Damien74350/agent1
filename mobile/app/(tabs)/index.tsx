@@ -14,8 +14,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import { useFocusEffect } from 'expo-router';
 import { api, ApiError, ChatMedia } from '@/api/client';
 import { TypingDots } from '@/components/TypingDots';
+import { takePendingPrompt, subscribePending } from '@/store/pendingPrompt';
 import { colors, radius, spacing } from '@/theme';
 
 type Msg = {
@@ -52,6 +54,18 @@ export default function Chat() {
   const scrollToEnd = useCallback(() => {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
   }, []);
+
+  // Other tabs (Learn) can hand us a prompt to send when we focus.
+  useFocusEffect(
+    useCallback(() => {
+      const drain = () => {
+        const pending = takePendingPrompt();
+        if (pending) send(pending);
+      };
+      drain();
+      return subscribePending(drain);
+    }, []),
+  );
 
   async function send(text: string, imageBase64?: string, imageUri?: string) {
     if (!text.trim() && !imageBase64) return;

@@ -7,10 +7,15 @@ Storage split:
 """
 
 import base64
+import hashlib
+import logging
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
+
+log = logging.getLogger("calo.coach")
 
 from .airtable_db import AirtableDB
 from .config import CaloConfig
@@ -61,7 +66,9 @@ class CaloCoach:
                 photo_ref = self.photos.save(
                     turn.photo_bytes,
                     kind="meal",
-                    user_id=hash(turn.user_id) & 0xFFFFFF,
+                    # SHA1-based to stay stable across process restarts (Python's
+                    # built-in hash is salted per interpreter).
+                    user_id=int(hashlib.sha1(turn.user_id.encode()).hexdigest()[:6], 16),
                     ext=ext,
                 )
             except Exception:
@@ -107,30 +114,43 @@ class CaloCoach:
         state_summary = _summarize_user_state(user, memories)
         history = _inject_state_reminder(history, state_summary)
 
-        # 6. Run the tool runner loop.
-        runner = self.client.beta.messages.tool_runner(
-            model=self.config.model,
-            max_tokens=self.config.max_tokens,
-            system=[
-                {
-                    "type": "text",
-                    "text": SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
-            output_config={"effort": self.config.effort},
-            tools=tools,
-            messages=history,
-        )
-
+        # 6. Run the tool runner loop with retry on transient overload (529/5xx).
         final_text = ""
         tool_calls_taken: list[str] = []
-        for message in runner:
-            for block in message.content:
-                if block.type == "text":
-                    final_text = block.text
-                elif block.type == "tool_use":
-                    tool_calls_taken.append(block.name)
+        attempts = 3
+        backoff = 1.0
+        for attempt in range(attempts):
+            try:
+                runner = self.client.beta.messages.tool_runner(
+                    model=self.config.model,
+                    max_tokens=self.config.max_tokens,
+                    system=[
+                        {
+                            "type": "text",
+                            "text": SYSTEM_PROMPT,
+                            "cache_control": {"type": "ephemeral"},
+                        }
+                    ],
+                    output_config={"effort": self.config.effort},
+                    tools=tools,
+                    messages=history,
+                )
+                for message in runner:
+                    for block in message.content:
+                        if block.type == "text":
+                            final_text = block.text
+                        elif block.type == "tool_use":
+                            tool_calls_taken.append(block.name)
+                break  # success
+            except (anthropic.APIStatusError, anthropic.APIConnectionError) as exc:
+                status = getattr(exc, "status_code", 0) or 0
+                transient = isinstance(exc, anthropic.APIConnectionError) or status >= 500
+                if not transient or attempt == attempts - 1:
+                    raise
+                wait = backoff * (2 ** attempt)
+                log.warning("anthropic transient error (try %d/%d, status=%s): %s; retrying in %.1fs",
+                            attempt + 1, attempts, status, exc, wait)
+                time.sleep(wait)
 
         # 7. Persist the assistant's final text reply. Tool_use/tool_result blocks
         #    are intentionally dropped from history — keeping them would require

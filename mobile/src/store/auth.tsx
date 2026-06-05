@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { api, setToken, setUnauthorizedHandler, PublicUser } from '@/api/client';
+import { showToast } from '@/components/Toast';
 
 const TOKEN_KEY = 'calo.token';
 
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Auto-sign-out if the backend ever returns 401 (token expired/revoked).
   useEffect(() => {
     setUnauthorizedHandler(() => {
+      showToast('Session expirée, reconnecte-toi 🙂');
       void signOut();
     });
     return () => setUnauthorizedHandler(null);

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '@/store/auth';
+import { ToastHost } from '@/components/Toast';
 import { colors } from '@/theme';
 
 function RootNavigator() {
@@ -47,6 +48,7 @@ export default function RootLayout() {
         <AuthProvider>
           <StatusBar style="light" />
           <RootNavigator />
+          <ToastHost />
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -1,19 +1,21 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Muted, Pill, Title } from '@/components/ui';
+import { setPendingPrompt } from '@/store/pendingPrompt';
 import { colors, radius, spacing } from '@/theme';
 
-const COURSES = [
-  { icon: 'nutrition', title: 'Maîtrise tes macros', days: '5 jours', tag: 'Nutrition' },
-  { icon: 'barbell', title: 'Premiers pas en boxing', days: '14 jours', tag: 'Sport' },
-  { icon: 'leaf', title: 'Gestion du stress', days: '5 jours', tag: 'Mental' },
-  { icon: 'moon', title: 'Sommeil optimal', days: '7 jours', tag: 'Mental' },
-  { icon: 'repeat', title: 'Habitudes durables', days: '7 jours', tag: 'Mental' },
-  { icon: 'female', title: 'Comprends ton cycle', days: '7 jours', tag: 'Femme' },
-] as const;
+type Course = { icon: string; title: string; days: string; tag: string; slug: string };
+const COURSES: Course[] = [
+  { icon: 'nutrition', title: 'Maîtrise tes macros', days: '5 jours', tag: 'Nutrition', slug: 'macros-5j' },
+  { icon: 'barbell', title: 'Premiers pas en boxing', days: '14 jours', tag: 'Sport', slug: 'boxing-init-14j' },
+  { icon: 'leaf', title: 'Gestion du stress', days: '5 jours', tag: 'Mental', slug: 'stress-5j' },
+  { icon: 'moon', title: 'Sommeil optimal', days: '7 jours', tag: 'Mental', slug: 'sommeil-7j' },
+  { icon: 'repeat', title: 'Habitudes durables', days: '7 jours', tag: 'Mental', slug: 'habitudes-7j' },
+  { icon: 'female', title: 'Comprends ton cycle', days: '7 jours', tag: 'Femme', slug: 'cycle-7j' },
+];
 
 const TOPICS = [
   'Plateau de poids', 'Manger au restaurant', 'Sommeil & perte de poids',
@@ -22,6 +24,14 @@ const TOPICS = [
 
 export default function Learn() {
   const router = useRouter();
+  const startCourse = (c: Course) => {
+    setPendingPrompt(`Démarre le micro-cours ${c.slug} : ${c.title}`);
+    router.push('/(tabs)');
+  };
+  const askTopic = (t: string) => {
+    setPendingPrompt(`Parle-moi de : ${t}`);
+    router.push('/(tabs)');
+  };
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={{ padding: spacing.lg }}>
@@ -32,7 +42,7 @@ export default function Learn() {
 
         <Text style={styles.section}>Micro-cours</Text>
         {COURSES.map((c) => (
-          <Pressable key={c.title} onPress={() => router.push('/(tabs)')}>
+          <Pressable key={c.title} onPress={() => startCourse(c)}>
             <Card style={styles.courseCard}>
               <View style={styles.iconWrap}>
                 <Ionicons name={c.icon as any} size={22} color={colors.accentSoft} />
@@ -49,7 +59,7 @@ export default function Learn() {
         <Text style={[styles.section, { marginTop: spacing.lg }]}>Sujets populaires</Text>
         <View style={styles.topicsWrap}>
           {TOPICS.map((t) => (
-            <Pressable key={t} onPress={() => router.push('/(tabs)')} style={styles.topic}>
+            <Pressable key={t} onPress={() => askTopic(t)} style={styles.topic}>
               <Text style={styles.topicText}>{t}</Text>
             </Pressable>
           ))}

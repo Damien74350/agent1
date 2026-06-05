@@ -15,6 +15,7 @@ import hashlib
 import hmac
 import logging
 import secrets
+import threading
 import time
 from typing import Annotated, Any
 
@@ -29,6 +30,7 @@ log = logging.getLogger("calo.app_api")
 # OTPs live in-memory: {phone: (code_hash, expires_at, attempts)}.
 # Good enough for launch (single worker). Move to Redis/Airtable if scaling out.
 _OTP_STORE: dict[str, tuple[str, float, int]] = {}
+_OTP_LOCK = threading.Lock()
 _OTP_TTL = 300  # 5 min
 _OTP_MAX_ATTEMPTS = 5
 _TOKEN_TTL = 60 * 60 * 24 * 60  # 60 days
@@ -135,20 +137,23 @@ def build_app_router(coach: CaloCoach, twilio: Any, config: CaloConfig) -> APIRo
     @router.post("/auth/verify")
     def auth_verify(body: AuthVerify) -> dict[str, Any]:
         phone = _normalize_phone(body.phone)
-        entry = _OTP_STORE.get(phone)
-        if not entry:
-            raise HTTPException(status_code=400, detail="no code requested")
-        code_hash, expires_at, attempts = entry
-        if time.time() > expires_at:
+        with _OTP_LOCK:
+            entry = _OTP_STORE.get(phone)
+            if not entry:
+                raise HTTPException(status_code=400, detail="no code requested")
+            code_hash, expires_at, attempts = entry
+            if time.time() > expires_at:
+                _OTP_STORE.pop(phone, None)
+                raise HTTPException(status_code=400, detail="code expired")
+            if attempts >= _OTP_MAX_ATTEMPTS:
+                _OTP_STORE.pop(phone, None)
+                raise HTTPException(status_code=429, detail="too many attempts")
+            if not hmac.compare_digest(
+                code_hash, hashlib.sha256(body.code.strip().encode()).hexdigest()
+            ):
+                _OTP_STORE[phone] = (code_hash, expires_at, attempts + 1)
+                raise HTTPException(status_code=401, detail="wrong code")
             _OTP_STORE.pop(phone, None)
-            raise HTTPException(status_code=400, detail="code expired")
-        if attempts >= _OTP_MAX_ATTEMPTS:
-            _OTP_STORE.pop(phone, None)
-            raise HTTPException(status_code=429, detail="too many attempts")
-        if not hmac.compare_digest(code_hash, hashlib.sha256(body.code.strip().encode()).hexdigest()):
-            _OTP_STORE[phone] = (code_hash, expires_at, attempts + 1)
-            raise HTTPException(status_code=401, detail="wrong code")
-        _OTP_STORE.pop(phone, None)
 
         user = coach.db.get_or_create_user(_whatsapp_id(phone))
         token = _issue_token(user["id"], secret)
@@ -173,7 +178,10 @@ def build_app_router(coach: CaloCoach, twilio: Any, config: CaloConfig) -> APIRo
         user = coach.db.get_user_by_id(user_id)
         target = int(user.get("daily_calories") or 0)
         return {
-            "weights": [{"kg": w.get("kg"), "at": w.get("measured_at")} for w in weights],
+            "weights": [
+                {"kg": w.get("weight_kg"), "at": w.get("logged_at")}
+                for w in weights if w.get("weight_kg") is not None
+            ],
             "today": {"consumed_kcal": consumed, "target_kcal": target,
                       "remaining_kcal": max(0, target - consumed) if target else None},
             "meals_today": len(meals),

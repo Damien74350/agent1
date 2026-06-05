@@ -5065,7 +5065,7 @@ Args:
         user = db.get_user_by_id(user_id)
         name = (user or {}).get("name", "")
         restrictions = (user or {}).get("restrictions") or ""
-        target_kcal_meal = (user.get("daily_calories", 2000) // 3) if user else 600
+        target_kcal_meal = ((user.get("daily_calories") or 2000) // 3) if user else 600
 
         # Calo génère la recette via son intelligence — le LLM la compose en réponse
         return (

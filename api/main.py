@@ -231,7 +231,8 @@ def _validate_signature(request: Request, params: dict[str, str]) -> bool:
     if not config.twilio_auth_token:
         return True
     signature = request.headers.get("X-Twilio-Signature", "")
-    # The URL Twilio signed includes the full public URL.
-    url = config.public_url.rstrip("/") + str(request.url.path) if config.public_url \
-        else str(request.url)
+    # The URL Twilio signed is the full public URL — preserve path AND query.
+    query = request.url.query
+    path = str(request.url.path) + (f"?{query}" if query else "")
+    url = config.public_url.rstrip("/") + path if config.public_url else str(request.url)
     return validator.validate(url, params, signature)

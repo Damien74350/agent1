@@ -3,7 +3,8 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View, Dimensions } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { api, Progress as ProgressData } from '@/api/client';
+import { api, ApiError, Progress as ProgressData } from '@/api/client';
+import { showToast } from '@/components/Toast';
 import { Card, Muted, Title } from '@/components/ui';
 import { colors, spacing } from '@/theme';
 
@@ -14,7 +15,12 @@ export default function Progress() {
   const load = useCallback(async () => {
     try {
       setData(await api.progress());
-    } catch {}
+    } catch (e) {
+      // 401 is handled globally (auto sign-out + toast) ; everything else, surface.
+      if (e instanceof ApiError && e.status !== 401) {
+        showToast(`Chargement impossible : ${e.message}`);
+      }
+    }
   }, []);
 
   useFocusEffect(

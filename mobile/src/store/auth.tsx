@@ -1,9 +1,9 @@
-/** Auth context: persists the bearer token in SecureStore and exposes
- * login/logout + the current user across the app. */
+/** Auth context: persists the bearer token across native (SecureStore) and
+ * web (localStorage), exposes login/logout + the current user app-wide. */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import { api, setToken, setUnauthorizedHandler, PublicUser } from '@/api/client';
 import { showToast } from '@/components/Toast';
+import { storage } from '@/store/storage';
 
 const TOKEN_KEY = 'calo.token';
 
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const saved = await SecureStore.getItemAsync(TOKEN_KEY);
+        const saved = await storage.getItemAsync(TOKEN_KEY);
         if (saved) {
           setToken(saved);
           setTok(saved);
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(user);
           } catch {
             // token invalid/expired — clear it
-            await SecureStore.deleteItemAsync(TOKEN_KEY);
+            await storage.deleteItemAsync(TOKEN_KEY);
             setToken(null);
             setTok(null);
           }
@@ -47,14 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (newToken: string, newUser: PublicUser) => {
-    await SecureStore.setItemAsync(TOKEN_KEY, newToken);
+    await storage.setItemAsync(TOKEN_KEY, newToken);
     setToken(newToken);
     setTok(newToken);
     setUser(newUser);
   }, []);
 
   const signOut = useCallback(async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await storage.deleteItemAsync(TOKEN_KEY);
     setToken(null);
     setTok(null);
     setUser(null);

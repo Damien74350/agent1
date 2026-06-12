@@ -1,204 +1,162 @@
 import Link from "next/link";
-import { Play, Sparkles, Tv, Zap, Users, ArrowRight, Star, Lock, Heart, Crown, TrendingUp } from "lucide-react";
-import { Pill, Card } from "../components/Card";
+import { ArrowRight, Tv, BookOpen, MessageCircle, ChevronRight } from "lucide-react";
 import { CreatorCard } from "../components/CreatorCard";
-import { ContentCard } from "../components/ContentCard";
-import { FEATURED_CREATORS, TRENDING_CREATORS, RISING_CREATORS, LIVE_NOW, CONTENTS, ALL_CATEGORIES, platformTotals, CREATORS } from "../lib/mock";
+import { FEATURED_CREATORS, LIVE_NOW, ALL_CATEGORIES, platformTotals } from "../lib/mock";
 import { compact, fmtEUR } from "../lib/format";
 
 export default function Home() {
   const totals = platformTotals();
   const liveNow = LIVE_NOW.slice(0, 3);
-  const recentContent = CONTENTS.slice(0, 4);
 
   return (
-    <div className="space-y-16">
-      {/* HERO */}
-      <section className="relative pt-6 sm:pt-10 pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-10 items-center">
-          <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose/10 ring-1 ring-rose/30 text-rose text-xs font-black uppercase tracking-[0.18em] mb-6">
-              <Sparkles size={12} /> Le Twitch du sport — bêta
-            </div>
-            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95]">
-              <span className="rose-text">unblur.</span><br />
-              Le vrai entraînement,<br />
-              sans filtre.
-            </h1>
-            <p className="mt-6 text-lg sm:text-xl text-foreground/70 max-w-2xl">
-              Abonne-toi à tes créateurs préférés. Ils fixent leur prix. Tu as accès à leurs lives, programmes, vidéos exclusives.
-              <strong className="text-foreground"> Le créateur garde 80%</strong> — la rémunération la plus juste du marché.
-            </p>
+    <div className="space-y-32 pb-12">
+      {/* ─── HERO ─── */}
+      <section className="pt-20 sm:pt-32">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-8">unblur · bêta</p>
+        <h1 className="text-5xl sm:text-7xl lg:text-[8rem] font-black tracking-tightest leading-[0.92] max-w-5xl">
+          Le contenu,<br />sans le filtre.
+        </h1>
+        <p className="mt-10 text-xl sm:text-2xl text-muted max-w-2xl leading-snug">
+          Abonne-toi à un <strong className="text-foreground">Unblurer</strong>. Lives en direct, programmes structurés, échanges privés. 80 % revient au créateur.
+        </p>
+        <div className="mt-12 flex flex-wrap gap-3">
+          <Link href="/discover" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-foreground text-surface font-semibold hover:opacity-90 transition">
+            Découvrir les Unblurers <ArrowRight size={16} />
+          </Link>
+          <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3 rounded-full ring-1 ring-foreground/20 hover:bg-overlay/5 font-semibold transition">
+            Devenir Unblurer
+          </Link>
+        </div>
+      </section>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/discover" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl rose-gradient text-black font-black shadow-glow">
-                <Sparkles size={18} /> Découvrir
-                <ArrowRight size={16} />
-              </Link>
-              <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-overlay/5 ring-1 ring-overlay/10 hover:bg-overlay/10 font-bold">
-                <Zap size={18} /> Devenir créateur
-              </Link>
-            </div>
+      {/* ─── DEFINITION ─── */}
+      <section className="border-y border-border py-16">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-4">Un Unblurer</p>
+        <p className="text-3xl sm:text-5xl font-black tracking-tight leading-[1.1] max-w-4xl">
+          Un créateur qui partage sa pratique <span className="text-muted">— sport, cuisine, art, musique, méthode —</span> sans filtre, en direct, avec sa communauté.
+        </p>
 
-            <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl">
-              <div>
-                <p className="text-3xl sm:text-4xl font-black rose-text">{compact(totals.totalCreators * 280)}</p>
-                <p className="text-xs text-foreground/60 mt-1">créateurs sur la plateforme</p>
-              </div>
-              <div>
-                <p className="text-3xl sm:text-4xl font-black">{compact(totals.totalSubs * 12)}</p>
-                <p className="text-xs text-foreground/60 mt-1">abonnés actifs</p>
-              </div>
-              <div>
-                <p className="text-3xl sm:text-4xl font-black">80%</p>
-                <p className="text-xs text-foreground/60 mt-1">au créateur, toujours</p>
-              </div>
-              <div>
-                <p className="text-3xl sm:text-4xl font-black rose-text">{fmtEUR(totals.creatorPayout * 12, 0)}</p>
-                <p className="text-xs text-foreground/60 mt-1">reversé aux créateurs</p>
-              </div>
-            </div>
+        <div className="mt-16 grid sm:grid-cols-3 gap-10">
+          <div>
+            <Tv size={22} className="mb-3" />
+            <p className="font-bold text-lg">Lives illimités</p>
+            <p className="text-sm text-muted mt-1 leading-relaxed">Sessions en direct, sans limite de durée. Player intégré, chat actif, replays sauvegardés automatiquement.</p>
           </div>
-
-          {/* Hero card preview */}
-          <div className="lg:col-span-5 relative">
-            <div className="glass-strong rounded-3xl overflow-hidden shadow-glow">
-              {liveNow[0] && (
-                <div className="relative aspect-video unblur-in" style={{ background: liveNow[0].banner }}>
-                  <div />
-                  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-foreground/80 backdrop-blur text-surface text-[10px] font-black uppercase tracking-widest">
-                    <span className="w-2 h-2 rounded-full bg-rose live-dot" /> Live · {compact(liveNow[0].liveViewers ?? 0)}
-                  </div>
-                  <div className="absolute inset-0 grid place-items-center">
-                    <div className="w-16 h-16 rounded-full rose-gradient grid place-items-center shadow-glow">
-                      <Play size={26} className="text-black ml-1" fill="currentColor" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="p-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl grid place-items-center font-black text-black" style={{ background: liveNow[0]?.banner }}>
-                    {liveNow[0]?.avatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black truncate">{liveNow[0]?.name}</p>
-                    <p className="text-xs text-muted truncate">{liveNow[0]?.handle}</p>
-                  </div>
-                  <Pill color="rose">{liveNow[0]?.tier}</Pill>
-                </div>
-                <p className="mt-3 font-bold text-sm">{liveNow[0]?.liveTitle}</p>
-                <button className="mt-4 w-full px-4 py-2.5 rounded-xl rose-gradient text-black font-black text-sm shadow-glow">
-                  Rejoindre — {fmtEUR(liveNow[0]?.monthlyPriceEUR ?? 9.9)}/mois
-                </button>
-              </div>
-            </div>
+          <div>
+            <BookOpen size={22} className="mb-3" />
+            <p className="font-bold text-lg">Programmes communauté</p>
+            <p className="text-sm text-muted mt-1 leading-relaxed">Crée des parcours spécifiques à ta communauté. Plan jour par jour, cohorte privée, durée libre.</p>
+          </div>
+          <div>
+            <MessageCircle size={22} className="mb-3" />
+            <p className="font-bold text-lg">Échanges directs</p>
+            <p className="text-sm text-muted mt-1 leading-relaxed">DMs chiffrés, feedback vidéo personnalisé, communauté privée. Tes abonnés te parlent vraiment.</p>
           </div>
         </div>
       </section>
 
-      {/* LIVE NOW */}
+      {/* ─── LIVE NOW ─── */}
       <section>
-        <header className="flex items-end justify-between mb-5">
+        <header className="flex items-end justify-between mb-10">
           <div>
-            <Pill color="rose"><span className="w-2 h-2 rounded-full bg-rose live-dot mr-1" />Live maintenant</Pill>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-black">En direct — rejoins la séance</h2>
+            <p className="text-xs uppercase tracking-[0.28em] text-muted mb-3">En direct</p>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tighter">{liveNow.length} sessions live</h2>
           </div>
-          <Link href="/live" className="text-sm text-rose font-bold hover:underline">Tout voir →</Link>
+          <Link href="/live" className="text-sm font-semibold underline underline-offset-4">Tout voir</Link>
         </header>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {liveNow.map(c => <CreatorCard key={c.id} creator={c} />)}
         </div>
       </section>
 
-      {/* FEATURED */}
+      {/* ─── FEATURED ─── */}
       <section>
-        <header className="mb-5">
-          <Pill color="sun">À la une cette semaine</Pill>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-black">4 créateurs qui cartonnent</h2>
+        <header className="mb-10">
+          <p className="text-xs uppercase tracking-[0.28em] text-muted mb-3">À découvrir</p>
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tighter">Quatre Unblurers cette semaine</h2>
         </header>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {FEATURED_CREATORS.map(c => <CreatorCard key={c.id} creator={c} compactMode />)}
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {/* ─── CATEGORIES ─── */}
       <section>
-        <header className="mb-5">
-          <Pill color="sky">Toutes les disciplines</Pill>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-black">Trouve ta discipline</h2>
+        <header className="mb-10">
+          <p className="text-xs uppercase tracking-[0.28em] text-muted mb-3">Tous les domaines</p>
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tighter">Sport. Et bien au-delà.</h2>
+          <p className="mt-3 text-muted">unblur démarre avec le sport et la remise en forme. Mais un Unblurer peut enseigner n'importe quoi.</p>
         </header>
         <div className="flex flex-wrap gap-2">
-          {ALL_CATEGORIES.map(cat => (
-            <Link key={cat} href={`/discover?cat=${cat}`} className="px-4 py-2 rounded-xl bg-overlay/5 ring-1 ring-overlay/10 hover:bg-rose/10 hover:ring-rose/30 transition text-sm font-bold">
+          {[...ALL_CATEGORIES, "Cuisine", "Musique", "Méthode", "Art", "Productivité", "Langues"].map(cat => (
+            <Link key={cat} href={`/discover?cat=${cat}`} className="px-4 py-2 rounded-full ring-1 ring-foreground/15 hover:bg-foreground hover:text-surface text-sm font-semibold transition">
               {cat}
             </Link>
           ))}
         </div>
       </section>
 
-      {/* WHY IT WORKS */}
-      <section className="rounded-3xl glass-strong p-8 sm:p-12">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <Pill color="rose">Le deal</Pill>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-black">80% au créateur. Toujours.</h2>
-          <p className="mt-3 text-foreground/70">
-            OnlyFans : 80/20 mais image sulfureuse. Twitch : 50/50. YouTube : algorithme.
-            Patreon : 88/12 mais zéro vidéo. unblur : <strong className="text-foreground">la justice + la qualité technique</strong>.
-          </p>
-        </div>
-        <div className="grid sm:grid-cols-3 gap-4">
-          {[
-            { icon: Crown, title: "80/20 le plus juste", text: "Tu fixes ton prix. Tu touches 80%. On gère tout : paiement, hébergement, support." },
-            { icon: Tv, title: "Live + Replay + Programme", text: "Sessions en direct, replays toujours dispos, programmes structurés. Tout un studio dans un onglet." },
-            { icon: Lock, title: "Paywall propre", text: "Stripe sous le capot. Tes abonnés paient avec Apple Pay, virement, CB. Aucun abus possible." },
-          ].map(o => (
-            <div key={o.title} className="rounded-2xl bg-overlay/5 ring-1 ring-overlay/10 p-5">
-              <o.icon size={22} className="text-rose mb-2" />
-              <p className="font-bold">{o.title}</p>
-              <p className="text-xs text-muted mt-1">{o.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* TRENDING CONTENT */}
-      <section>
-        <header className="mb-5 flex items-end justify-between">
+      {/* ─── DEAL ─── */}
+      <section className="border-y border-border py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div>
-            <Pill color="violet">Trending</Pill>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-black">Le contenu qui buzz</h2>
+            <p className="text-xs uppercase tracking-[0.28em] text-muted mb-3">Le deal</p>
+            <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[1.05]">80 % au créateur.</h2>
+            <p className="mt-6 text-lg text-muted max-w-md leading-relaxed">
+              OnlyFans : 80/20 mais image sulfureuse. Twitch : 50/50. Patreon : 88/12 mais zéro vidéo. unblur : la justice + l'authenticité, sur la qualité technique.
+            </p>
           </div>
-          <Link href="/discover" className="text-sm text-rose font-bold hover:underline">Explorer →</Link>
-        </header>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {recentContent.map(c => <ContentCard key={c.id} content={c} />)}
+          <div className="space-y-px text-lg">
+            {[
+              { l: "unblur", v: "80 / 20", featured: true },
+              { l: "OnlyFans", v: "80 / 20" },
+              { l: "Patreon", v: "88 / 12" },
+              { l: "Twitch", v: "50 / 50" },
+              { l: "YouTube", v: "55 / 45" },
+            ].map(o => (
+              <div key={o.l} className={`flex items-baseline justify-between py-4 border-b border-border ${o.featured ? "font-black text-2xl" : "text-muted"}`}>
+                <span>{o.l}</span>
+                <span className="font-mono tabular-nums">{o.v}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA FINAL */}
-      <section className="relative rounded-3xl ring-1 ring-rose/30 p-10 sm:p-16 text-center overflow-hidden">
-        <div className="absolute inset-0 rose-gradient opacity-[0.12]" />
-        <div />
-        <div className="relative max-w-3xl mx-auto">
-          <Crown className="mx-auto text-rose" size={36} />
-          <h2 className="mt-5 text-4xl sm:text-6xl font-black tracking-tight leading-[1.05]">
-            Tu enseignes ?<br />
-            <span className="rose-text">Vis de ta passion.</span>
-          </h2>
-          <p className="mt-5 text-foreground/70 text-lg max-w-xl mx-auto">
-            Une étudiante en kiné gagne <strong className="text-foreground">{fmtEUR(CREATORS[0].monthlyEarningsEUR * 0.8, 0)}</strong> ce mois sur unblur. Sans agent, sans contrat.
-            Lance ton abonnement en 10 minutes.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3 justify-center">
-            <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl rose-gradient text-black font-black shadow-glow">
-              <Sparkles size={18} /> Devenir créateur
-            </Link>
-            <Link href="/discover" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-overlay/10 ring-1 ring-overlay/20 font-bold">
-              <Heart size={18} /> Découvrir les créateurs
-            </Link>
+      {/* ─── METRICS ─── */}
+      <section>
+        <div className="grid sm:grid-cols-4 gap-8 border-b border-border pb-12">
+          <div>
+            <p className="text-4xl sm:text-6xl font-black tracking-tighter">{compact(totals.totalCreators * 280)}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted mt-3">Unblurers actifs</p>
+          </div>
+          <div>
+            <p className="text-4xl sm:text-6xl font-black tracking-tighter">{compact(totals.totalSubs * 12)}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted mt-3">Abonnés</p>
+          </div>
+          <div>
+            <p className="text-4xl sm:text-6xl font-black tracking-tighter">80 %</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted mt-3">Au créateur, toujours</p>
+          </div>
+          <div>
+            <p className="text-4xl sm:text-6xl font-black tracking-tighter">{fmtEUR(totals.creatorPayout * 12, 0)}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted mt-3">Reversé aux Unblurers</p>
           </div>
         </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section className="text-center py-24">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-4">Tu enseignes quelque chose ?</p>
+        <h2 className="text-5xl sm:text-7xl font-black tracking-tightest leading-[0.95] max-w-3xl mx-auto">
+          Deviens Unblurer.
+        </h2>
+        <p className="mt-6 text-xl text-muted max-w-xl mx-auto leading-snug">
+          Lives. Programmes. Communauté. Stripe intégré. Tu gardes 80 %.
+        </p>
+        <Link href="/become-creator" className="mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-full bg-foreground text-surface font-semibold hover:opacity-90 transition">
+          Lancer mon studio <ChevronRight size={16} />
+        </Link>
       </section>
     </div>
   );

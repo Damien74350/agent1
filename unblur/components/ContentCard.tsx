@@ -9,11 +9,12 @@ export function ContentCard({ content }: { content: Content }) {
   const creator = findCreator(content.creatorId);
   if (!creator) return null;
   return (
-    <Link href={`/c/${creator.id}`} className="group block">
+    <Link href={`/watch/${content.id}`} className="group block">
       <article className="rounded-2xl overflow-hidden ring-1 ring-white/10 hover:ring-rose/40 transition">
         <div className="relative aspect-video" style={{ background: content.thumbnail }}>
           <div className="absolute inset-0 grain opacity-30" />
-          <div className="absolute inset-0 grid place-items-center text-6xl">{content.thumbnailEmoji}</div>
+          <div className={`absolute inset-0 grid place-items-center text-6xl ${content.isPremium ? "blur-md" : ""}`}>{content.thumbnailEmoji}</div>
+          {content.isPremium && <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-10">
             <div className="flex items-center gap-2 text-[10px]">
               {content.type === "live" && (

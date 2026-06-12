@@ -72,7 +72,7 @@ export default function MessagesPage() {
                   <button onClick={() => setActiveId(t.creatorId)} className={`w-full flex items-start gap-3 p-3 transition text-left ${isActive ? "bg-rose/10 ring-1 ring-rose/30" : "hover:bg-overlay/5"}`}>
                     <div className="relative shrink-0">
                       <div className="w-12 h-12 rounded-2xl grid place-items-center font-black text-black" style={{ background: c.banner }}>{c.avatar}</div>
-                      {c.isLive && <span className="absolute -bottom-0.5 -right-0.5 px-1.5 py-0.5 rounded-full bg-rose text-[8px] font-black text-white">LIVE</span>}
+                      {c.isLive && <span className="absolute -bottom-0.5 -right-0.5 px-1.5 py-0.5 rounded-full bg-rose text-[8px] font-black text-foreground">LIVE</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-1">

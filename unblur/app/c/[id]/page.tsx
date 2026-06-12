@@ -25,10 +25,10 @@ export default function CreatorPage() {
   return (
     <div className="space-y-6">
       {/* BANNER */}
-      <section className="relative h-48 sm:h-72 rounded-3xl overflow-hidden ring-1 ring-white/10" style={{ background: creator.banner }}>
-        <div className="absolute inset-0 grain opacity-30" />
+      <section className="relative h-48 sm:h-72 rounded-3xl overflow-hidden ring-1 ring-overlay/10" style={{ background: creator.banner }}>
+        <div />
         {creator.isLive && (
-          <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-xs font-black uppercase tracking-widest text-white">
+          <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/80 backdrop-blur text-xs font-black uppercase tracking-widest text-foreground">
             <span className="w-2 h-2 rounded-full bg-rose live-dot" />
             Live · {compact(creator.liveViewers ?? 0)} viewers
           </div>
@@ -50,7 +50,7 @@ export default function CreatorPage() {
               )}
             </div>
             <p className="text-muted">{creator.handle}</p>
-            <p className="mt-2 text-sm text-white/70 italic">"{creator.tagline}"</p>
+            <p className="mt-2 text-sm text-foreground/70 italic">"{creator.tagline}"</p>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
               <span className="inline-flex items-center gap-1"><MapPin size={11} /> {creator.city}, {creator.country} {creator.countryFlag}</span>
               <span>·</span>
@@ -97,7 +97,7 @@ export default function CreatorPage() {
 
       {/* STORY */}
       <Card title="Son histoire">
-        <p className="text-sm text-white/80 leading-relaxed">{creator.story}</p>
+        <p className="text-sm text-foreground/80 leading-relaxed">{creator.story}</p>
         {creator.certifications.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {creator.certifications.map(c => (
@@ -123,11 +123,11 @@ export default function CreatorPage() {
 
       {/* PAYWALL MODAL */}
       {showPaywall && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowPaywall(false)}>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-overlay/60 backdrop-blur-sm p-4" onClick={() => setShowPaywall(false)}>
           <div className="glass-strong rounded-3xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <p className="text-[10px] uppercase tracking-widest text-rose font-bold">Tu rejoins</p>
-              <button onClick={() => setShowPaywall(false)} className="p-1 rounded-lg hover:bg-white/10"><X size={18} /></button>
+              <button onClick={() => setShowPaywall(false)} className="p-1 rounded-lg hover:bg-overlay/10"><X size={18} /></button>
             </div>
             <div className="mt-4 flex items-center gap-3">
               <div className="w-14 h-14 rounded-2xl grid place-items-center font-black text-black text-xl" style={{ background: creator.banner }}>{creator.avatar}</div>
@@ -137,7 +137,7 @@ export default function CreatorPage() {
               </div>
             </div>
             <div className="mt-5 space-y-2">
-              <button className="w-full text-left rounded-xl bg-white/5 ring-1 ring-rose/30 p-4 hover:ring-rose/60 transition">
+              <button className="w-full text-left rounded-xl bg-overlay/5 ring-1 ring-rose/30 p-4 hover:ring-rose/60 transition">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-bold">Mensuel</p>

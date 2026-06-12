@@ -44,7 +44,7 @@ export function Pill({ children, color = "muted" }: { children: ReactNode; color
     sky: "bg-sky/15 text-sky ring-sky/30",
     violet: "bg-violet/15 text-violet ring-violet/30",
     success: "bg-success/15 text-success ring-success/30",
-    muted: "bg-white/5 text-muted ring-white/10",
+    muted: "bg-overlay/5 text-muted ring-overlay/10",
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ring-1 ${map[color]}`}>

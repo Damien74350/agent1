@@ -33,7 +33,7 @@ export default function FeedPage() {
             const c = findCreator(s.creatorId)!;
             return (
               <Link key={s.creatorId} href={`/c/${c.id}`} className="block">
-                <div className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 p-3 transition">
+                <div className="flex items-center gap-3 rounded-xl bg-overlay/5 hover:bg-overlay/10 p-3 transition">
                   <div className="w-12 h-12 rounded-2xl grid place-items-center font-black text-black" style={{ background: c.banner }}>{c.avatar}</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold truncate">{c.name}</p>

@@ -26,7 +26,7 @@ export default function LivePage() {
       <Card title="Programmés bientôt" subtitle="N'oublie pas de t'abonner">
         <div className="space-y-2">
           {scheduledNext.map((c, i) => (
-            <div key={c.id} className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
+            <div key={c.id} className="flex items-center gap-3 rounded-xl bg-overlay/5 p-3">
               <div className="w-10 h-10 rounded-xl grid place-items-center font-black text-black text-xs" style={{ background: c.banner }}>{c.avatar}</div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">{c.name}</p>

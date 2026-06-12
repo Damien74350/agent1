@@ -28,16 +28,16 @@ export default function DiscoverPage() {
       </header>
 
       <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-1 rounded-xl bg-white/5 p-1 ring-1 ring-white/10 overflow-x-auto scrollbar-thin">
+        <div className="flex items-center gap-1 rounded-xl bg-overlay/5 p-1 ring-1 ring-overlay/10 overflow-x-auto scrollbar-thin">
           <Filter size={13} className="text-muted ml-2 shrink-0" />
-          <button onClick={() => setCat("ALL")} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${cat === "ALL" ? "bg-rose text-black" : "text-muted hover:text-white"}`}>Toutes</button>
+          <button onClick={() => setCat("ALL")} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${cat === "ALL" ? "bg-rose text-black" : "text-muted hover:text-foreground"}`}>Toutes</button>
           {ALL_CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCat(c)} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${cat === c ? "bg-rose text-black" : "text-muted hover:text-white"}`}>{c}</button>
+            <button key={c} onClick={() => setCat(c)} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${cat === c ? "bg-rose text-black" : "text-muted hover:text-foreground"}`}>{c}</button>
           ))}
         </div>
-        <div className="flex items-center gap-1 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
+        <div className="flex items-center gap-1 rounded-xl bg-overlay/5 p-1 ring-1 ring-overlay/10">
           {([{ v: "popular", l: "Populaires" }, { v: "rising", l: "Émergents" }, { v: "price-low", l: "Prix ↑" }, { v: "price-high", l: "Prix ↓" }] as const).map(o => (
-            <button key={o.v} onClick={() => setSort(o.v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${sort === o.v ? "bg-sun text-black" : "text-muted hover:text-white"}`}>{o.l}</button>
+            <button key={o.v} onClick={() => setSort(o.v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${sort === o.v ? "bg-sun text-black" : "text-muted hover:text-foreground"}`}>{o.l}</button>
           ))}
         </div>
       </div>

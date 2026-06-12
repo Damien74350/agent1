@@ -10,29 +10,29 @@ export function ContentCard({ content }: { content: Content }) {
   if (!creator) return null;
   return (
     <Link href={`/watch/${content.id}`} className="group block">
-      <article className="rounded-2xl overflow-hidden ring-1 ring-white/10 hover:ring-rose/40 transition">
+      <article className="rounded-2xl overflow-hidden ring-1 ring-overlay/10 hover:ring-rose/40 transition">
         <div className="relative aspect-video" style={{ background: content.thumbnail }}>
-          <div className="absolute inset-0 grain opacity-30" />
+          <div />
           <div className={`absolute inset-0 grid place-items-center text-6xl ${content.isPremium ? "blur-md" : ""}`}>{content.thumbnailEmoji}</div>
           {content.isPremium && <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-10">
             <div className="flex items-center gap-2 text-[10px]">
               {content.type === "live" && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose text-white font-black uppercase">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose text-foreground font-black uppercase">
                   <Tv size={9} /> Live
                 </span>
               )}
               {content.type === "program" && <Pill color="violet">Programme</Pill>}
               {content.type === "video" && <Pill color="sun">Vidéo</Pill>}
               {content.durationMin && (
-                <span className="inline-flex items-center gap-0.5 text-white/80">
+                <span className="inline-flex items-center gap-0.5 text-foreground/80">
                   <Clock size={9} /> {content.durationMin}min
                 </span>
               )}
             </div>
           </div>
           {content.isPremium && (
-            <div className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-black/60 backdrop-blur grid place-items-center">
+            <div className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-foreground/60 backdrop-blur grid place-items-center">
               <Lock size={14} className="text-rose" />
             </div>
           )}
@@ -45,7 +45,7 @@ export function ContentCard({ content }: { content: Content }) {
         <div className="p-3 glass">
           <p className="font-bold text-sm line-clamp-1">{content.title}</p>
           <div className="mt-1 flex items-center gap-2 text-[11px] text-muted">
-            <span className="font-semibold text-white/80">{creator.handle}</span>
+            <span className="font-semibold text-foreground/80">{creator.handle}</span>
             <span>·</span>
             <span>{relativeDate(content.publishedAt)}</span>
           </div>

@@ -31,7 +31,7 @@ export default function ProgramsPage() {
             <Link href={`/c/${c.id}`} key={pg.id} className="block group">
               <article className="rounded-2xl overflow-hidden ring-1 ring-overlay/10 hover:ring-rose/40 transition glass">
                 <div className="relative h-44" style={{ background: pg.cover }}>
-                  <div className="absolute inset-0 grain opacity-30" />
+                  <div />
                   <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                     <Pill color="violet">Programme</Pill>
                     <Pill color="sky">{pg.level}</Pill>
@@ -42,7 +42,7 @@ export default function ProgramsPage() {
                         <CheckCircle2 size={10} /> Inclus
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur text-[10px] font-black">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-foreground/80 backdrop-blur text-surface text-[10px] font-black">
                         <Lock size={10} /> Premium
                       </span>
                     )}

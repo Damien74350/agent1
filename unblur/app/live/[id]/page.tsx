@@ -60,7 +60,7 @@ export default function LiveRoom() {
 
   return (
     <div className="space-y-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-      <Link href={`/c/${creator.id}`} className="inline-flex items-center gap-1 text-xs text-muted hover:text-white">
+      <Link href={`/c/${creator.id}`} className="inline-flex items-center gap-1 text-xs text-muted hover:text-foreground">
         <ChevronLeft size={14} /> Retour au profil
       </Link>
 
@@ -68,23 +68,23 @@ export default function LiveRoom() {
         {/* VIDEO PLAYER */}
         <div className="lg:col-span-8 space-y-3">
           <div className="relative aspect-video rounded-2xl overflow-hidden ring-1 ring-rose/40 shadow-glow" style={{ background: creator.banner }}>
-            <div className="absolute inset-0 grain opacity-30" />
+            <div />
             {/* Live UI */}
-            <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-xs font-black uppercase tracking-widest">
+            <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/80 backdrop-blur text-xs font-black uppercase tracking-widest">
               <span className="w-2 h-2 rounded-full bg-rose live-dot" /> LIVE
             </div>
-            <div className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur text-xs font-bold">
+            <div className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-foreground/80 backdrop-blur text-xs font-bold">
               <Eye size={11} /> {compact(viewers)}
             </div>
             {/* Faux centre player */}
             <div className="absolute inset-0 grid place-items-center">
-              <div className="w-20 h-20 rounded-full bg-black/40 backdrop-blur grid place-items-center">
-                <Pause size={32} className="text-white" />
+              <div className="w-20 h-20 rounded-full bg-foreground/40 backdrop-blur grid place-items-center">
+                <Pause size={32} className="text-foreground" />
               </div>
             </div>
             {/* Controls */}
             <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-              <div className="flex items-center gap-3 text-white">
+              <div className="flex items-center gap-3 text-foreground">
                 <Pause size={16} />
                 <Volume2 size={16} />
                 <div className="flex-1 h-1 bg-overlay/30 rounded-full">
@@ -128,7 +128,7 @@ export default function LiveRoom() {
                   <p className="font-black">Tu suis Louise gratuitement</p>
                   <p className="text-xs opacity-80">Abonne-toi pour : chat actif · replays · programmes · DMs</p>
                 </div>
-                <button onClick={() => setSubscribed(true)} className="px-4 py-2 rounded-lg bg-black text-white font-bold text-xs">
+                <button onClick={() => setSubscribed(true)} className="px-4 py-2 rounded-lg bg-black text-foreground font-bold text-xs">
                   S'abonner {fmtEUR(creator.monthlyPriceEUR)}
                 </button>
               </div>

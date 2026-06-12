@@ -25,7 +25,7 @@ export function TopNav() {
             <Logo />
           </Link>
           <div className="hidden md:flex items-center gap-2 flex-1 max-w-xl">
-            <div className="flex items-center gap-2 rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2 flex-1">
+            <div className="flex items-center gap-2 rounded-xl bg-overlay/5 ring-1 ring-overlay/10 px-3 py-2 flex-1">
               <Search size={14} className="text-muted" />
               <input placeholder="Cherche un créateur, une discipline…" className="bg-transparent outline-none flex-1 text-sm" />
             </div>
@@ -34,7 +34,7 @@ export function TopNav() {
             {NAV.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== "/" && pathname.startsWith(href));
               return (
-                <Link key={href} href={href} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition ${active ? "bg-rose/15 text-rose ring-1 ring-rose/30" : "text-muted hover:text-white hover:bg-white/5"}`}>
+                <Link key={href} href={href} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition ${active ? "bg-rose/15 text-rose ring-1 ring-rose/30" : "text-muted hover:text-foreground hover:bg-overlay/5"}`}>
                   <Icon size={15} />
                   {label}
                 </Link>
@@ -49,7 +49,7 @@ export function TopNav() {
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== "/" && pathname.startsWith(href));
             return (
-              <Link key={href} href={href} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition ${active ? "bg-rose/15 text-rose ring-1 ring-rose/30" : "text-muted hover:text-white"}`}>
+              <Link key={href} href={href} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition ${active ? "bg-rose/15 text-rose ring-1 ring-rose/30" : "text-muted hover:text-foreground"}`}>
                 <Icon size={14} />
                 {label}
               </Link>

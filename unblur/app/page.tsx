@@ -25,9 +25,9 @@ export default function Home() {
               Le vrai entraînement,<br />
               sans filtre.
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-white/70 max-w-2xl">
+            <p className="mt-6 text-lg sm:text-xl text-foreground/70 max-w-2xl">
               Abonne-toi à tes créateurs préférés. Ils fixent leur prix. Tu as accès à leurs lives, programmes, vidéos exclusives.
-              <strong className="text-white"> Le créateur garde 80%</strong> — la rémunération la plus juste du marché.
+              <strong className="text-foreground"> Le créateur garde 80%</strong> — la rémunération la plus juste du marché.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -35,7 +35,7 @@ export default function Home() {
                 <Sparkles size={18} /> Découvrir
                 <ArrowRight size={16} />
               </Link>
-              <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 ring-1 ring-white/10 hover:bg-white/10 font-bold">
+              <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-overlay/5 ring-1 ring-overlay/10 hover:bg-overlay/10 font-bold">
                 <Zap size={18} /> Devenir créateur
               </Link>
             </div>
@@ -43,19 +43,19 @@ export default function Home() {
             <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl">
               <div>
                 <p className="text-3xl sm:text-4xl font-black rose-text">{compact(totals.totalCreators * 280)}</p>
-                <p className="text-xs text-white/60 mt-1">créateurs sur la plateforme</p>
+                <p className="text-xs text-foreground/60 mt-1">créateurs sur la plateforme</p>
               </div>
               <div>
                 <p className="text-3xl sm:text-4xl font-black">{compact(totals.totalSubs * 12)}</p>
-                <p className="text-xs text-white/60 mt-1">abonnés actifs</p>
+                <p className="text-xs text-foreground/60 mt-1">abonnés actifs</p>
               </div>
               <div>
                 <p className="text-3xl sm:text-4xl font-black">80%</p>
-                <p className="text-xs text-white/60 mt-1">au créateur, toujours</p>
+                <p className="text-xs text-foreground/60 mt-1">au créateur, toujours</p>
               </div>
               <div>
                 <p className="text-3xl sm:text-4xl font-black rose-text">{fmtEUR(totals.creatorPayout * 12, 0)}</p>
-                <p className="text-xs text-white/60 mt-1">reversé aux créateurs</p>
+                <p className="text-xs text-foreground/60 mt-1">reversé aux créateurs</p>
               </div>
             </div>
           </div>
@@ -65,8 +65,8 @@ export default function Home() {
             <div className="glass-strong rounded-3xl overflow-hidden shadow-glow">
               {liveNow[0] && (
                 <div className="relative aspect-video unblur-in" style={{ background: liveNow[0].banner }}>
-                  <div className="absolute inset-0 grain opacity-30" />
-                  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/70 backdrop-blur text-[10px] font-black uppercase tracking-widest text-white">
+                  <div />
+                  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-foreground/80 backdrop-blur text-surface text-[10px] font-black uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-rose live-dot" /> Live · {compact(liveNow[0].liveViewers ?? 0)}
                   </div>
                   <div className="absolute inset-0 grid place-items-center">
@@ -130,7 +130,7 @@ export default function Home() {
         </header>
         <div className="flex flex-wrap gap-2">
           {ALL_CATEGORIES.map(cat => (
-            <Link key={cat} href={`/discover?cat=${cat}`} className="px-4 py-2 rounded-xl bg-white/5 ring-1 ring-white/10 hover:bg-rose/10 hover:ring-rose/30 transition text-sm font-bold">
+            <Link key={cat} href={`/discover?cat=${cat}`} className="px-4 py-2 rounded-xl bg-overlay/5 ring-1 ring-overlay/10 hover:bg-rose/10 hover:ring-rose/30 transition text-sm font-bold">
               {cat}
             </Link>
           ))}
@@ -142,9 +142,9 @@ export default function Home() {
         <div className="text-center max-w-2xl mx-auto mb-8">
           <Pill color="rose">Le deal</Pill>
           <h2 className="mt-3 text-3xl sm:text-4xl font-black">80% au créateur. Toujours.</h2>
-          <p className="mt-3 text-white/70">
+          <p className="mt-3 text-foreground/70">
             OnlyFans : 80/20 mais image sulfureuse. Twitch : 50/50. YouTube : algorithme.
-            Patreon : 88/12 mais zéro vidéo. unblur : <strong className="text-white">la justice + la qualité technique</strong>.
+            Patreon : 88/12 mais zéro vidéo. unblur : <strong className="text-foreground">la justice + la qualité technique</strong>.
           </p>
         </div>
         <div className="grid sm:grid-cols-3 gap-4">
@@ -153,7 +153,7 @@ export default function Home() {
             { icon: Tv, title: "Live + Replay + Programme", text: "Sessions en direct, replays toujours dispos, programmes structurés. Tout un studio dans un onglet." },
             { icon: Lock, title: "Paywall propre", text: "Stripe sous le capot. Tes abonnés paient avec Apple Pay, virement, CB. Aucun abus possible." },
           ].map(o => (
-            <div key={o.title} className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5">
+            <div key={o.title} className="rounded-2xl bg-overlay/5 ring-1 ring-overlay/10 p-5">
               <o.icon size={22} className="text-rose mb-2" />
               <p className="font-bold">{o.title}</p>
               <p className="text-xs text-muted mt-1">{o.text}</p>
@@ -179,22 +179,22 @@ export default function Home() {
       {/* CTA FINAL */}
       <section className="relative rounded-3xl ring-1 ring-rose/30 p-10 sm:p-16 text-center overflow-hidden">
         <div className="absolute inset-0 rose-gradient opacity-[0.12]" />
-        <div className="absolute inset-0 grain opacity-25" />
+        <div />
         <div className="relative max-w-3xl mx-auto">
           <Crown className="mx-auto text-rose" size={36} />
           <h2 className="mt-5 text-4xl sm:text-6xl font-black tracking-tight leading-[1.05]">
             Tu enseignes ?<br />
             <span className="rose-text">Vis de ta passion.</span>
           </h2>
-          <p className="mt-5 text-white/70 text-lg max-w-xl mx-auto">
-            Une étudiante en kiné gagne <strong className="text-white">{fmtEUR(CREATORS[0].monthlyEarningsEUR * 0.8, 0)}</strong> ce mois sur unblur. Sans agent, sans contrat.
+          <p className="mt-5 text-foreground/70 text-lg max-w-xl mx-auto">
+            Une étudiante en kiné gagne <strong className="text-foreground">{fmtEUR(CREATORS[0].monthlyEarningsEUR * 0.8, 0)}</strong> ce mois sur unblur. Sans agent, sans contrat.
             Lance ton abonnement en 10 minutes.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
             <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl rose-gradient text-black font-black shadow-glow">
               <Sparkles size={18} /> Devenir créateur
             </Link>
-            <Link href="/discover" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 ring-1 ring-white/20 font-bold">
+            <Link href="/discover" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-overlay/10 ring-1 ring-overlay/20 font-bold">
               <Heart size={18} /> Découvrir les créateurs
             </Link>
           </div>

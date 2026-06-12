@@ -32,7 +32,7 @@ export default function WatchPage() {
 
   return (
     <div className="space-y-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-      <Link href={`/c/${creator.id}`} className="inline-flex items-center gap-1 text-xs text-muted hover:text-white">
+      <Link href={`/c/${creator.id}`} className="inline-flex items-center gap-1 text-xs text-muted hover:text-foreground">
         <ChevronLeft size={14} /> {creator.name}
       </Link>
 
@@ -41,11 +41,11 @@ export default function WatchPage() {
         <div className="lg:col-span-8 space-y-5">
           {/* Player */}
           <div className="relative aspect-video rounded-2xl overflow-hidden ring-1 ring-overlay/10" style={{ background: content.thumbnail }}>
-            <div className="absolute inset-0 grain opacity-30" />
+            <div />
             <div className="absolute inset-0 grid place-items-center text-7xl opacity-50">{content.thumbnailEmoji}</div>
 
             {!subscribed ? (
-              <div className="absolute inset-0 grid place-items-center bg-black/60 backdrop-blur">
+              <div className="absolute inset-0 grid place-items-center bg-foreground/60 backdrop-blur">
                 <div className="text-center max-w-xs px-4">
                   <Lock size={32} className="text-rose mx-auto mb-3" />
                   <p className="font-black text-xl">Contenu premium</p>
@@ -63,7 +63,7 @@ export default function WatchPage() {
                   </div>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                  <div className="flex items-center gap-3 text-white">
+                  <div className="flex items-center gap-3 text-foreground">
                     <Play size={16} />
                     <Volume2 size={16} />
                     <div className="flex-1 h-1 bg-overlay/30 rounded-full">

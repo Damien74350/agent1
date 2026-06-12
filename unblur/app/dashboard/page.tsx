@@ -42,11 +42,11 @@ export default function DashboardPage() {
       {/* PAYOUT EN COURS */}
       <Card title="Versement en cours" subtitle="Stripe — virement automatique le 5 du mois suivant" right={<Pill color="success">{currentPayout.status === "pending" ? "en cours" : currentPayout.status}</Pill>}>
         <div className="grid sm:grid-cols-3 gap-3">
-          <div className="rounded-xl bg-white/5 p-4">
+          <div className="rounded-xl bg-overlay/5 p-4">
             <p className="text-[10px] uppercase text-muted">Brut généré</p>
             <p className="text-2xl font-black mt-1">{fmtEUR(currentPayout.grossEUR, 0)}</p>
           </div>
-          <div className="rounded-xl bg-white/5 p-4">
+          <div className="rounded-xl bg-overlay/5 p-4">
             <p className="text-[10px] uppercase text-muted">Frais plateforme (20%)</p>
             <p className="text-2xl font-black mt-1 text-muted">- {fmtEUR(currentPayout.platformFeeEUR, 0)}</p>
           </div>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-white/10">
+        <div className="mt-4 pt-4 border-t border-overlay/10">
           <p className="text-[10px] uppercase tracking-wider text-muted font-bold mb-2">Historique versements</p>
           <table className="w-full text-sm">
             <thead className="text-[10px] uppercase text-muted">
@@ -69,7 +69,7 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {MY_PAYOUTS.slice(1).map(p => (
-                <tr key={p.id} className="border-t border-white/5">
+                <tr key={p.id} className="border-t border-overlay/5">
                   <td className="py-2 font-semibold">{p.periodLabel}</td>
                   <td className="text-right">{fmtEUR(p.grossEUR, 0)}</td>
                   <td className="text-right font-bold rose-text">{fmtEUR(p.netEUR, 0)}</td>
@@ -91,7 +91,7 @@ export default function DashboardPage() {
               { label: "Commentaires", value: compact(MY_CONTENTS.reduce((s, c) => s + c.comments, 0)), icon: MessageCircle },
               { label: "Watch time moyen", value: "18 min", icon: Clock },
             ].map(o => (
-              <div key={o.label} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div key={o.label} className="flex items-center justify-between rounded-xl bg-overlay/5 px-3 py-2.5">
                 <div className="flex items-center gap-2 text-sm">
                   <o.icon size={14} className="text-rose" />
                   <span>{o.label}</span>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
             { icon: Settings, title: "Active l'abonnement annuel", desc: "Les créateurs avec offre annuelle gagnent 38% en moyenne.", color: "rose" as const },
             { icon: Users, title: "Collab avec @marko.run", desc: "Audience complémentaire. Croisement chiffré : +840 abonnés probables.", color: "sun" as const },
           ].map(o => (
-            <button key={o.title} className="text-left rounded-xl bg-white/5 ring-1 ring-white/10 p-4 hover:ring-rose/30 transition">
+            <button key={o.title} className="text-left rounded-xl bg-overlay/5 ring-1 ring-overlay/10 p-4 hover:ring-rose/30 transition">
               <o.icon size={18} className={`text-${o.color} mb-2`} />
               <p className="font-bold text-sm">{o.title}</p>
               <p className="text-[11px] text-muted mt-1">{o.desc}</p>

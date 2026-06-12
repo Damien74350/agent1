@@ -5,28 +5,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#0a0a0d",
-        canvas: "#0f0f14",
-        surface: "#16161d",
-        surfaceAlt: "#1d1d26",
-        border: "#2a2a36",
-        // brand
-        rose: "#ff2e7e",   // unblur signature
-        sun: "#ffb347",
-        sky: "#5eead4",
-        violet: "#a78bfa",
-        success: "#22c55e",
+        // Theme-driven (resolved via CSS vars)
+        foreground: "rgb(var(--c-fg) / <alpha-value>)",
+        overlay: "rgb(var(--c-overlay) / <alpha-value>)",
+        surface: "rgb(var(--c-surface) / <alpha-value>)",
+        border: "rgb(var(--c-border) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
+        rose: "rgb(var(--c-rose) / <alpha-value>)",
+        sun: "rgb(var(--c-sun) / <alpha-value>)",
+        sky: "rgb(var(--c-sky) / <alpha-value>)",
+        violet: "rgb(var(--c-violet) / <alpha-value>)",
+        success: "rgb(var(--c-success) / <alpha-value>)",
+        danger: "rgb(var(--c-danger) / <alpha-value>)",
+        // Convenience aliases used in existing code
+        ink: "rgb(var(--c-fg) / <alpha-value>)",
+        canvas: "var(--bg-base)",
+        surfaceAlt: "#f4f4f5",
         warning: "#f59e0b",
-        danger: "#ef4444",
-        muted: "#8b8d97",
       },
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Inter", "sans-serif"],
-        display: ["ui-sans-serif", "system-ui", "Inter", "sans-serif"],
+        sans: ["-apple-system", "BlinkMacSystemFont", "ui-sans-serif", "system-ui", "Segoe UI", "Inter", "sans-serif"],
+        display: ["-apple-system", "BlinkMacSystemFont", "ui-sans-serif", "system-ui", "Inter", "sans-serif"],
       },
-      boxShadow: {
-        glow: "0 10px 50px rgba(255, 46, 126, 0.30)",
-        sun: "0 10px 50px rgba(255, 179, 71, 0.25)",
+      letterSpacing: {
+        tighter: "-0.04em",
+        tightest: "-0.06em",
       },
     },
   },

@@ -19,15 +19,15 @@ export default function BecomeCreatorPage() {
       {/* HERO */}
       <section className="relative rounded-3xl overflow-hidden ring-1 ring-rose/30 p-6 sm:p-14 text-center">
         <div className="absolute inset-0 rose-gradient opacity-[0.12]" />
-        <div className="absolute inset-0 grain opacity-20" />
+        <div />
         <div className="relative max-w-4xl mx-auto">
           <Pill color="rose">Devenir créateur</Pill>
           <h1 className="mt-4 text-4xl sm:text-7xl font-black tracking-tight leading-[1.02]">
             Vis de ton <span className="rose-text">expertise sport.</span>
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto">
+          <p className="mt-6 text-lg sm:text-xl text-foreground/70 max-w-2xl mx-auto">
             Tu connais quelque chose que les autres veulent apprendre. unblur te donne tout l'écosystème : paywall, lives, replays, paiements.
-            Tu gardes <strong className="text-white">80%</strong>. On gère le reste.
+            Tu gardes <strong className="text-foreground">80%</strong>. On gère le reste.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
             <button className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl rose-gradient text-black font-black shadow-glow">
@@ -42,7 +42,7 @@ export default function BecomeCreatorPage() {
         <header className="mb-8 text-center">
           <Pill color="sun">Simulateur</Pill>
           <h2 className="mt-3 text-3xl sm:text-5xl font-black">Combien tu pourrais gagner ?</h2>
-          <p className="mt-3 text-white/70 max-w-2xl mx-auto">Bouge les curseurs. Vois ton revenu.</p>
+          <p className="mt-3 text-foreground/70 max-w-2xl mx-auto">Bouge les curseurs. Vois ton revenu.</p>
         </header>
 
         <Card className="max-w-3xl mx-auto">
@@ -75,11 +75,11 @@ export default function BecomeCreatorPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-3 text-center text-xs">
-              <div className="rounded-xl bg-white/5 p-3">
+              <div className="rounded-xl bg-overlay/5 p-3">
                 <p className="text-muted">Brut généré</p>
                 <p className="font-black mt-1">{fmtEUR(gross, 0)}</p>
               </div>
-              <div className="rounded-xl bg-white/5 p-3">
+              <div className="rounded-xl bg-overlay/5 p-3">
                 <p className="text-muted">unblur prend</p>
                 <p className="font-black mt-1 text-muted">-{fmtEUR(gross * 0.20, 0)}</p>
               </div>
@@ -102,12 +102,12 @@ export default function BecomeCreatorPage() {
         <div className="grid sm:grid-cols-3 gap-4">
           {[
             { name: "unblur", split: "80 / 20", color: "rose-text", featured: true, pros: ["Live + Replay + Programme", "Stripe intégré", "Aucun frais caché", "Image propre & sport"] },
-            { name: "OnlyFans", split: "80 / 20", color: "text-white", pros: ["Same split"], cons: ["Image sulfureuse", "Marques fuient"] },
-            { name: "Twitch", split: "50 / 50", color: "text-white", pros: ["Audience massive"], cons: ["50% de marge", "Gaming-centric"] },
-            { name: "Patreon", split: "88 / 12", color: "text-white", pros: ["Meilleur split"], cons: ["Pas de live propre", "Pas focus sport"] },
-            { name: "Apple Fitness+", split: "Salarié", color: "text-white", pros: ["Production studio"], cons: ["Tu n'es pas créateur indep", "Tu as un patron"] },
+            { name: "OnlyFans", split: "80 / 20", color: "text-foreground", pros: ["Same split"], cons: ["Image sulfureuse", "Marques fuient"] },
+            { name: "Twitch", split: "50 / 50", color: "text-foreground", pros: ["Audience massive"], cons: ["50% de marge", "Gaming-centric"] },
+            { name: "Patreon", split: "88 / 12", color: "text-foreground", pros: ["Meilleur split"], cons: ["Pas de live propre", "Pas focus sport"] },
+            { name: "Apple Fitness+", split: "Salarié", color: "text-foreground", pros: ["Production studio"], cons: ["Tu n'es pas créateur indep", "Tu as un patron"] },
           ].slice(0, 3).map(o => (
-            <div key={o.name} className={`rounded-2xl p-5 ring-1 ${o.featured ? "ring-rose/40 shadow-glow bg-rose/5" : "ring-white/10 bg-white/5"}`}>
+            <div key={o.name} className={`rounded-2xl p-5 ring-1 ${o.featured ? "ring-rose/40 shadow-glow bg-rose/5" : "ring-overlay/10 bg-overlay/5"}`}>
               {o.featured && <Pill color="rose">Le meilleur deal</Pill>}
               <p className={`mt-2 text-2xl font-black ${o.color}`}>{o.name}</p>
               <p className="text-sm text-muted">{o.split} créateur/plateforme</p>
@@ -141,7 +141,7 @@ export default function BecomeCreatorPage() {
             { icon: Zap, t: "Page profil belle", d: "Aucun code requis. Banner, story, certifs, contenu — c'est prêt." },
             { icon: CheckCircle2, t: "Modération assurée", d: "On gère les trolls, les abus, les remboursements. Tu te concentres sur ton métier." },
           ].map(o => (
-            <div key={o.t} className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5">
+            <div key={o.t} className="rounded-2xl bg-overlay/5 ring-1 ring-overlay/10 p-5">
               <o.icon size={20} className="text-rose mb-2" />
               <p className="font-bold">{o.t}</p>
               <p className="text-xs text-muted mt-1">{o.d}</p>
@@ -158,7 +158,7 @@ export default function BecomeCreatorPage() {
         </header>
         <div className="grid sm:grid-cols-3 gap-5">
           {CREATORS.slice(0, 3).map(c => (
-            <div key={c.id} className="rounded-2xl glass p-5 ring-1 ring-white/10">
+            <div key={c.id} className="rounded-2xl glass p-5 ring-1 ring-overlay/10">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl grid place-items-center font-black text-black" style={{ background: c.banner }}>{c.avatar}</div>
                 <div className="min-w-0">
@@ -166,7 +166,7 @@ export default function BecomeCreatorPage() {
                   <p className="text-xs text-muted truncate">{c.handle}</p>
                 </div>
               </div>
-              <p className="mt-4 text-sm italic text-white/80 line-clamp-3">"{c.story}"</p>
+              <p className="mt-4 text-sm italic text-foreground/80 line-clamp-3">"{c.story}"</p>
               <p className="mt-4 font-black rose-text">{fmtEUR(c.monthlyEarningsEUR * 0.8, 0)}/mois</p>
             </div>
           ))}

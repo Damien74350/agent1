@@ -91,7 +91,7 @@ const SLIDES: ((key: number) => any)[] = [
           </div>
         ))}
       </div>
-      <p className="mt-8 text-base text-muted italic">unblur-app.vercel.app</p>
+      <p className="mt-8 text-base text-muted italic">unblur.ch</p>
     </Slide>
   ),
 
@@ -406,7 +406,7 @@ const SLIDES: ((key: number) => any)[] = [
           Architecture, stack, choix techniques. Tout est ouvert au débat.
         </p>
         <p className="mt-12 text-xs uppercase tracking-[0.5em] text-surface/30">
-          unblur-app.vercel.app · damien@unblur.app
+          unblur.ch · damien@unblur.ch
         </p>
       </div>
     </Slide>
@@ -429,7 +429,7 @@ const SLIDES: ((key: number) => any)[] = [
         <Row l="Shorts TikTok-like" v="/shorts" />
         <Row l="Pitch deck VC complet" v="/pitch" />
       </div>
-      <p className="mt-10 text-base text-muted italic">Tout est dans `unblur-app.vercel.app`. Code source sur github.com/Damien74350/agent1, dossier `unblur`.</p>
+      <p className="mt-10 text-base text-muted italic">Tout est dans `unblur.ch`. Code source sur github.com/Damien74350/agent1, dossier `unblur`.</p>
     </Slide>
   ),
 ];

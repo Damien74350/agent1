@@ -22,7 +22,7 @@ const SLIDES: ((key: number) => any)[] = [
           L'écosystème mondial des créateurs sportifs.
         </p>
         <p className="mt-20 text-xs uppercase tracking-[0.4em] text-surface/30">
-          Damien · Fondateur · damien@unblur.app
+          Damien · Fondateur · damien@unblur.ch
         </p>
       </div>
     </Slide>
@@ -572,7 +572,7 @@ const SLIDES: ((key: number) => any)[] = [
           On reprend la méthode <span className="text-rose">Linktree</span>.
         </h2>
         <p className="text-xl text-surface/70 mb-12 max-w-4xl leading-relaxed">
-          Chaque Unblurer reçoit un lien unique <span className="font-mono text-rose">unblur.app/louise</span> qu'elle colle dans sa bio Instagram. Une action. Une seule fois. Acquisition mondiale, gratuite, permanente.
+          Chaque Unblurer reçoit un lien unique <span className="font-mono text-rose">unblur.ch/louise</span> qu'elle colle dans sa bio Instagram. Une action. Une seule fois. Acquisition mondiale, gratuite, permanente.
         </p>
 
         <div className="grid sm:grid-cols-4 gap-6 mb-12">
@@ -933,7 +933,7 @@ const SLIDES: ((key: number) => any)[] = [
           La seule question qui reste : <Hl>tu montes ou pas ?</Hl>
         </p>
         <p className="mt-16 text-xs uppercase tracking-[0.4em] text-surface/30">
-          unblur-app.vercel.app · damien@unblur.app
+          unblur.ch · damien@unblur.ch
         </p>
       </div>
     </Slide>

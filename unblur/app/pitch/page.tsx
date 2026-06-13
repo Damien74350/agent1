@@ -85,13 +85,14 @@ const SLIDES: ((key: number) => any)[] = [
   () => (
     <Slide>
       <Eyebrow>Problème — Côté créateur</Eyebrow>
-      <Big>Un coach sport jongle entre <Hl>10 outils</Hl>, 4 commissions, 0 cohérence.</Big>
+      <Big>Un <Hl>passionné de sport</Hl> qui veut monétiser sa passion jongle entre <Hl>10 outils</Hl>, 4 commissions, 0 cohérence.</Big>
       <ul className="mt-12 grid grid-cols-2 gap-4 max-w-3xl text-base text-muted">
         {["Instagram (algo contre lui)", "YouTube (55/45)", "Twitch (50/50, gaming)", "Patreon (88/12, sans vidéo)", "OnlyFans (image sulfureuse)", "Calendly · Stripe · Discord · Notion · Mailchimp"].map(s => (
           <li key={s} className="flex items-baseline gap-2"><span className="text-rose">–</span> {s}</li>
         ))}
       </ul>
       <p className="mt-12 text-2xl font-bold"><Hl>95 % des créateurs sport abandonnent en 18 mois.</Hl></p>
+      <p className="mt-4 text-sm text-muted italic">La cible primaire : les passionnés de sport — runners, crossfitteurs, grimpeurs, yogis, danseurs, kinés-étudiants. Les coachs pros sont évidemment les bienvenus aussi.</p>
     </Slide>
   ),
 
@@ -134,7 +135,7 @@ const SLIDES: ((key: number) => any)[] = [
       <Big>96 Mds $ — fitness mondial en ligne.</Big>
       <div className="mt-12 space-y-4 max-w-3xl text-base">
         <Row l="Apps fitness (Apple Fitness+, Peloton, Freeletics)" v="42 Mds $" />
-        <Row l="Coachs en ligne indépendants" v="28 Mds $" />
+        <Row l="Créateurs sport indépendants (passionnés + coachs)" v="28 Mds $" />
         <Row l="Programmes vidéo sport" v="16 Mds $" />
         <Row l="Communautés sportives premium" v="10 Mds $" />
         <Row l="Croissance annuelle" v="14 % CAGR" highlight />
@@ -146,12 +147,13 @@ const SLIDES: ((key: number) => any)[] = [
   () => (
     <Slide>
       <Eyebrow>Marché adressable serviceable (SAM)</Eyebrow>
-      <Big>12 Mds $ — créateurs sport indépendants <Hl>monde</Hl>.</Big>
+      <Big>12 Mds $ — passionnés de sport qui veulent monétiser <Hl>monde</Hl>.</Big>
       <div className="mt-12 grid sm:grid-cols-3 gap-6">
-        <BigStat n="2,4 M" l="Coachs sport indépendants dans le monde" />
+        <BigStat n="48 M" l="Passionnés sport actifs sur les réseaux (mondial)" />
         <BigStat n="180 M" l="Abonnés potentiels à un créateur sport" />
         <BigStat n="12 Mds $" l="Volume actuel mal capté par la concurrence" />
       </div>
+      <p className="mt-8 text-sm text-muted italic">Sur ces 48 M, 2,4 M sont coachs pros et 45 M sont passionnés. unblur accueille les deux — la cible primaire est le passionné, qui est 20× plus nombreux.</p>
     </Slide>
   ),
 

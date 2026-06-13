@@ -38,7 +38,7 @@ const SLIDES: ((key: number) => any)[] = [
       <Eyebrow>Le concept</Eyebrow>
       <Big><Hl>TikTok + Twitch + OnlyFans + Encyclopédie</Hl> du sport.</Big>
       <p className="mt-10 text-xl text-muted max-w-3xl leading-relaxed">
-        Un coach sport indépendant a aujourd'hui 10 outils éclatés. unblur lui donne un seul écran. Il garde 80 % minimum. Brevet déposé sur la mécanique économique.
+        Tout passionné de sport — runner, yogi, grimpeur, kiné-étudiant, coach pro, danseur — qui veut partager sa discipline et la monétiser. Aujourd'hui il jongle entre 10 outils éclatés. unblur lui donne un seul écran. Il garde 80 % minimum.
       </p>
     </Slide>
   ),
@@ -316,7 +316,7 @@ const SLIDES: ((key: number) => any)[] = [
           Construire l'<span className="text-rose">infrastructure</span><br />du sport en ligne francophone.
         </h2>
         <p className="text-xl text-surface/70 leading-relaxed max-w-3xl">
-          Pas une app de plus. Une couche de base sur laquelle des milliers de coachs vont vivre. Avec une qualité d'exécution qui force le respect — au niveau Apple, pas au niveau startup MVP.
+          Pas une app de plus. Une couche de base où des milliers de passionnés et de coachs sport vont monétiser leur passion — runners, crossfitteurs, grimpeurs, yogis, danseurs, cyclistes, coachs pros. Tout le monde est bienvenu. Avec une qualité d'exécution qui force le respect — au niveau Apple, pas au niveau startup MVP.
         </p>
       </div>
     </Slide>

@@ -25,9 +25,9 @@ const SLIDES: ((key: number) => any)[] = [
   () => (
     <Slide>
       <Eyebrow>Avant tout</Eyebrow>
-      <Big>Bienvenue.<br />Voici ce que je veux construire <Hl>avec toi</Hl>.</Big>
+      <Big>Bienvenue.<br />Voici ce que <Hl>je construis</Hl>.</Big>
       <p className="mt-12 text-xl text-muted max-w-3xl leading-relaxed">
-        Je vais te montrer le concept, l'architecture, et la stack que j'envisage. Puis on discute du périmètre du MVP, des choix technos, et de comment on travaille ensemble.
+        Je vais te montrer le concept, l'architecture, la stack. Pas de pitch commercial, pas de chiffres. Juste un produit que personne au monde n'a encore osé faire.
       </p>
     </Slide>
   ),
@@ -76,7 +76,7 @@ const SLIDES: ((key: number) => any)[] = [
   // 5 — Stack proposée
   () => (
     <Slide>
-      <Eyebrow>Stack technique proposée</Eyebrow>
+      <Eyebrow>Stack technique</Eyebrow>
       <Big>Pragmatique. <Hl>Speed-to-market</Hl>.</Big>
       <div className="mt-12 grid sm:grid-cols-2 gap-8 max-w-5xl">
         <div>
@@ -101,7 +101,6 @@ const SLIDES: ((key: number) => any)[] = [
           </ul>
         </div>
       </div>
-      <p className="mt-10 text-base text-muted italic">Tout est négociable. C'est ton terrain.</p>
     </Slide>
   ),
 
@@ -122,18 +121,18 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 7 — MVP scope (priorités)
+  // 7 — Roadmap produit
   () => (
     <Slide>
-      <Eyebrow>MVP en 12 semaines</Eyebrow>
-      <Big>Le strict minimum pour signer 30 créateurs.</Big>
+      <Eyebrow>Roadmap produit</Eyebrow>
+      <Big>Les briques à construire <Hl>par ordre d'impact</Hl>.</Big>
       <ol className="mt-12 space-y-3 max-w-4xl text-lg">
         {[
-          ["S1-2", "Auth + onboarding créateur + KYC Stripe"],
-          ["S2-4", "Paywall Stripe Connect · webhooks · payouts auto"],
-          ["S4-7", "Lives Mux + chat Pusher + replays auto"],
-          ["S7-9", "DMs + canal communautaire privé"],
-          ["S9-12", "Page profil créateur + paywall + smoke-testing"],
+          ["01", "Auth + onboarding créateur + KYC Stripe"],
+          ["02", "Paywall Stripe Connect · webhooks · payouts auto"],
+          ["03", "Lives Mux + chat Pusher + replays auto"],
+          ["04", "DMs + canal communautaire privé"],
+          ["05", "Page profil créateur + paywall · ouverture publique"],
         ].map(([s, t], i) => (
           <li key={i} className="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-border">
             <span className="col-span-2 font-mono text-rose">{s}</span>
@@ -175,10 +174,11 @@ const SLIDES: ((key: number) => any)[] = [
   // 9 — Décisions techniques
   () => (
     <Slide>
-      <Eyebrow>3 décisions techniques à prendre ensemble</Eyebrow>
+      <Eyebrow>Les 3 vrais choix techno</Eyebrow>
+      <Big>Tout le reste découle de ça.</Big>
       <ol className="mt-10 space-y-6 max-w-4xl text-lg">
         {[
-          ["Streaming vidéo", "Mux (rapide, cher) · Livepeer (web3) · LiveKit (open source)"],
+          ["Streaming vidéo", "Mux (rapide) · Livepeer (web3) · LiveKit (open source)"],
           ["Persistance", "Neon Postgres serverless · Supabase · Railway"],
           ["Paiements", "Stripe Connect Express · Stripe Connect Standard · Lemon Squeezy"],
         ].map(([t, opts], i) => (
@@ -188,7 +188,7 @@ const SLIDES: ((key: number) => any)[] = [
           </li>
         ))}
       </ol>
-      <p className="mt-10 text-base text-muted italic">Mes hypothèses : Mux + Neon + Stripe Express. Tu valides ?</p>
+      <p className="mt-10 text-base text-muted italic">Mon hypothèse : Mux + Neon + Stripe Express. Ouvert au débat.</p>
     </Slide>
   ),
 
@@ -207,139 +207,116 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 11 — Budget développement
+  // 11 — Pourquoi c'est révolutionnaire
   () => (
-    <Slide>
-      <Eyebrow>Budget MVP estimé</Eyebrow>
-      <Big>Combien pour livrer en 12 semaines ?</Big>
-      <div className="mt-12 max-w-3xl space-y-3">
-        <Row l="Développement (toi)" v="60-100 k CHF" />
-        <Row l="Infrastructure cloud (Vercel + Neon + Mux + Stripe)" v="800 CHF/mois" />
-        <Row l="Design polish + assets" v="6 k CHF" />
-        <Row l="Tests + QA" v="3 k CHF" />
-        <Row l="Légal + CGU + brevet" v="15 k CHF" />
-        <Row l="Total MVP 12 semaines" v="84-124 k CHF" highlight />
-      </div>
-      <p className="mt-8 text-base text-muted">Sur les 800 k CHF du pré-seed, tu dois représenter ~15 % du budget total.</p>
-    </Slide>
-  ),
-
-  // 12 — Modalités de collaboration
-  () => (
-    <Slide>
-      <Eyebrow>Comment tu rejoins l'aventure</Eyebrow>
-      <Big>3 options. <Hl>À toi de choisir.</Hl></Big>
-      <div className="grid sm:grid-cols-3 gap-6 mt-12">
-        {[
-          { t: "A · Co-fondatrice technique", s: "2-3 k CHF/mois", e: "12-20 % equity vesting 4 ans", who: "Tu crois fort au projet" },
-          { t: "B · Lead Dev salariée", s: "8-10 k CHF/mois", e: "Stock options après 12 mois", who: "Tu veux sécuriser" },
-          { t: "C · Freelance MVP forfait", s: "60-100 k CHF forfait", e: "Pas d'engagement long-terme", who: "Tu veux tester d'abord" },
-        ].map((o, i) => (
-          <div key={i} className={`p-6 rounded-3xl ${i === 0 ? "bg-foreground text-surface" : "border border-border"}`}>
-            <p className="text-2xl font-black mb-4">{o.t}</p>
-            <p className="text-xs uppercase tracking-widest font-bold opacity-70">Rémunération</p>
-            <p className="mt-1 font-bold">{o.s}</p>
-            <p className="mt-4 text-xs uppercase tracking-widest font-bold opacity-70">Equity</p>
-            <p className="mt-1 font-bold">{o.e}</p>
-            <p className="mt-6 text-xs opacity-60 italic">{o.who}</p>
-          </div>
-        ))}
-      </div>
-    </Slide>
-  ),
-
-  // 13 — Mon rôle
-  () => (
-    <Slide>
-      <Eyebrow>Mon rôle vs ton rôle</Eyebrow>
-      <Big>Moi la <Hl>vision</Hl>.<br />Toi le <Hl>code</Hl>.</Big>
-      <div className="mt-12 grid sm:grid-cols-2 gap-8 max-w-5xl">
-        <div className="p-8 rounded-3xl border border-border">
-          <p className="text-xs uppercase tracking-[0.3em] text-rose font-bold mb-4">Moi — Damien</p>
-          <ul className="space-y-2 text-base text-muted">
-            <li>→ Concept, naming, branding</li>
-            <li>→ Modèle économique, brevet</li>
-            <li>→ Recrutement créateurs</li>
-            <li>→ Levée de fonds, presse</li>
-            <li>→ Deals sponsors</li>
-            <li>→ Stratégie pays par pays</li>
-          </ul>
+    <Slide bg="dark">
+      <Eyebrow>Pourquoi c'est révolutionnaire</Eyebrow>
+      <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tightest leading-[1.02] text-surface">
+        Personne au monde n'a fait <Hl>les quatre à la fois</Hl>.
+      </h2>
+      <div className="mt-12 grid sm:grid-cols-2 gap-x-12 gap-y-8 max-w-5xl">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-2">Feed vertical</p>
+          <p className="text-lg text-surface/70">Les Shorts TikTok du sport. Acquisition virale.</p>
         </div>
-        <div className="p-8 rounded-3xl bg-foreground text-surface">
-          <p className="text-xs uppercase tracking-[0.3em] text-rose font-bold mb-4">Toi — la codeuse</p>
-          <ul className="space-y-2 text-base text-surface/70">
-            <li>→ MVP en 12 semaines</li>
-            <li>→ Stack technique solide</li>
-            <li>→ Architecture scalable</li>
-            <li>→ Sécurité + RGPD</li>
-            <li>→ Tu construis ce que je vois</li>
-            <li>→ Tu raffines techniquement</li>
-          </ul>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-2">Live 1 clic</p>
+          <p className="text-lg text-surface/70">Twitch sans la complexité. Caméra navigateur.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-2">Paywall créateur</p>
+          <p className="text-lg text-surface/70">OnlyFans sans le sulfureux. Abonnement direct.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-2">Encyclopédie</p>
+          <p className="text-lg text-surface/70">500+ exercices. Magnet SEO mondial.</p>
         </div>
       </div>
     </Slide>
   ),
 
-  // 14 — Calendrier
+  // 12 — Le défi technique
   () => (
     <Slide>
-      <Eyebrow>Calendrier que je tiens</Eyebrow>
-      <div className="mt-10 space-y-8 max-w-4xl">
-        <div>
-          <p className="text-rose font-black text-6xl tracking-tighter">Lundi 15 juin</p>
-          <p className="mt-2 text-lg text-muted">Aujourd'hui · on aligne la vision et le scope</p>
-        </div>
-        <div>
-          <p className="text-rose font-black text-6xl tracking-tighter">Fin juin</p>
-          <p className="mt-2 text-lg text-muted">Décision sur la modalité de collaboration · contrat signé</p>
-        </div>
-        <div>
-          <p className="text-rose font-black text-6xl tracking-tighter">Début juillet</p>
-          <p className="mt-2 text-lg text-muted">Démarrage MVP · Sprint 0</p>
-        </div>
-        <div>
-          <p className="text-foreground font-black text-6xl tracking-tighter">Fin août</p>
-          <p className="mt-2 text-lg text-muted">Bêta privée · 5 Unblurers tests</p>
-        </div>
-        <div>
-          <p className="text-foreground font-black text-6xl tracking-tighter">Octobre</p>
-          <p className="mt-2 text-lg text-muted">Ouverture publique Suisse romande</p>
-        </div>
+      <Eyebrow>Le défi technique</Eyebrow>
+      <Big>Faire tenir <Hl>4 produits</Hl> sur un seul écran.<br />Sans que ça rame.</Big>
+      <ul className="mt-12 space-y-4 max-w-4xl text-lg">
+        <li>→ <strong>Latence live &lt; 3 s</strong> sur connexion 4G moyenne</li>
+        <li>→ <strong>Scroll infini Shorts</strong> à 60 fps avec préchargement vidéo</li>
+        <li>→ <strong>Paywall instantané</strong> sans rechargement de page</li>
+        <li>→ <strong>Chat temps réel</strong> jusqu'à 5 000 viewers simultanés</li>
+        <li>→ <strong>Replays auto</strong> générés dans la minute qui suit le live</li>
+        <li>→ <strong>Search exercices</strong> &lt; 100 ms full-text</li>
+      </ul>
+      <p className="mt-10 text-base text-muted italic">C'est ce qui rend le produit défendable face aux clones.</p>
+    </Slide>
+  ),
+
+  // 13 — Le brevet
+  () => (
+    <Slide>
+      <Eyebrow>Le moat technique</Eyebrow>
+      <Big>Un <Hl>brevet européen</Hl> sur l'algorithme.</Big>
+      <div className="mt-12 max-w-4xl space-y-6 text-lg">
+        <p className="text-muted leading-relaxed">
+          Méthode mise en œuvre par ordinateur qui ajuste dynamiquement la commission selon trois axes :
+        </p>
+        <ul className="space-y-3 pl-6">
+          <li>→ Paliers de revenu du créateur (commission dégressive 30 → 5 %)</li>
+          <li>→ Durée cumulative de fidélité de chaque abonné individuel</li>
+          <li>→ Système de parrainage croisé entre créateurs</li>
+        </ul>
+        <p className="text-muted leading-relaxed">
+          C'est un algorithme spécifique, brevetable selon l'EPO. Cabinet PI Zurich. Code source = forteresse.
+        </p>
       </div>
     </Slide>
   ),
 
-  // 15 — Décisions à prendre aujourd'hui
+  // 14 — Ce qui existe déjà
   () => (
     <Slide>
-      <Eyebrow>Ce qu'on décide ensemble aujourd'hui</Eyebrow>
-      <ol className="mt-12 space-y-5 max-w-4xl text-xl">
-        {[
-          "Faisabilité du MVP en 12 semaines · avec 1 dev senior",
-          "Choix techno : Mux ou alternative ? Persistance ? Auth ?",
-          "Budget MVP : 60-100 k CHF, on confirme l'enveloppe ?",
-          "Modalité de collaboration : Option A, B ou C ?",
-          "Timing du démarrage : début juillet, on tient ?",
-        ].map((q, i) => (
-          <li key={i} className="flex gap-5 items-baseline">
-            <span className="text-4xl font-black text-rose tabular-nums">{String(i + 1).padStart(2, "0")}</span>
-            <span>{q}</span>
-          </li>
-        ))}
-      </ol>
+      <Eyebrow>L'état du produit aujourd'hui</Eyebrow>
+      <Big>Ce n'est pas une <Hl>idée</Hl>. C'est une <Hl>démo</Hl>.</Big>
+      <ul className="mt-12 space-y-3 max-w-4xl text-lg">
+        <li>→ <strong>15 routes Next.js</strong> entièrement fonctionnelles en production sur Vercel</li>
+        <li>→ <strong>Design system complet</strong> · variables CSS · typographie éditoriale</li>
+        <li>→ <strong>24 exercices documentés</strong> avec filtres muscle / équipement / catégorie</li>
+        <li>→ <strong>Feed Shorts vertical</strong> style TikTok, scroll fluide</li>
+        <li>→ <strong>Studio créateur</strong> · record · communauté · programmes</li>
+        <li>→ <strong>Pitch deck VC</strong> de 40 slides en code, accessible publiquement</li>
+        <li>→ <strong>Marques déposées</strong> (CH + EU + US) · brevet en cours de dépôt</li>
+      </ul>
     </Slide>
   ),
 
-  // 16 — Pourquoi je veux toi
+  // 15 — Ce qu'il reste à construire
+  () => (
+    <Slide>
+      <Eyebrow>Ce qu'il reste à construire</Eyebrow>
+      <Big>Le passage de <Hl>démo</Hl> à <Hl>plateforme</Hl>.</Big>
+      <ul className="mt-12 space-y-3 max-w-4xl text-lg">
+        <li>→ Backend persistant (Postgres + Prisma)</li>
+        <li>→ Auth réelle (Clerk + KYC créateur)</li>
+        <li>→ Paiements + payouts (Stripe Connect Express)</li>
+        <li>→ Vidéo live native (Mux + Pusher)</li>
+        <li>→ Replays automatiques</li>
+        <li>→ Webhooks signés, sécurité, observabilité</li>
+        <li>→ Migration des mocks vers la vraie API</li>
+      </ul>
+    </Slide>
+  ),
+
+  // 16 — La vision technique
   () => (
     <Slide bg="dark">
       <div className="max-w-5xl">
-        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Pourquoi je viens te voir</p>
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">La vision technique</p>
         <h2 className="text-5xl sm:text-7xl font-black tracking-tightest leading-[1.02] text-surface mb-12">
-          Parce que tu sais construire des choses qui <span className="text-rose">scalent</span>.
+          Construire l'<span className="text-rose">infrastructure</span><br />du sport en ligne francophone.
         </h2>
         <p className="text-xl text-surface/70 leading-relaxed max-w-3xl">
-          Je sais convaincre des créateurs, lever de l'argent, écrire un brevet, vendre à des sponsors. Mais sans toi, ce projet reste une démo Vercel. Avec toi, il devient l'infrastructure du sport en ligne francophone.
+          Pas une app de plus. Une couche de base sur laquelle des milliers de coachs vont vivre. Avec une qualité d'exécution qui force le respect — au niveau Apple, pas au niveau startup MVP.
         </p>
       </div>
     </Slide>
@@ -351,10 +328,10 @@ const SLIDES: ((key: number) => any)[] = [
       <div className="text-center max-w-5xl mx-auto">
         <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Maintenant</p>
         <h2 className="text-6xl sm:text-9xl font-black tracking-tightest leading-[0.9] text-surface">
-          On en parle<span className="text-rose">.</span>
+          Tes questions<span className="text-rose">.</span>
         </h2>
         <p className="mt-16 text-2xl text-surface/60 max-w-2xl mx-auto leading-snug">
-          Tu poses tes questions. Tu donnes ton avis sur la stack. On regarde ensemble ce qui te va.
+          Architecture, stack, choix techniques. Tout est ouvert au débat.
         </p>
         <p className="mt-12 text-xs uppercase tracking-[0.5em] text-surface/30">
           unblur-app.vercel.app · damien@unblur.app

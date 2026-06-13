@@ -12,7 +12,7 @@ const NAV = [
   { href: "/programs", label: "Programmes", icon: BookOpen },
   { href: "/feed", label: "Mon feed", icon: Library },
   { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/dashboard", label: "Studio", icon: BarChart3 },
+  { href: "/studio", label: "Studio", icon: BarChart3 },
 ];
 
 export function TopNav() {

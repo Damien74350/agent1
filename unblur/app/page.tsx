@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Tv, BookOpen, MessageCircle, ChevronRight } from "lucide-react";
+import { ArrowRight, Tv, BookOpen, MessageCircle, ChevronRight, Users, Sparkles } from "lucide-react";
 import { CreatorCard } from "../components/CreatorCard";
 import { FEATURED_CREATORS, LIVE_NOW, ALL_CATEGORIES, platformTotals } from "../lib/mock";
 import { compact, fmtEUR } from "../lib/format";
@@ -10,48 +10,69 @@ export default function Home() {
 
   return (
     <div className="space-y-32 pb-12">
-      {/* ─── HERO ─── */}
-      <section className="pt-20 sm:pt-32">
+      {/* ─── HERO POSITIONING ─── */}
+      <section className="pt-20 sm:pt-28">
         <p className="text-xs uppercase tracking-[0.28em] text-muted mb-8">unblur · bêta</p>
-        <h1 className="text-5xl sm:text-7xl lg:text-[8rem] font-black tracking-tightest leading-[0.92] max-w-5xl">
-          Le contenu,<br />sans le filtre.
+        <h1 className="text-5xl sm:text-7xl lg:text-[7.5rem] font-black tracking-tightest leading-[0.92] max-w-5xl">
+          L'écosystème<br />
+          des créateurs sportifs.
         </h1>
         <p className="mt-10 text-xl sm:text-2xl text-muted max-w-2xl leading-snug">
-          Abonne-toi à un <strong className="text-foreground">Unblurer</strong>. Lives en direct, programmes structurés, échanges privés. 80 % revient au créateur.
+          Comme Twitch ou OnlyFans, mais pour le sport, la remise en forme et toute pratique sérieuse. <strong className="text-foreground">Le créateur garde 80 %.</strong>
         </p>
-        <div className="mt-12 flex flex-wrap gap-3">
-          <Link href="/discover" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-foreground text-surface font-semibold hover:opacity-90 transition">
-            Découvrir les Unblurers <ArrowRight size={16} />
+      </section>
+
+      {/* ─── DUAL CHOICE — 2 chemins clairs ─── */}
+      <section>
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-6">Tu es là pour</p>
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* CHOICE 1 — SUIVRE UN CRÉATEUR */}
+          <Link href="/discover" className="group block rounded-3xl border border-border hover:border-foreground/40 p-8 sm:p-10 transition relative overflow-hidden">
+            <div className="flex items-start justify-between mb-8">
+              <Users size={28} />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-muted">01 / Abonné</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tighter leading-[1.05]">
+              Suivre un<br />créateur.
+            </h2>
+            <p className="mt-6 text-base text-muted leading-relaxed max-w-md">
+              Abonne-toi à un Unblurer. Accès aux lives, replays, programmes structurés, communauté privée et DMs directs.
+            </p>
+            <div className="mt-8 inline-flex items-center gap-1.5 font-bold text-sm">
+              Découvrir les Unblurers <ArrowRight size={14} className="group-hover:translate-x-1 transition" />
+            </div>
           </Link>
-          <Link href="/become-creator" className="inline-flex items-center gap-2 px-6 py-3 rounded-full ring-1 ring-foreground/20 hover:bg-overlay/5 font-semibold transition">
-            Devenir Unblurer
+
+          {/* CHOICE 2 — DEVENIR CRÉATEUR */}
+          <Link href="/become-creator" className="group block rounded-3xl bg-foreground text-surface p-8 sm:p-10 transition relative overflow-hidden hover:opacity-95">
+            <div className="flex items-start justify-between mb-8">
+              <Sparkles size={28} />
+              <span className="text-[10px] uppercase tracking-widest font-bold opacity-60">02 / Créateur</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tighter leading-[1.05]">
+              Devenir<br />Unblurer.
+            </h2>
+            <p className="mt-6 text-base opacity-75 leading-relaxed max-w-md">
+              Filme-toi. Crée des programmes pour TA communauté. Anime un canal privé façon WhatsApp. Tu fixes le prix, tu gardes 80 %.
+            </p>
+            <div className="mt-8 inline-flex items-center gap-1.5 font-bold text-sm">
+              Lancer mon studio <ArrowRight size={14} className="group-hover:translate-x-1 transition" />
+            </div>
           </Link>
         </div>
       </section>
 
-      {/* ─── DEFINITION ─── */}
+      {/* ─── DEFINITION UNBLURER ─── */}
       <section className="border-y border-border py-16">
         <p className="text-xs uppercase tracking-[0.28em] text-muted mb-4">Un Unblurer</p>
-        <p className="text-3xl sm:text-5xl font-black tracking-tight leading-[1.1] max-w-4xl">
+        <p className="text-2xl sm:text-4xl font-black tracking-tight leading-[1.15] max-w-4xl">
           Un créateur qui partage sa pratique <span className="text-muted">— sport, cuisine, art, musique, méthode —</span> sans filtre, en direct, avec sa communauté.
         </p>
 
         <div className="mt-16 grid sm:grid-cols-3 gap-10">
-          <div>
-            <Tv size={22} className="mb-3" />
-            <p className="font-bold text-lg">Lives illimités</p>
-            <p className="text-sm text-muted mt-1 leading-relaxed">Sessions en direct, sans limite de durée. Player intégré, chat actif, replays sauvegardés automatiquement.</p>
-          </div>
-          <div>
-            <BookOpen size={22} className="mb-3" />
-            <p className="font-bold text-lg">Programmes communauté</p>
-            <p className="text-sm text-muted mt-1 leading-relaxed">Crée des parcours spécifiques à ta communauté. Plan jour par jour, cohorte privée, durée libre.</p>
-          </div>
-          <div>
-            <MessageCircle size={22} className="mb-3" />
-            <p className="font-bold text-lg">Échanges directs</p>
-            <p className="text-sm text-muted mt-1 leading-relaxed">DMs chiffrés, feedback vidéo personnalisé, communauté privée. Tes abonnés te parlent vraiment.</p>
-          </div>
+          <Feature icon={Tv}            t="Lives illimités"       d="Sessions en direct sans limite de durée. Player intégré, chat actif, replays sauvegardés." />
+          <Feature icon={BookOpen}      t="Programmes communauté" d="Crée des parcours pour TA communauté. Plan jour par jour, cohorte privée." />
+          <Feature icon={MessageCircle} t="Canal privé groupe"    d="Comme WhatsApp : channels par thème, DMs, voix, sondages. Tes abonnés te parlent vraiment." />
         </div>
       </section>
 
@@ -85,7 +106,7 @@ export default function Home() {
         <header className="mb-10">
           <p className="text-xs uppercase tracking-[0.28em] text-muted mb-3">Tous les domaines</p>
           <h2 className="text-3xl sm:text-5xl font-black tracking-tighter">Sport. Et bien au-delà.</h2>
-          <p className="mt-3 text-muted">unblur démarre avec le sport et la remise en forme. Mais un Unblurer peut enseigner n'importe quoi.</p>
+          <p className="mt-3 text-muted">unblur démarre avec le sport et la remise en forme. Un Unblurer peut enseigner n'importe quel domaine.</p>
         </header>
         <div className="flex flex-wrap gap-2">
           {[...ALL_CATEGORIES, "Cuisine", "Musique", "Méthode", "Art", "Productivité", "Langues"].map(cat => (
@@ -103,7 +124,7 @@ export default function Home() {
             <p className="text-xs uppercase tracking-[0.28em] text-muted mb-3">Le deal</p>
             <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[1.05]">80 % au créateur.</h2>
             <p className="mt-6 text-lg text-muted max-w-md leading-relaxed">
-              OnlyFans : 80/20 mais image sulfureuse. Twitch : 50/50. Patreon : 88/12 mais zéro vidéo. unblur : la justice + l'authenticité, sur la qualité technique.
+              OnlyFans : 80/20 mais image sulfureuse. Twitch : 50/50. Patreon : 88/12 mais zéro vidéo. unblur : la justice, l'authenticité, et le sérieux du sport et de la pratique.
             </p>
           </div>
           <div className="space-y-px text-lg">
@@ -145,19 +166,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── CTA ─── */}
+      {/* ─── CTA FINAL — re-affirme les 2 chemins ─── */}
       <section className="text-center py-24">
-        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-4">Tu enseignes quelque chose ?</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-4">Choisis ton côté</p>
         <h2 className="text-5xl sm:text-7xl font-black tracking-tightest leading-[0.95] max-w-3xl mx-auto">
-          Deviens Unblurer.
+          Suis. Ou crée.
         </h2>
         <p className="mt-6 text-xl text-muted max-w-xl mx-auto leading-snug">
-          Lives. Programmes. Communauté. Stripe intégré. Tu gardes 80 %.
+          Les deux côtés d'un même écosystème.
         </p>
-        <Link href="/become-creator" className="mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-full bg-foreground text-surface font-semibold hover:opacity-90 transition">
-          Lancer mon studio <ChevronRight size={16} />
-        </Link>
+        <div className="mt-10 flex flex-wrap gap-3 justify-center">
+          <Link href="/discover" className="inline-flex items-center gap-2 px-8 py-4 rounded-full border border-foreground/20 hover:bg-overlay/5 font-semibold transition">
+            Découvrir les Unblurers
+          </Link>
+          <Link href="/become-creator" className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-foreground text-surface font-semibold hover:opacity-90 transition">
+            Devenir Unblurer <ChevronRight size={16} />
+          </Link>
+        </div>
       </section>
+    </div>
+  );
+}
+
+function Feature({ icon: Icon, t, d }: { icon: any; t: string; d: string }) {
+  return (
+    <div>
+      <Icon size={22} className="mb-3" />
+      <p className="font-bold text-lg">{t}</p>
+      <p className="text-sm text-muted mt-1 leading-relaxed">{d}</p>
     </div>
   );
 }

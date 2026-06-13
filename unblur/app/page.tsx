@@ -18,8 +18,33 @@ export default function Home() {
           des créateurs sportifs.
         </h1>
         <p className="mt-10 text-xl sm:text-2xl text-muted max-w-2xl leading-snug">
-          Comme Twitch ou OnlyFans, mais pour le sport, la remise en forme et toute pratique sérieuse. <strong className="text-foreground">Le créateur garde 80 %.</strong>
+          <strong className="text-foreground">TikTok</strong> pour les shorts. <strong className="text-foreground">Twitch</strong> pour les lives. <strong className="text-foreground">OnlyFans</strong> pour la rémunération. Focus sport et remise en forme — au départ.
         </p>
+        <p className="mt-4 text-base text-muted max-w-2xl">
+          80 % du revenu va au créateur. Toujours.
+        </p>
+      </section>
+
+      {/* ─── 3-IN-1 — mention explicite ─── */}
+      <section className="border-y border-border py-12">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-6">unblur, c'est trois plateformes dans une</p>
+        <div className="grid sm:grid-cols-3 gap-10">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">TikTok</p>
+            <p className="font-black text-2xl tracking-tight">Shorts gratuits</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Vertical, 15-60s. Tips, motivation, behind-the-scenes. Pour découvrir.</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">Twitch</p>
+            <p className="font-black text-2xl tracking-tight">Lives en direct</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Sessions illimitées, chat actif, viewers count. Le créateur lance un live en un clic depuis son compte.</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">OnlyFans</p>
+            <p className="font-black text-2xl tracking-tight">Abonnement direct</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Tu fixes ton prix. Tu gardes 80 %. Sans algorithme, sans pub, sans censure absurde.</p>
+          </div>
+        </div>
       </section>
 
       {/* ─── DUAL CHOICE — 2 chemins clairs ─── */}

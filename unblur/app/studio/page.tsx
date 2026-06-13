@@ -23,6 +23,18 @@ export default function StudioPage() {
         <p className="mt-4 text-lg text-muted max-w-2xl">
           Ton studio complet : filmer, écrire, animer ta communauté, gagner ta vie. Tout au même endroit.
         </p>
+
+        {/* GO LIVE — bouton 1-clic ultra-visible */}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link href="/studio/record?live=1" className="inline-flex items-center gap-3 px-6 py-4 rounded-full bg-rose text-surface font-black text-base shadow-glow hover:scale-[1.02] transition">
+            <span className="w-2.5 h-2.5 rounded-full bg-surface live-dot" />
+            LANCER UN LIVE
+            <span className="text-[10px] opacity-80 font-bold uppercase tracking-widest">1 clic</span>
+          </Link>
+          <Link href="/studio/record" className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border hover:bg-overlay/5 font-semibold transition">
+            <Video size={15} /> Filmer un replay
+          </Link>
+        </div>
       </section>
 
       {/* QUICK ACTIONS — les 6 outils principaux */}

@@ -681,28 +681,90 @@ const SLIDES: ((key: number) => any)[] = [
   ),
 
   // ════════════════════════════════════
-  // PART X — IP (slide 36)
+  // PART IX-BIS — EVOLUTION V2-V3
   // ════════════════════════════════════
 
-  // 36 — Propriété intellectuelle
+  // 35-bis — Le moteur intelligent (v2-v3)
+  () => (
+    <Slide bg="dark">
+      <div className="max-w-6xl">
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Évolution v2-v3 · post-MVP</p>
+        <h2 className="text-5xl sm:text-7xl font-black tracking-tightest leading-[1] text-surface mb-8">
+          Le <span className="text-rose">moteur intelligent</span> unblur.
+        </h2>
+        <p className="text-xl text-surface/70 mb-12 max-w-3xl leading-relaxed">
+          L'abonnée note la difficulté perçue de chaque séance. L'algorithme construit sa courbe de progression. La séance la plus dure reste floutée tant que les paliers intermédiaires ne sont pas validés.
+        </p>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {[
+            { t: "Sécurité abonnée", d: "L'algo empêche l'accès à un contenu trop difficile. Zéro blessure. Zéro frustration." },
+            { t: "Rétention massive", d: "12 séances dans une progression de 6 mois au lieu d'une consommation flash." },
+            { t: "Barrière concurrence", d: "Un moteur de reco fitness-aware = 6-18 mois d'avance technique." },
+          ].map((b, i) => (
+            <div key={i} className="border-l-2 border-rose pl-5">
+              <p className="text-xs uppercase tracking-widest text-rose font-bold mb-2">{b.t}</p>
+              <p className="text-base text-surface/70 leading-relaxed">{b.d}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-12 text-xs uppercase tracking-[0.4em] text-rose">Brevet n°3 en réserve sur cette mécanique</p>
+      </div>
+    </Slide>
+  ),
+
+  // ════════════════════════════════════
+  // PART X — IP (portfolio complet)
+  // ════════════════════════════════════
+
+  // 36 — Portefeuille IP
   () => (
     <Slide>
-      <Eyebrow>Forteresse juridique</Eyebrow>
-      <Big>Le concurrent qui veut copier devra <Hl>franchir 4 murs</Hl>.</Big>
-      <div className="mt-12 space-y-5 max-w-4xl">
-        {[
-          { t: "Marque 'unblur'", w: "IPI Suisse · EUIPO · USPTO", c: "Protection mondiale" },
-          { t: "Marque 'Unblurer'", w: "Idem · trio mondial", c: "Le mot devient mon territoire" },
-          { t: "Brevet européen", w: "Multiplicateur de fidélité abonné", c: "20 ans de protection" },
-          { t: "Trade secret", w: "Paramètres exacts de l'algorithme", c: "Protection illimitée" },
-        ].map((r, i) => (
-          <div key={i} className="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-border">
-            <p className="col-span-4 font-black text-xl">{r.t}</p>
-            <p className="col-span-4 text-sm text-muted">{r.w}</p>
-            <p className="col-span-4 text-sm text-muted text-right">{r.c}</p>
+      <Eyebrow>Portefeuille de propriété intellectuelle</Eyebrow>
+      <Big>3 <Hl>brevets</Hl>. 6 <Hl>marques</Hl>. 20 ans de protection.</Big>
+
+      <div className="mt-10 grid sm:grid-cols-2 gap-10 max-w-6xl">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-4">Les 3 brevets européens</p>
+          <div className="space-y-4">
+            {[
+              { n: "01", t: "Commission dégressive viralisable", s: "Déposé", d: "Multiplicateur de fidélité abonné + paliers de revenu + parrainage croisé" },
+              { n: "02", t: "Défloutage par l'effort physique", s: "À déposer", d: "Méthode de défloutage d'un contenu selon l'accomplissement d'une séance + re-floutage post-usage" },
+              { n: "03", t: "Reco fitness avec protection progression", s: "v2-v3", d: "Algo de recommandation personnalisée basé sur la difficulté perçue et la progression cumulative" },
+            ].map((b) => (
+              <div key={b.n} className="border-l-2 border-rose pl-4 pb-2">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-xs font-mono text-rose tabular-nums">{b.n}</span>
+                  <p className="font-black text-base">{b.t}</p>
+                  <span className="text-[10px] uppercase tracking-widest text-muted ml-auto">{b.s}</span>
+                </div>
+                <p className="text-xs text-muted mt-1 leading-relaxed">{b.d}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-4">Les 6 marques déposées</p>
+          <div className="space-y-3">
+            {[
+              { n: "unblur",          s: "Déposée", z: "CH + EU + US",      d: "Marque verbale + figurative" },
+              { n: "Unblurer",        s: "Déposée", z: "CH + EU + US",      d: "Titre du créateur (comme YouTuber)" },
+              { n: "unblurée",        s: "À déposer", z: "EU",              d: "Verbe d'usage de l'abonnée" },
+              { n: "Founding Unblurer", s: "À déposer", z: "EU + US",       d: "Statut des 100 premiers créateurs" },
+              { n: "déflou / défloutage", s: "À étudier", z: "EU",          d: "Vocabulaire propriétaire de la marque" },
+              { n: "u.",              s: "À déposer", z: "CH + EU + US",    d: "Signature visuelle (point rouge)" },
+            ].map((m) => (
+              <div key={m.n} className="flex items-baseline gap-2 text-xs">
+                <p className="font-black text-sm w-40 truncate">{m.n}</p>
+                <span className="text-[9px] uppercase tracking-widest text-muted">{m.s}</span>
+                <span className="text-[9px] uppercase tracking-widest text-muted ml-auto">{m.z}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+
+      <p className="mt-10 text-base text-muted italic">+ Trade secret sur les paramètres exacts des algorithmes — protection illimitée.</p>
     </Slide>
   ),
 

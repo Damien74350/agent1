@@ -277,20 +277,70 @@ const SLIDES: ((key: number) => any)[] = [
   // 13 — Le brevet
   () => (
     <Slide>
-      <Eyebrow>Le moat technique</Eyebrow>
-      <Big>Un <Hl>brevet européen</Hl> sur l'algorithme.</Big>
-      <div className="mt-12 max-w-4xl space-y-6 text-lg">
-        <p className="text-muted leading-relaxed">
-          Méthode mise en œuvre par ordinateur qui ajuste dynamiquement la commission selon trois axes :
+      <Eyebrow>Le moat — 3 brevets + 6 marques</Eyebrow>
+      <Big>Le code que tu vas écrire est <Hl>protégé</Hl>.</Big>
+
+      <div className="mt-10 grid sm:grid-cols-2 gap-10 max-w-6xl">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-4">3 brevets européens</p>
+          <ol className="space-y-4 text-sm">
+            <li className="border-l-2 border-rose pl-4">
+              <p className="font-black text-base">01 — Commission dégressive viralisable</p>
+              <p className="text-muted text-xs mt-1">Multiplicateur fidélité abonné + paliers revenu + parrainage croisé · <span className="text-rose">déposé</span></p>
+            </li>
+            <li className="border-l-2 border-rose pl-4">
+              <p className="font-black text-base">02 — Défloutage par l'effort</p>
+              <p className="text-muted text-xs mt-1">Méthode où le contenu se défloutе pendant la séance et se re-floutе après · <span className="text-rose">à déposer</span></p>
+            </li>
+            <li className="border-l-2 border-rose pl-4">
+              <p className="font-black text-base">03 — Reco progression saine</p>
+              <p className="text-muted text-xs mt-1">Algo qui empêche le déflou d'un contenu trop dur · <span className="text-rose">v2-v3</span></p>
+            </li>
+          </ol>
+        </div>
+
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-4">6 marques déposées</p>
+          <ul className="space-y-2 text-sm">
+            <li className="flex justify-between border-b border-border pb-1"><strong>unblur</strong> <span className="text-muted text-xs">CH+EU+US · déposée</span></li>
+            <li className="flex justify-between border-b border-border pb-1"><strong>Unblurer</strong> <span className="text-muted text-xs">CH+EU+US · déposée</span></li>
+            <li className="flex justify-between border-b border-border pb-1"><strong>unblurée</strong> (verbe) <span className="text-muted text-xs">EU · à déposer</span></li>
+            <li className="flex justify-between border-b border-border pb-1"><strong>Founding Unblurer</strong> <span className="text-muted text-xs">EU+US · à déposer</span></li>
+            <li className="flex justify-between border-b border-border pb-1"><strong>déflou / défloutage</strong> <span className="text-muted text-xs">EU · à étudier</span></li>
+            <li className="flex justify-between border-b border-border pb-1"><strong>u.</strong> (signature) <span className="text-muted text-xs">CH+EU+US · à déposer</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <p className="mt-8 text-base text-muted italic">+ Trade secret sur les paramètres des algos. Le code source est la forteresse.</p>
+    </Slide>
+  ),
+
+  // 13-bis — Évolution V2-V3 (moteur intelligent)
+  () => (
+    <Slide bg="dark">
+      <div className="max-w-6xl">
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Évolution v2-v3 · post-MVP</p>
+        <h2 className="text-4xl sm:text-6xl font-black tracking-tightest leading-[1.02] text-surface mb-8">
+          Le <span className="text-rose">moteur intelligent</span>.<br />
+          Ton chantier de l'année 2.
+        </h2>
+        <p className="text-xl text-surface/70 mb-12 max-w-3xl leading-relaxed">
+          L'abonnée note la difficulté ressentie. L'algorithme construit sa courbe. Les séances les plus dures restent floutées tant que les paliers intermédiaires ne sont pas validés. Personne ne se blesse, personne ne saute d'étape.
         </p>
-        <ul className="space-y-3 pl-6">
-          <li>→ Paliers de revenu du créateur (commission dégressive 30 → 5 %)</li>
-          <li>→ Durée cumulative de fidélité de chaque abonné individuel</li>
-          <li>→ Système de parrainage croisé entre créateurs</li>
-        </ul>
-        <p className="text-muted leading-relaxed">
-          C'est un algorithme spécifique, brevetable selon l'EPO. Cabinet PI Zurich. Code source = forteresse.
-        </p>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {[
+            { t: "Le défi data", d: "Construire un graphe créatrices × difficultés × profils d'abonnées. Tu apprends avec chaque séance notée." },
+            { t: "Le défi ML", d: "Un modèle de progression fitness-aware qui ne se contente pas d'un classique collaborative filtering." },
+            { t: "Le défi UX", d: "Faire sentir à l'abonnée que le contenu se déflouтe pour elle, pas qu'on lui interdit l'accès." },
+          ].map((b, i) => (
+            <div key={i} className="border-l-2 border-rose pl-5">
+              <p className="text-xs uppercase tracking-widest text-rose font-bold mb-2">{b.t}</p>
+              <p className="text-sm text-surface/70 leading-relaxed">{b.d}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-12 text-xs uppercase tracking-[0.4em] text-rose">3e brevet en réserve sur cette mécanique</p>
       </div>
     </Slide>
   ),

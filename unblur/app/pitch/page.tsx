@@ -562,6 +562,61 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
+  // 30-bis — Distribution : on n'invente pas la roue (Linktree playbook)
+  () => (
+    <Slide bg="dark">
+      <div className="max-w-6xl">
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Distribution · acquisition créatrices</p>
+        <h2 className="text-5xl sm:text-7xl font-black tracking-tightest leading-[1] text-surface mb-8">
+          On n'invente <span className="text-rose">pas la roue</span>.<br />
+          On reprend la méthode <span className="text-rose">Linktree</span>.
+        </h2>
+        <p className="text-xl text-surface/70 mb-12 max-w-4xl leading-relaxed">
+          Chaque Unblurer reçoit un lien unique <span className="font-mono text-rose">unblur.app/louise</span> qu'elle colle dans sa bio Instagram. Une action. Une seule fois. Acquisition mondiale, gratuite, permanente.
+        </p>
+
+        <div className="grid sm:grid-cols-4 gap-6 mb-12">
+          {[
+            { v: "50 M+", l: "utilisateurs Linktree dans le monde" },
+            { v: "1,3 Md $", l: "valorisation Linktree (Série C 2022)" },
+            { v: "25 M $", l: "ARR Linktree — preuve que le modèle marche" },
+            { v: "16 000", l: "signups/jour au pic — adoption fulgurante" },
+          ].map((s, i) => (
+            <div key={i} className="border-l-2 border-rose pl-5">
+              <p className="text-4xl font-black tracking-tighter text-surface tabular-nums">{s.v}</p>
+              <p className="text-xs text-surface/60 mt-2 leading-relaxed">{s.l}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-8 max-w-5xl">
+          <div className="p-6 rounded-2xl border border-surface/20">
+            <p className="text-xs uppercase tracking-widest text-rose font-bold mb-3">Ce que fait Linktree</p>
+            <ul className="text-sm text-surface/70 space-y-2">
+              <li>→ 1 lien dans la bio Insta</li>
+              <li>→ Page agrégateur de liens</li>
+              <li>→ Modèle horizontal, tous secteurs</li>
+              <li>→ <strong className="text-surface">Pas de monétisation native</strong></li>
+            </ul>
+          </div>
+          <div className="p-6 rounded-2xl bg-surface text-foreground">
+            <p className="text-xs uppercase tracking-widest text-rose font-bold mb-3">Ce que fait unblur en plus</p>
+            <ul className="text-sm space-y-2">
+              <li>→ 1 lien dans la bio Insta</li>
+              <li>→ Page créatrice <strong>brandée + transactionnelle</strong></li>
+              <li>→ Modèle vertical <strong>focalisé sport</strong></li>
+              <li>→ <strong className="text-rose">Paywall + lives + communauté intégrés</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <p className="mt-10 text-base text-surface/60 italic max-w-4xl">
+          Linktree = distribution sans monétisation. OnlyFans = monétisation sans distribution propre. unblur = les deux dans une seule URL.
+        </p>
+      </div>
+    </Slide>
+  ),
+
   // 31 — Traction actuelle
   () => (
     <Slide>

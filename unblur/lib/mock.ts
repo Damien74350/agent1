@@ -1,8 +1,8 @@
 import type { Creator, Content, SubscriberStat, PayoutEntry, Category } from "./types";
 
 export const ALL_CATEGORIES: Category[] = [
-  "Yoga", "HIIT", "Calisthenics", "Running", "Strength", "Pilates",
-  "Boxing", "Crossfit", "Mobility", "Nutrition", "Cycling", "Climbing",
+  "Yoga", "HIIT", "Calisthénie", "Course", "Force", "Pilates",
+  "Boxe", "Crossfit", "Mobilité", "Nutrition", "Vélo", "Escalade",
 ];
 
 // ────────── CREATORS — pseudo-réalistes ──────────
@@ -11,10 +11,10 @@ export const CREATORS: Creator[] = [
   {
     id: "c_louise", handle: "@louise.training", name: "Louise Carmin",
     avatar: "LC", bio: "Étudiante en kiné · J'apprends en montrant, je montre ce que j'apprends.",
-    tagline: "Calisthenics & mobilité pour débutants",
+    tagline: "Calisthénie & mobilité pour débutants",
     city: "Lyon", country: "France", countryFlag: "🇫🇷",
-    category: "Calisthenics", subCategories: ["Calisthenics", "Mobility"],
-    tier: "Trusted", monthlyPriceEUR: 9.90, yearlyPriceEUR: 89,
+    category: "Calisthénie", subCategories: ["Calisthénie", "Mobilité"],
+    tier: "Confirmé", monthlyPriceEUR: 9.90, yearlyPriceEUR: 89,
     subscribers: 2_840, freeFollowers: 18_400, monthlyEarningsEUR: 22_513, totalEarningsEUR: 184_220,
     rating: 4.92, isLive: true, liveTitle: "Mobilité matin 25 min — épaules & hanches", liveViewers: 312,
     joinedAt: "2025-03-14", certifications: ["BTS APS", "L3 STAPS"],
@@ -26,7 +26,7 @@ export const CREATORS: Creator[] = [
     avatar: "MV", bio: "Ultra-trailer, coach running depuis 8 ans. Trans-Alpes 2024 #3.",
     tagline: "Préparation marathon & ultratrail",
     city: "Chamonix", country: "France", countryFlag: "🇫🇷",
-    category: "Running", subCategories: ["Running"],
+    category: "Course", subCategories: ["Course"],
     tier: "Pro", monthlyPriceEUR: 19.90, yearlyPriceEUR: 179,
     subscribers: 5_620, freeFollowers: 42_100, monthlyEarningsEUR: 89_410, totalEarningsEUR: 720_840,
     rating: 4.97, isLive: false,
@@ -39,8 +39,8 @@ export const CREATORS: Creator[] = [
     avatar: "AB", bio: "Vinyasa & Yin. Plus de 1200 séances en ligne. Calme + profondeur.",
     tagline: "Yoga pour le sport et la récup",
     city: "Marseille", country: "France", countryFlag: "🇫🇷",
-    category: "Yoga", subCategories: ["Yoga", "Mobility"],
-    tier: "Elite", monthlyPriceEUR: 12.50, yearlyPriceEUR: 109,
+    category: "Yoga", subCategories: ["Yoga", "Mobilité"],
+    tier: "Élite", monthlyPriceEUR: 12.50, yearlyPriceEUR: 109,
     subscribers: 12_840, freeFollowers: 84_200, monthlyEarningsEUR: 160_500, totalEarningsEUR: 1_840_220,
     rating: 4.95, isLive: false,
     joinedAt: "2024-06-21", certifications: ["RYT 500", "Yoga Alliance"],
@@ -49,11 +49,11 @@ export const CREATORS: Creator[] = [
   },
   {
     id: "c_jules", handle: "@jules.fit", name: "Jules Manceau",
-    avatar: "JM", bio: "Calisthenics & gymnastique. Champion régional 2023.",
+    avatar: "JM", bio: "Calisthénie & gymnastique. Champion régional 2023.",
     tagline: "Maîtrise ton poids de corps",
     city: "Bordeaux", country: "France", countryFlag: "🇫🇷",
-    category: "Calisthenics", subCategories: ["Calisthenics", "Strength"],
-    tier: "Rising", monthlyPriceEUR: 7.90,
+    category: "Calisthénie", subCategories: ["Calisthénie", "Force"],
+    tier: "Émergent", monthlyPriceEUR: 7.90,
     subscribers: 980, freeFollowers: 9_400, monthlyEarningsEUR: 6_192, totalEarningsEUR: 32_140,
     rating: 4.86, isLive: false,
     joinedAt: "2025-08-11", certifications: ["BPJEPS AGFF"],
@@ -65,10 +65,10 @@ export const CREATORS: Creator[] = [
     avatar: "NR", bio: "Ancienne boxeuse pro, coach mental & technique.",
     tagline: "Boxe technique + cardio",
     city: "Paris", country: "France", countryFlag: "🇫🇷",
-    category: "Boxing", subCategories: ["Boxing", "HIIT"],
+    category: "Boxe", subCategories: ["Boxe", "HIIT"],
     tier: "Pro", monthlyPriceEUR: 14.90, yearlyPriceEUR: 129,
     subscribers: 3_120, freeFollowers: 28_400, monthlyEarningsEUR: 46_488, totalEarningsEUR: 380_220,
-    rating: 4.91, isLive: true, liveTitle: "Round 1 — boxing fundamentals", liveViewers: 184,
+    rating: 4.91, isLive: true, liveTitle: "Round 1 — fondamentaux de boxe", liveViewers: 184,
     joinedAt: "2024-12-04", certifications: ["FFB instructeur", "BPJEPS"],
     banner: "linear-gradient(135deg, #ff2e7e, #a78bfa)",
     story: "J'enseigne ce que j'ai mis 20 ans à comprendre dans la boxe. La technique avant la puissance.",
@@ -78,8 +78,8 @@ export const CREATORS: Creator[] = [
     avatar: "TR", bio: "Powerlifter compétiteur, programme strength.",
     tagline: "Force & hypertrophie sérieuse",
     city: "Toulouse", country: "France", countryFlag: "🇫🇷",
-    category: "Strength", subCategories: ["Strength"],
-    tier: "Trusted", monthlyPriceEUR: 12.90,
+    category: "Force", subCategories: ["Force"],
+    tier: "Confirmé", monthlyPriceEUR: 12.90,
     subscribers: 1_840, freeFollowers: 14_200, monthlyEarningsEUR: 23_716, totalEarningsEUR: 168_400,
     rating: 4.88, isLive: false,
     joinedAt: "2025-01-22", certifications: ["IPF coach"],
@@ -91,8 +91,8 @@ export const CREATORS: Creator[] = [
     avatar: "EL", bio: "Pilates Reformer & santé du dos.",
     tagline: "Posture & core force",
     city: "Strasbourg", country: "France", countryFlag: "🇫🇷",
-    category: "Pilates", subCategories: ["Pilates", "Mobility"],
-    tier: "Trusted", monthlyPriceEUR: 11.90, yearlyPriceEUR: 99,
+    category: "Pilates", subCategories: ["Pilates", "Mobilité"],
+    tier: "Confirmé", monthlyPriceEUR: 11.90, yearlyPriceEUR: 99,
     subscribers: 2_140, freeFollowers: 16_800, monthlyEarningsEUR: 25_466, totalEarningsEUR: 184_400,
     rating: 4.93, isLive: false,
     joinedAt: "2025-02-08", certifications: ["Stott Pilates", "Reformer Pro"],
@@ -102,9 +102,9 @@ export const CREATORS: Creator[] = [
   {
     id: "c_yuki", handle: "@yuki.cyclist", name: "Yuki Tanaka",
     avatar: "YT", bio: "Cycliste route + gravel. Ex-équipe pro Asie.",
-    tagline: "Cycling structure + nutrition",
+    tagline: "Structure cyclisme + nutrition",
     city: "Tokyo", country: "Japon", countryFlag: "🇯🇵",
-    category: "Cycling", subCategories: ["Cycling", "Nutrition"],
+    category: "Vélo", subCategories: ["Vélo", "Nutrition"],
     tier: "Pro", monthlyPriceEUR: 16.90,
     subscribers: 4_240, freeFollowers: 38_400, monthlyEarningsEUR: 71_656, totalEarningsEUR: 480_120,
     rating: 4.95, isLive: false,
@@ -118,7 +118,7 @@ export const CREATORS: Creator[] = [
     tagline: "20 min suffisent. Vraiment.",
     city: "Lille", country: "France", countryFlag: "🇫🇷",
     category: "HIIT", subCategories: ["HIIT"],
-    tier: "Rising", monthlyPriceEUR: 5.90,
+    tier: "Émergent", monthlyPriceEUR: 5.90,
     subscribers: 1_620, freeFollowers: 8_900, monthlyEarningsEUR: 7_645, totalEarningsEUR: 38_420,
     rating: 4.84, isLive: false,
     joinedAt: "2025-09-15", certifications: [],
@@ -127,11 +127,11 @@ export const CREATORS: Creator[] = [
   },
   {
     id: "c_adam", handle: "@adam.cross", name: "Adam Belmondo",
-    avatar: "AB", bio: "CrossFit L2, programmation WOD pour gym.",
-    tagline: "Conditioning haut niveau",
+    avatar: "AB", bio: "CrossFit L2, programmation WOD pour salles.",
+    tagline: "Préparation physique haut niveau",
     city: "Nice", country: "France", countryFlag: "🇫🇷",
-    category: "Crossfit", subCategories: ["Crossfit", "Strength"],
-    tier: "Trusted", monthlyPriceEUR: 13.90,
+    category: "Crossfit", subCategories: ["Crossfit", "Force"],
+    tier: "Confirmé", monthlyPriceEUR: 13.90,
     subscribers: 1_980, freeFollowers: 12_600, monthlyEarningsEUR: 27_522, totalEarningsEUR: 198_400,
     rating: 4.89, isLive: false,
     joinedAt: "2024-10-30", certifications: ["CrossFit L2"],
@@ -143,8 +143,8 @@ export const CREATORS: Creator[] = [
     avatar: "CD", bio: "Grimpeuse bloc + voie. Coaching mental.",
     tagline: "Le climbing pour grimper plus haut",
     city: "Grenoble", country: "France", countryFlag: "🇫🇷",
-    category: "Climbing", subCategories: ["Climbing", "Strength"],
-    tier: "Rising", monthlyPriceEUR: 8.90,
+    category: "Escalade", subCategories: ["Escalade", "Force"],
+    tier: "Émergent", monthlyPriceEUR: 8.90,
     subscribers: 720, freeFollowers: 6_400, monthlyEarningsEUR: 6_408, totalEarningsEUR: 22_140,
     rating: 4.97, isLive: false,
     joinedAt: "2025-07-04", certifications: ["FFME"],
@@ -156,8 +156,8 @@ export const CREATORS: Creator[] = [
     avatar: "KB", bio: "Coach boxe & combat, 1500+ séances. Légende WARfit.",
     tagline: "Boxe + mental warrior",
     city: "Casablanca", country: "Maroc", countryFlag: "🇲🇦",
-    category: "Boxing", subCategories: ["Boxing", "HIIT"],
-    tier: "Elite", monthlyPriceEUR: 19.90, yearlyPriceEUR: 179,
+    category: "Boxe", subCategories: ["Boxe", "HIIT"],
+    tier: "Élite", monthlyPriceEUR: 19.90, yearlyPriceEUR: 179,
     subscribers: 8_420, freeFollowers: 64_800, monthlyEarningsEUR: 167_558, totalEarningsEUR: 1_820_400,
     rating: 4.96, isLive: false,
     joinedAt: "2024-04-18", certifications: ["WBF", "BPJEPS"],
@@ -169,7 +169,7 @@ export const CREATORS: Creator[] = [
 // Featured creators for the landing
 export const FEATURED_CREATORS = CREATORS.slice(0, 4);
 export const TRENDING_CREATORS = [CREATORS[2], CREATORS[0], CREATORS[11], CREATORS[1]];
-export const RISING_CREATORS = CREATORS.filter(c => c.tier === "Rising");
+export const RISING_CREATORS = CREATORS.filter(c => c.tier === "Émergent");
 export const LIVE_NOW = CREATORS.filter(c => c.isLive);
 
 // ────────── ME — l'utilisateur demo, à la fois créateur ET abonné ──────────
@@ -188,16 +188,16 @@ export const MY_SUBSCRIPTIONS: SubscriberStat[] = [
 const TITLES_BY_CATEGORY: Record<string, string[]> = {
   Yoga: ["Vinyasa flow 30 min", "Yin matin pour le dos", "Mobilité hanches", "Séance restauratrice"],
   HIIT: ["Tabata 20 min total", "AMRAP 15 min sans matériel", "EMOM full body"],
-  Calisthenics: ["Progression pull-up", "Push routine débutant", "Handstand 8 semaines", "Core dur"],
-  Running: ["Sortie fractionnée 8x400", "Endurance fond 1h30", "Récup active jambes lourdes"],
-  Strength: ["Squat 5x5 — focus technique", "Deadlift form check live", "Bench progression 12 sem"],
+  Calisthénie: ["Progression pull-up", "Push routine débutant", "Handstand 8 semaines", "Core dur"],
+  Course: ["Sortie fractionnée 8x400", "Endurance fond 1h30", "Récup active jambes lourdes"],
+  Force: ["Squat 5x5 — focus technique", "Deadlift form check live", "Bench progression 12 sem"],
   Pilates: ["Reformer débutant 45 min", "Core posture 30 min", "Hernie discale rebuild"],
-  Boxing: ["Round 1 jab cross", "Footwork drills", "Sparring vidéo analyse"],
-  Crossfit: ["WOD Murph scaled", "Olympic clean form", "Conditioning 12 min"],
-  Mobility: ["Routine soir 15 min", "Décompression dos", "Préparation course matin"],
+  Boxe: ["Round 1 jab cross", "Footwork drills", "Sparring vidéo analyse"],
+  Crossfit: ["WOD Murph adapté", "Clean olympique - technique", "Préparation 12 min"],
+  Mobilité: ["Routine soir 15 min", "Décompression dos", "Préparation course matin"],
   Nutrition: ["Plan macros marathon", "Nutrition pré-séance", "Récup post-effort"],
-  Cycling: ["Intervals Sweet Spot", "Sortie ville 1h", "Granfondo prep semaine"],
-  Climbing: ["Doigts crimping safe", "Voie 7a projection", "Bloc dynamique"],
+  Vélo: ["Intervals Sweet Spot", "Sortie ville 1h", "Granfondo prep semaine"],
+  Escalade: ["Doigts crimping safe", "Voie 7a projection", "Bloc dynamique"],
 };
 
 export const CONTENTS: Content[] = CREATORS.flatMap((c, ci) =>

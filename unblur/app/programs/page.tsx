@@ -8,7 +8,7 @@ const PROGRAMS = [
   { id: "pg_1", creatorId: "c_louise", title: "Premier pull-up en 12 semaines", weeks: 12, sessionsPerWeek: 4, level: "Débutant",   priceEUR: 49, subs: 1240, included: true,  cover: "linear-gradient(135deg, #ff2e7e, #ffb347)" },
   { id: "pg_2", creatorId: "c_marko",  title: "Marathon sub 4h",                weeks: 16, sessionsPerWeek: 5, level: "Intermédiaire", priceEUR: 89, subs: 2840, included: true,  cover: "linear-gradient(135deg, #5eead4, #5b9eff)" },
   { id: "pg_3", creatorId: "c_amira",  title: "Posture parfaite — 8 semaines", weeks: 8,  sessionsPerWeek: 3, level: "Débutant",     priceEUR: 39, subs: 4120, included: true,  cover: "linear-gradient(135deg, #a78bfa, #ff2e7e)" },
-  { id: "pg_4", creatorId: "c_jules",  title: "Calisthenics fondations 8 sem", weeks: 8,  sessionsPerWeek: 4, level: "Débutant",     priceEUR: 29, subs: 480,  included: false, cover: "linear-gradient(135deg, #5eead4, #ffb347)" },
+  { id: "pg_4", creatorId: "c_jules",  title: "Calisthénie fondations 8 sem", weeks: 8,  sessionsPerWeek: 4, level: "Débutant",     priceEUR: 29, subs: 480,  included: false, cover: "linear-gradient(135deg, #5eead4, #ffb347)" },
   { id: "pg_5", creatorId: "c_theo",   title: "Force 5/3/1 — 12 semaines",      weeks: 12, sessionsPerWeek: 4, level: "Avancé",       priceEUR: 69, subs: 920,  included: false, cover: "linear-gradient(135deg, #ffb347, #ff2e7e)" },
   { id: "pg_6", creatorId: "c_chloé",  title: "6a → 7b en 12 mois",            weeks: 52, sessionsPerWeek: 3, level: "Intermédiaire", priceEUR: 129,subs: 280,  included: false, cover: "linear-gradient(135deg, #a78bfa, #ffb347)" },
 ];

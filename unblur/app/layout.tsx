@@ -3,8 +3,8 @@ import "./globals.css";
 import { TopNav } from "../components/TopNav";
 
 export const metadata: Metadata = {
-  title: "unblur — Le Twitch du sport",
-  description: "L'abonnement direct à tes créateurs de sport préférés. 80% au créateur, 20% à la plateforme. Pas de filtres. Pas de pub. Juste le vrai entraînement.",
+  title: "unblur — Le contenu sans le filtre",
+  description: "Abonne-toi à un Unblurer. Lives en direct, programmes communauté, échanges privés. 80% revient au créateur.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

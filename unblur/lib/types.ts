@@ -1,6 +1,6 @@
-export type Category = "Yoga" | "HIIT" | "Calisthenics" | "Running" | "Strength" | "Pilates" | "Boxing" | "Crossfit" | "Mobility" | "Nutrition" | "Cycling" | "Climbing";
+export type Category = "Yoga" | "HIIT" | "Calisthénie" | "Course" | "Force" | "Pilates" | "Boxe" | "Crossfit" | "Mobilité" | "Nutrition" | "Vélo" | "Escalade";
 
-export type CreatorTier = "Rising" | "Trusted" | "Pro" | "Elite";
+export type CreatorTier = "Émergent" | "Confirmé" | "Pro" | "Élite";
 
 export type Creator = {
   id: string;

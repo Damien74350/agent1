@@ -32,6 +32,28 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
+  // 2-bis — Origin story
+  () => (
+    <Slide bg="dark">
+      <div className="max-w-5xl">
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">D'où vient l'idée</p>
+        <p className="text-base text-surface/40 italic mb-10">Salle de sport, Suisse romande, automne 2025.</p>
+        <h2 className="text-4xl sm:text-6xl font-black tracking-tightest leading-[1.05] text-surface mb-12">
+          Une cliente s'entraîne.<br />
+          Physiquement <span className="text-rose">irréprochable</span>.<br />
+          Pas coach. Juste passionnée.
+        </h2>
+        <p className="text-2xl text-surface/70 leading-snug max-w-3xl border-l-2 border-rose pl-6 italic">
+          « Elle a un physique de dingue. Si elle avait une app, je m'entraînerais comme elle. »
+        </p>
+        <p className="mt-6 text-base text-surface/50">— Trois clientes différentes, trois fois la même phrase, en trois semaines.</p>
+        <p className="mt-16 text-2xl font-black text-surface">
+          unblur est né <span className="text-rose">ce jour-là</span>.
+        </p>
+      </div>
+    </Slide>
+  ),
+
   // 3 — Le concept
   () => (
     <Slide>

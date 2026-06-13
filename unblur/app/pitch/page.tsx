@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const SLIDES: ((key: number) => any)[] = [
+
   // 1 — Cover
   () => (
     <Slide bg="dark">
@@ -14,22 +15,18 @@ const SLIDES: ((key: number) => any)[] = [
           unblur<span className="text-rose">.</span>
         </h1>
         <p className="mt-12 text-xl sm:text-3xl text-surface/70 tracking-tight max-w-3xl mx-auto leading-snug">
-          L'écosystème des créateurs sportifs.<br />
-          <span className="text-surface/40">TikTok + Twitch + OnlyFans + Encyclopédie.</span>
-        </p>
-        <p className="mt-16 text-xs uppercase tracking-[0.4em] text-surface/30">
-          Présentation à ma codeuse · 15 juin 2026
+          L'écosystème mondial des créateurs sportifs.
         </p>
       </div>
     </Slide>
   ),
 
-  // 2 — Le pitch en une phrase
+  // 2 — Pitch en 1 phrase
   () => (
     <Slide>
-      <Eyebrow>La phrase qui résume tout</Eyebrow>
+      <Eyebrow>Ce que c'est</Eyebrow>
       <Big>
-        unblur est <Hl>la première plateforme</Hl> qui combine TikTok, Twitch, OnlyFans et une encyclopédie complète des exercices, focalisée sur le sport, où le créateur devient <Hl>de plus en plus riche</Hl> à mesure qu'il fait grandir la plateforme.
+        unblur, c'est <Hl>TikTok + Twitch + OnlyFans + l'encyclopédie complète des exercices</Hl> — réunis sur une seule plateforme, focalisée sur le sport et la pratique sérieuse.
       </Big>
     </Slide>
   ),
@@ -37,25 +34,25 @@ const SLIDES: ((key: number) => any)[] = [
   // 3 — Le problème
   () => (
     <Slide>
-      <Eyebrow>Problème</Eyebrow>
-      <Big>Un coach sport doit jongler entre <Hl>10 outils</Hl>, 4 commissions différentes, et 0 cohérence.</Big>
+      <Eyebrow>Le problème mondial</Eyebrow>
+      <Big>Un coach sport jongle entre <Hl>10 outils</Hl>, 4 commissions, et 0 cohérence.</Big>
       <ul className="mt-12 grid grid-cols-2 gap-4 max-w-3xl text-base text-muted">
-        {["Instagram (algo contre lui)", "YouTube (55/45)", "Twitch (50/50)", "Patreon (88/12, pas de vidéo)", "OnlyFans (image sulfureuse)", "Calendly, Stripe, Discord, Notion, Mailchimp"].map(s => (
+        {["Instagram (algo contre lui)", "YouTube (55/45)", "Twitch (50/50, gaming)", "Patreon (88/12, sans vidéo)", "OnlyFans (image sulfureuse)", "Calendly · Stripe · Discord · Notion · Mailchimp"].map(s => (
           <li key={s} className="flex items-baseline gap-2"><span className="text-rose">–</span> {s}</li>
         ))}
       </ul>
-      <p className="mt-12 text-2xl font-bold">95 % des créateurs sport abandonnent en 18 mois.</p>
+      <p className="mt-12 text-2xl font-bold">Résultat : <Hl>95 % des créateurs sport abandonnent en 18 mois.</Hl></p>
     </Slide>
   ),
 
-  // 4 — La solution
+  // 4 — Solution
   () => (
     <Slide>
-      <Eyebrow>Solution — 4 dimensions, 1 plateforme</Eyebrow>
+      <Eyebrow>La solution — 4 dimensions, 1 plateforme</Eyebrow>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
         {[
-          { l: "TikTok", t: "Shorts gratuits", d: "Vertical 15-60s. L'entonnoir d'acquisition." },
-          { l: "Twitch", t: "Lives en 1 clic", d: "Sessions illimitées, chat, replays auto." },
+          { l: "TikTok", t: "Shorts gratuits", d: "Vertical 15-60s. L'entonnoir d'acquisition mondial." },
+          { l: "Twitch", t: "Lives en 1 clic", d: "Sessions illimitées, chat actif, replays auto." },
           { l: "OnlyFans", t: "Abonnement direct", d: "Le créateur fixe son prix. Garde jusqu'à 95%." },
           { l: "Encyclopédie", t: "Bibliothèque", d: "Tous les exercices, machines, techniques. Magnet SEO." },
         ].map(o => (
@@ -69,22 +66,22 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 5 — Le naming
+  // 5 — Naming
   () => (
     <Slide>
-      <Eyebrow>Naming</Eyebrow>
-      <Big>Les créateurs sont des <Hl>Unblurers</Hl>.</Big>
+      <Eyebrow>Le créateur a un nom</Eyebrow>
+      <Big>Il s'appelle <Hl>Unblurer</Hl>.</Big>
       <ul className="mt-12 space-y-3 text-xl text-muted">
-        <li>— Court. 8 lettres.</li>
+        <li>— Court. 8 lettres. Mémorisable.</li>
         <li>— Ownable. Aucun acteur ne l'utilise.</li>
-        <li>— Multilingue. FR · EN · DE · IT.</li>
+        <li>— Multilingue. FR · EN · DE · IT · ES.</li>
         <li>— Statut social. "Je suis Unblurer."</li>
-        <li>— Brevetable comme marque.</li>
+        <li>— Brevetable comme marque mondiale.</li>
       </ul>
     </Slide>
   ),
 
-  // 6 — Business model — intro
+  // 6 — Intro algo (dark)
   () => (
     <Slide bg="dark">
       <div className="text-center">
@@ -96,18 +93,18 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 7 — Paliers commission
+  // 7 — Commission dégressive
   () => (
     <Slide>
-      <Eyebrow>Commission dégressive</Eyebrow>
+      <Eyebrow>Commission dégressive — unique au monde</Eyebrow>
       <Big>Personne ne fait ça aujourd'hui.</Big>
       <div className="mt-12 max-w-3xl">
         {[
-          { range: "0 – 1 000 €", us: 30, them: 70 },
-          { range: "1 001 – 5 000 €", us: 20, them: 80 },
-          { range: "5 001 – 20 000 €", us: 12, them: 88 },
+          { range: "0 – 1 000 €",       us: 30, them: 70 },
+          { range: "1 001 – 5 000 €",   us: 20, them: 80 },
+          { range: "5 001 – 20 000 €",  us: 12, them: 88 },
           { range: "20 001 – 100 000 €", us: 8, them: 92 },
-          { range: "100 000 € +", us: 5, them: 95 },
+          { range: "100 000 € +",        us: 5, them: 95 },
         ].map((p, i) => (
           <div key={i} className="grid grid-cols-3 items-baseline py-5 border-b border-border">
             <p className="text-base font-semibold text-muted">{p.range}/mois</p>
@@ -119,44 +116,44 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 8 — Mécanique 1 — bonus viralité
+  // 8 — Bonus viralité
   () => (
     <Slide>
       <Eyebrow>Mécanique 1 — Bonus viralité</Eyebrow>
-      <Big>Tu parraines un Unblurer qui cartonne ?<br />Tu <Hl>économises 2 points</Hl> de commission pendant 3 mois.</Big>
+      <Big>Un Unblurer en parraine un autre ?<br />Il <Hl>économise 2 points</Hl> de commission pendant 3 mois.</Big>
       <p className="mt-12 text-xl text-muted max-w-3xl leading-relaxed">
-        Tes Unblurers font l'acquisition à ta place. Tu n'as plus besoin de team sales. Croissance virale gratuite.
+        Les Unblurers font l'acquisition à ma place. Aucune équipe sales. Croissance virale mondiale gratuite.
       </p>
     </Slide>
   ),
 
-  // 9 — Mécanique 2 — Founding
+  // 9 — Founding Unblurer
   () => (
     <Slide>
       <Eyebrow>Mécanique 2 — Founding Unblurer</Eyebrow>
-      <Big>Les <Hl>100 premiers</Hl> signés en Suisse romande gardent à vie leur grille actuelle, même si la commission de base augmente plus tard.</Big>
+      <Big>Les <Hl>100 premiers signés en Suisse</Hl> gardent leur grille à vie, même si la commission de base augmente plus tard.</Big>
       <p className="mt-12 text-xl text-muted max-w-3xl leading-relaxed">
-        C'est ce qu'Uber a fait avec ses premiers chauffeurs. Une caste protégée qui te défend toute leur carrière contre les nouveaux entrants.
+        Comme Uber avec ses premiers chauffeurs, Airbnb avec ses premiers hôtes. Une caste protégée qui défend la plateforme contre les nouveaux entrants.
       </p>
     </Slide>
   ),
 
-  // 10 — Mécanique 3 — fidélité (LE brevet)
+  // 10 — Brevetable — multiplicateur fidélité (dark)
   () => (
     <Slide bg="dark">
       <div className="max-w-5xl">
-        <p className="text-xs uppercase tracking-[0.5em] text-rose mb-8">Mécanique 3 — Brevetable</p>
+        <p className="text-xs uppercase tracking-[0.5em] text-rose mb-8">Mécanique 3 — Brevet mondial déposé</p>
         <h2 className="text-6xl sm:text-8xl font-black tracking-tightest leading-[0.92] text-surface">
           Multiplicateur de <span className="text-rose">fidélité abonné</span>.
         </h2>
         <p className="mt-12 text-xl text-surface/70 max-w-3xl leading-relaxed">
-          Pour chaque abonné qui reste plus de 12 mois chez un créateur, la commission unblur sur cet abonné précis <span className="text-rose font-black">baisse de 1 point par année supplémentaire</span>, jusqu'à un plancher de 5%.
+          Pour chaque abonné qui reste plus de 12 mois chez un créateur, ma commission sur cet abonné précis <span className="text-rose font-black">baisse de 1 point par année supplémentaire</span>, plancher à 5%.
         </p>
         <ul className="mt-10 space-y-2 text-base text-surface/60">
           <li>→ Le créateur a un intérêt direct à fidéliser long-terme</li>
-          <li>→ Nous, nous avons un intérêt à ce qu'il les fidélise</li>
+          <li>→ Nous avons intérêt à ce qu'il les fidélise</li>
           <li>→ Brevet européen "méthode mise en œuvre par ordinateur"</li>
-          <li>→ Cabinet PI suisse, budget 12 000 CHF, protection 20 ans</li>
+          <li>→ Cabinet PI suisse · 12 000 CHF · 20 ans de protection</li>
         </ul>
       </div>
     </Slide>
@@ -168,17 +165,17 @@ const SLIDES: ((key: number) => any)[] = [
       <Eyebrow>Mécanique 4 — Palier sponsor</Eyebrow>
       <Big>À 20 000 €/mois, l'Unblurer débloque les <Hl>deals sponsors</Hl> orchestrés par unblur.</Big>
       <p className="mt-10 text-xl text-muted leading-relaxed max-w-3xl">
-        Decathlon, On Running, Mammut, Lululemon paient pour accéder au top 5%. unblur prend 30%, l'Unblurer 70% — en plus de son revenu abonnés.
+        Decathlon, On Running, Mammut, Lululemon paient unblur pour accéder au top 5%. Je prends 30%, l'Unblurer 70% — en plus de son revenu abonnés.
       </p>
       <div className="mt-12 grid sm:grid-cols-3 gap-8 max-w-4xl">
-        <Stat n="86 600 €" l="Karim garde / mois" />
+        <Stat n="86 600 €" l="Un Unblurer top garde / mois" />
         <Stat n="23 400 €" l="unblur encaisse / mois" />
         <Stat n="× 200" l="top créateurs en année 4" />
       </div>
     </Slide>
   ),
 
-  // 12 — Le slogan
+  // 12 — Slogan (dark)
   () => (
     <Slide bg="dark">
       <div className="max-w-5xl">
@@ -193,10 +190,35 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 13 — Roadmap géographique
+  // 13 — Bibliothèque exercices (SEO magnet)
   () => (
     <Slide>
-      <Eyebrow>Stratégie géographique</Eyebrow>
+      <Eyebrow>L'arme cachée — l'Encyclopédie</Eyebrow>
+      <Big>La bibliothèque de <Hl>tous les exercices</Hl> et <Hl>toutes les machines</Hl> du sport.</Big>
+      <div className="mt-12 grid sm:grid-cols-3 gap-8 max-w-5xl">
+        <div>
+          <p className="text-5xl font-black tracking-tighter">500+</p>
+          <p className="text-xs uppercase tracking-widest text-muted font-bold mt-3">Exercices référencés à 18 mois</p>
+        </div>
+        <div>
+          <p className="text-5xl font-black tracking-tighter">15</p>
+          <p className="text-xs uppercase tracking-widest text-muted font-bold mt-3">Groupes musculaires</p>
+        </div>
+        <div>
+          <p className="text-5xl font-black tracking-tighter">M+</p>
+          <p className="text-xs uppercase tracking-widest text-muted font-bold mt-3">Recherches Google captables/an</p>
+        </div>
+      </div>
+      <p className="mt-12 text-lg text-muted max-w-3xl leading-relaxed">
+        Magnet SEO massif gratuit. Outil quotidien que les sportifs ouvrent en salle, même sans abonnement. Funnel parfait vers la conversion premium. Fossé défensif que TikTok, Twitch, OnlyFans ne peuvent pas copier.
+      </p>
+    </Slide>
+  ),
+
+  // 14 — Roadmap géographique
+  () => (
+    <Slide>
+      <Eyebrow>Stratégie mondiale</Eyebrow>
       <Big>Suisse → Francophonie → Anglo → Monde.</Big>
       <div className="mt-12 space-y-6 max-w-4xl">
         {[
@@ -216,71 +238,20 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 14 — MVP technique
-  () => (
-    <Slide>
-      <Eyebrow>MVP technique — 12 semaines</Eyebrow>
-      <Big>Le strict minimum pour signer 30 créateurs et générer du chiffre.</Big>
-      <ol className="mt-12 space-y-3 max-w-4xl text-lg">
-        {[
-          { s: "S1-2", t: "Auth + profil créateur", stack: "Clerk, PostgreSQL + Prisma" },
-          { s: "S2-4", t: "Paywall Stripe Connect 80/20", stack: "Stripe Connect Express, webhooks signés" },
-          { s: "S4-7", t: "Lives — le cœur du produit", stack: "Mux (recommandé) vs Livepeer vs LiveKit" },
-          { s: "S7-9", t: "DMs + canal communautaire", stack: "Pusher Channels ou Soketi" },
-          { s: "S9-12", t: "Replays + bibliothèque vidéo", stack: "Cloudinary + transcodage" },
-        ].map((o, i) => (
-          <li key={i} className="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-border">
-            <span className="col-span-1 font-mono text-sm text-rose">{o.s}</span>
-            <span className="col-span-5 font-bold">{o.t}</span>
-            <span className="col-span-6 text-sm text-muted">{o.stack}</span>
-          </li>
-        ))}
-      </ol>
-    </Slide>
-  ),
-
-  // 15 — Anti-roadmap
-  () => (
-    <Slide>
-      <Eyebrow>Anti-roadmap — ce qu'on NE fait PAS</Eyebrow>
-      <Big>Ce qui te tue, c'est ce que tu fais en trop.<br />Pas ce que tu ne fais pas.</Big>
-      <div className="mt-12 grid sm:grid-cols-2 gap-x-12 gap-y-4 max-w-4xl">
-        {[
-          ["Shorts vidéo", "v2 — mois 4-6"],
-          ["Bibliothèque exercices complète", "v2 — mois 4-7"],
-          ["Programmes structurés avancés", "v2 — mois 6-8"],
-          ["App mobile native iOS/Android", "v3 — mois 12+"],
-          ["Boost interne (pub créateur)", "2027+"],
-          ["Deals sponsors orchestrés", "2028"],
-          ["Marketplace équipement", "2029"],
-          ["API publique B2B", "2029+"],
-        ].map(([t, when], i) => (
-          <div key={i} className="flex items-baseline gap-3">
-            <span className="text-rose">✕</span>
-            <div>
-              <p className="font-bold">{t}</p>
-              <p className="text-xs text-muted">{when}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Slide>
-  ),
-
-  // 16 — Trajectoire financière
+  // 15 — Trajectoire financière
   () => (
     <Slide>
       <Eyebrow>Trajectoire financière</Eyebrow>
-      <Big>De rentable en année 1<br />à <Hl>pré-licorne en année 7</Hl>.</Big>
+      <Big>Rentable en année 1.<br /><Hl>Pré-licorne en année 7.</Hl></Big>
       <div className="mt-12 grid sm:grid-cols-4 gap-6 max-w-5xl">
         {[
-          { y: "An 1", arr: "240 k€",  zone: "Suisse", what: "100 Unblurers · équilibre" },
-          { y: "An 3", arr: "2,4 M€",  zone: "Francophonie", what: "1 500 Unblurers · marge 1,2 M" },
-          { y: "An 5", arr: "17 M€",   zone: "Anglo", what: "8 000 Unblurers · marge 5 M" },
-          { y: "An 7", arr: "80-100 M€", zone: "Monde", what: "Valo 640-800 M · pré-licorne" },
+          { y: "An 1", arr: "240 k€",   zone: "Suisse",       what: "100 Unblurers · équilibre" },
+          { y: "An 3", arr: "2,4 M€",   zone: "Francophonie", what: "1 500 Unblurers · marge 1,2 M" },
+          { y: "An 5", arr: "17 M€",    zone: "Anglo",        what: "8 000 Unblurers · marge 5 M" },
+          { y: "An 7", arr: "80-100 M€",zone: "Monde",        what: "Valo 640-800 M · pré-licorne" },
         ].map((s, i) => (
           <div key={i} className={`p-6 rounded-3xl ${i === 3 ? "bg-foreground text-surface" : "border border-border"}`}>
-            <p className={`text-xs uppercase tracking-widest font-bold ${i === 3 ? "text-rose" : "text-rose"}`}>{s.y}</p>
+            <p className="text-xs uppercase tracking-widest font-bold text-rose">{s.y}</p>
             <p className="mt-3 text-3xl font-black tabular-nums tracking-tighter">{s.arr}</p>
             <p className="text-[10px] uppercase tracking-widest mt-1 opacity-70">ARR · {s.zone}</p>
             <p className={`mt-4 text-xs ${i === 3 ? "text-surface/70" : "text-muted"} leading-relaxed`}>{s.what}</p>
@@ -290,125 +261,141 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 17 — Levée de fonds
+  // 16 — Propriété intellectuelle
   () => (
     <Slide>
-      <Eyebrow>Levée de fonds prévisionnelle</Eyebrow>
-      <Big>3 tours sur 5 ans.</Big>
+      <Eyebrow>Propriété intellectuelle</Eyebrow>
+      <Big>Ma forteresse juridique mondiale.</Big>
+      <div className="mt-12 space-y-5 max-w-4xl text-lg">
+        {[
+          { t: "Marque 'unblur'", w: "IPI Suisse · EUIPO · USPTO", c: "Protection mondiale" },
+          { t: "Marque 'Unblurer'", w: "Idem · trio mondial", c: "Le mot devient mon territoire" },
+          { t: "Brevet européen", w: "Multiplicateur de fidélité", c: "Méthode mise en œuvre par ordinateur · 20 ans" },
+          { t: "Trade secret", w: "Paramètres exacts de la formule", c: "Protection illimitée tant que confidentiel" },
+        ].map((r, i) => (
+          <div key={i} className="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-border">
+            <p className="col-span-4 font-black text-xl">{r.t}</p>
+            <p className="col-span-4 text-sm text-muted">{r.w}</p>
+            <p className="col-span-4 text-sm text-muted text-right">{r.c}</p>
+          </div>
+        ))}
+      </div>
+    </Slide>
+  ),
+
+  // 17 — Levée de fonds prévisionnelle
+  () => (
+    <Slide>
+      <Eyebrow>Levée de fonds</Eyebrow>
+      <Big>3 tours sur 5 ans pour conquérir le monde.</Big>
       <div className="mt-12 space-y-6 max-w-4xl">
         {[
-          { t: "Pré-seed", w: "maintenant", a: "500-800 k CHF", use: "MVP · recrutement Suisse · runway 18 mois", who: "Investiere, Verve, Innosuisse, FONGIT" },
-          { t: "Seed",     w: "+18 mois",   a: "3 M CHF",        use: "Internationalisation francophone · équipe 15", who: "Speedinvest, Index Ventures, Heartcore" },
-          { t: "Series A", w: "+36 mois",   a: "15 M CHF",       use: "Anglo + monde", who: "Atomico, Accel, a16z creator economy fund" },
+          { t: "Pré-seed", w: "T3 2026", a: "500-800 k CHF", use: "MVP · 30 premiers Unblurers · runway 18 mois" },
+          { t: "Seed",     w: "T1 2028", a: "3 M CHF",       use: "Internationalisation francophone · équipe 15" },
+          { t: "Series A", w: "T1 2029", a: "15 M CHF",      use: "Conquête anglo + monde" },
         ].map((r, i) => (
           <div key={i} className="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-border">
             <p className="col-span-2 text-xs uppercase tracking-widest font-bold text-rose">{r.t}</p>
             <p className="col-span-2 text-sm text-muted">{r.w}</p>
-            <p className="col-span-2 font-black text-xl">{r.a}</p>
-            <p className="col-span-3 text-sm text-muted">{r.use}</p>
-            <p className="col-span-3 text-xs text-muted text-right">{r.who}</p>
+            <p className="col-span-3 font-black text-2xl">{r.a}</p>
+            <p className="col-span-5 text-sm text-muted">{r.use}</p>
           </div>
         ))}
       </div>
     </Slide>
   ),
 
-  // 18 — Ce qu'on attend de la codeuse
+  // 18 — Ce que j'apporte au monde
   () => (
-    <Slide>
-      <Eyebrow>Notre partenariat</Eyebrow>
-      <Big>Moi la <Hl>vision</Hl>. Toi le <Hl>code</Hl>. Ensemble, la licorne.</Big>
-      <div className="mt-16 grid sm:grid-cols-2 gap-8 max-w-5xl">
-        <div className="p-8 rounded-3xl border border-border">
-          <p className="text-xs uppercase tracking-[0.3em] text-rose font-bold mb-4">Moi — Damien</p>
-          <p className="text-3xl font-black tracking-tighter mb-6">Le visionnaire</p>
-          <ul className="space-y-3 text-base text-muted">
-            <li>→ Concept, naming, branding, positionnement</li>
-            <li>→ Modèle économique brevetable</li>
-            <li>→ Recrutement des 30 premiers Unblurers</li>
-            <li>→ Levée de fonds, business, presse</li>
-            <li>→ Stratégie pays par pays</li>
-            <li>→ Deals sponsors</li>
-          </ul>
-        </div>
-        <div className="p-8 rounded-3xl bg-foreground text-surface">
-          <p className="text-xs uppercase tracking-[0.3em] text-rose font-bold mb-4">Toi — la codeuse</p>
-          <p className="text-3xl font-black tracking-tighter mb-6">L'exécution technique</p>
-          <ul className="space-y-3 text-base text-surface/70">
-            <li>→ MVP en 12 semaines</li>
-            <li>→ Stack technique solide</li>
-            <li>→ Architecture qui scale au monde</li>
-            <li>→ Sécurité paiements + RGPD</li>
-            <li>→ Tu construis ce que je vois</li>
-            <li>→ Tu m'aides à raffiner techniquement</li>
-          </ul>
-        </div>
+    <Slide bg="dark">
+      <div className="max-w-5xl">
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Mon impact sur le monde</p>
+        <h2 className="text-6xl sm:text-7xl font-black tracking-tightest leading-[1] text-surface mb-12">
+          Je libère les <span className="text-rose">créateurs sportifs</span>.
+        </h2>
+        <ul className="space-y-4 text-xl text-surface/70 leading-relaxed">
+          <li>→ Une étudiante en kiné peut vivre de son expertise dès le 1er jour.</li>
+          <li>→ Un boxeur en fin de carrière transmet sans passer par une fédération.</li>
+          <li>→ Une mère solo poste 20 min/jour et touche son public mondial.</li>
+          <li>→ Un kiné de quartier devient référence francophone d'une discipline.</li>
+          <li>→ Les marques accèdent à un canal mesurable et propre.</li>
+          <li>→ Les abonnés trouvent enfin le contenu qu'ils cherchaient sans algorithme.</li>
+        </ul>
       </div>
     </Slide>
   ),
 
-  // 19 — Options collaboration
+  // 19 — Vision 2030
   () => (
     <Slide>
-      <Eyebrow>Comment tu rejoins l'aventure</Eyebrow>
-      <Big>3 façons d'embarquer.<br />À toi de choisir ton niveau d'engagement.</Big>
-      <div className="grid sm:grid-cols-3 gap-6 mt-12">
-        {[
-          { t: "A · Co-fondatrice technique", s: "2-3 k CHF/mois", e: "12-20% equity vesting 4 ans", who: "Tu crois fort au projet. Tu construis avec moi." },
-          { t: "B · Lead Dev salariée", s: "8-10 k CHF/mois", e: "Stock options après 12 mois", who: "Tu veux sécuriser, garder ton temps libre." },
-          { t: "C · Freelance MVP forfait", s: "60-100 k CHF forfait", e: "Pas d'engagement long-terme", who: "Tu veux livrer le MVP puis voir." },
-        ].map((o, i) => (
-          <div key={i} className={`p-6 rounded-3xl ${i === 0 ? "bg-foreground text-surface" : "border border-border"}`}>
-            <p className="text-2xl font-black mb-4">{o.t}</p>
-            <p className="text-sm opacity-70 uppercase tracking-widest font-bold">Rémunération</p>
-            <p className="mt-1 font-bold">{o.s}</p>
-            <p className="mt-4 text-sm opacity-70 uppercase tracking-widest font-bold">Equity</p>
-            <p className="mt-1 font-bold">{o.e}</p>
-            <p className="mt-6 text-xs opacity-60 italic">{o.who}</p>
-          </div>
-        ))}
+      <Eyebrow>Ma vision pour 2030</Eyebrow>
+      <Big>unblur devient la <Hl>référence mondiale</Hl> du savoir-faire sportif.</Big>
+      <div className="mt-12 grid sm:grid-cols-2 gap-12 max-w-5xl">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-3">D'ici 2030</p>
+          <ul className="space-y-3 text-lg text-muted leading-relaxed">
+            <li>→ 50 000 Unblurers dans le monde</li>
+            <li>→ 5 millions d'abonnés actifs</li>
+            <li>→ Présence dans 40+ pays</li>
+            <li>→ Encyclopédie de 2 000 exercices</li>
+            <li>→ La plateforme que Decathlon rachète, ou qu'on IPO</li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-rose font-bold mb-3">Au-delà du sport</p>
+          <ul className="space-y-3 text-lg text-muted leading-relaxed">
+            <li>→ Extension cuisine, art, musique, méthode</li>
+            <li>→ Le modèle s'étend à tout savoir-faire enseignable</li>
+            <li>→ unblur devient le synonyme mondial de "créateur authentique"</li>
+            <li>→ Le mot "Unblurer" entre dans les dictionnaires</li>
+          </ul>
+        </div>
       </div>
-      <p className="mt-10 text-base text-muted italic max-w-3xl">
-        Je suis ouvert. La vision reste la mienne, mais les options techniques se décident avec toi. C'est ton terrain.
-      </p>
     </Slide>
   ),
 
   // 20 — Timing
   () => (
     <Slide>
-      <Eyebrow>Timing impératif</Eyebrow>
+      <Eyebrow>Le calendrier que je tiens</Eyebrow>
       <div className="mt-8 space-y-12 max-w-4xl">
         <div>
           <p className="text-rose font-black text-7xl tracking-tighter tabular-nums">Août 2026</p>
-          <p className="mt-3 text-xl text-muted">Bêta privée avec 5 Unblurers tests en Suisse romande</p>
+          <p className="mt-3 text-xl text-muted">Bêta privée · 5 Unblurers tests en Suisse romande</p>
         </div>
         <div>
           <p className="text-rose font-black text-7xl tracking-tighter tabular-nums">Octobre 2026</p>
           <p className="mt-3 text-xl text-muted">Ouverture publique Suisse romande</p>
         </div>
         <div>
-          <p className="text-foreground font-black text-7xl tracking-tighter tabular-nums">T1 2027</p>
-          <p className="mt-3 text-xl text-muted">Démarrage Francophonie</p>
+          <p className="text-foreground font-black text-7xl tracking-tighter tabular-nums">2027</p>
+          <p className="mt-3 text-xl text-muted">Lancement francophonie complète</p>
+        </div>
+        <div>
+          <p className="text-foreground font-black text-7xl tracking-tighter tabular-nums">2030</p>
+          <p className="mt-3 text-xl text-muted">Référence mondiale du savoir-faire sportif</p>
         </div>
       </div>
     </Slide>
   ),
 
-  // 21 — Closing
+  // 21 — Closing — ma promesse
   () => (
     <Slide bg="dark">
       <div className="text-center max-w-5xl mx-auto">
-        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Pour conclure</p>
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Ma promesse</p>
         <h2 className="text-6xl sm:text-9xl font-black tracking-tightest leading-[0.9] text-surface">
-          Ma vision<span className="text-rose">.</span><br />Ton code<span className="text-rose">.</span><br />La licorne<span className="text-rose">.</span>
+          unblur<span className="text-rose">.</span><br />
+          La plateforme<br />
+          que <span className="text-rose">le sport</span><br />
+          mérite<span className="text-rose">.</span>
         </h2>
         <p className="mt-16 text-2xl text-surface/60 max-w-2xl mx-auto leading-snug">
-          La démo est en ligne. Le concept est verrouillé. Le brevet est prêt à déposer.<br />
-          <span className="text-surface/90 font-bold">Il manque juste toi.</span>
+          Le concept est prêt. Le brevet est prêt. La démo est en ligne.<br />
+          <span className="text-surface/90 font-bold">Je vais le construire.</span>
         </p>
         <p className="mt-12 text-xs uppercase tracking-[0.5em] text-surface/30">
-          unblur-app.vercel.app · Damien74350/agent1 · branche main
+          unblur-app.vercel.app
         </p>
       </div>
     </Slide>
@@ -427,7 +414,6 @@ export default function PitchPage() {
       else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); prev(); }
       else if (e.key === "Home") setIdx(0);
       else if (e.key === "End") setIdx(SLIDES.length - 1);
-      else if (e.key === "Escape") {} // could close fullscreen
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -441,7 +427,6 @@ export default function PitchPage() {
         {Slide(idx)}
       </div>
 
-      {/* Controls */}
       <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
         <span className="text-xs font-mono tabular-nums px-3 py-1.5 rounded-full bg-surface/80 backdrop-blur ring-1 ring-border">
           {String(idx + 1).padStart(2, "0")} / {String(SLIDES.length).padStart(2, "0")}
@@ -475,8 +460,6 @@ export default function PitchPage() {
     </div>
   );
 }
-
-// ─── COMPOSANTS PRIMITIFS DE SLIDE ───
 
 function Slide({ children, bg = "light" }: { children: React.ReactNode; bg?: "light" | "dark" }) {
   return (

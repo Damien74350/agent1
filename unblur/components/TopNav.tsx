@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
-import { Search, Home, Compass, Tv, Library, BarChart3, BookOpen, MessageCircle, PlaySquare } from "lucide-react";
+import { Search, Home, Compass, Tv, Library, BarChart3, BookOpen, MessageCircle, PlaySquare, Dumbbell } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Accueil", icon: Home },
   { href: "/discover", label: "Découvrir", icon: Compass },
   { href: "/shorts", label: "Shorts", icon: PlaySquare },
   { href: "/live", label: "Live", icon: Tv },
+  { href: "/exercises", label: "Exercices", icon: Dumbbell },
   { href: "/programs", label: "Programmes", icon: BookOpen },
   { href: "/feed", label: "Mon feed", icon: Library },
   { href: "/messages", label: "Messages", icon: MessageCircle },

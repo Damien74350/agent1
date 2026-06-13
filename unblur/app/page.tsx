@@ -12,37 +12,42 @@ export default function Home() {
     <div className="space-y-32 pb-12">
       {/* ─── HERO POSITIONING ─── */}
       <section className="pt-20 sm:pt-28">
-        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-8">unblur · bêta</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-8">unblur · bêta · 🇨🇭 → 🌍 francophone → monde</p>
         <h1 className="text-5xl sm:text-7xl lg:text-[7.5rem] font-black tracking-tightest leading-[0.92] max-w-5xl">
           L'écosystème<br />
           des créateurs sportifs.
         </h1>
         <p className="mt-10 text-xl sm:text-2xl text-muted max-w-2xl leading-snug">
-          <strong className="text-foreground">TikTok</strong> pour les shorts. <strong className="text-foreground">Twitch</strong> pour les lives. <strong className="text-foreground">OnlyFans</strong> pour la rémunération. Focus sport et remise en forme — au départ.
+          <strong className="text-foreground">TikTok</strong> pour les shorts. <strong className="text-foreground">Twitch</strong> pour les lives. <strong className="text-foreground">OnlyFans</strong> pour la rémunération. <strong className="text-foreground">L'encyclopédie</strong> des exercices.
         </p>
         <p className="mt-4 text-base text-muted max-w-2xl">
-          80 % du revenu va au créateur. Toujours.
+          80 % du revenu va au créateur. Toujours. Lancement Suisse puis tous les pays francophones.
         </p>
       </section>
 
       {/* ─── 3-IN-1 — mention explicite ─── */}
       <section className="border-y border-border py-12">
-        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-6">unblur, c'est trois plateformes dans une</p>
-        <div className="grid sm:grid-cols-3 gap-10">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted mb-6">unblur, c'est quatre plateformes dans une</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           <div>
             <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">TikTok</p>
             <p className="font-black text-2xl tracking-tight">Shorts gratuits</p>
-            <p className="text-sm text-muted mt-2 leading-relaxed">Vertical, 15-60s. Tips, motivation, behind-the-scenes. Pour découvrir.</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Vertical, 15-60s. Tips, motivation, behind-the-scenes.</p>
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">Twitch</p>
             <p className="font-black text-2xl tracking-tight">Lives en direct</p>
-            <p className="text-sm text-muted mt-2 leading-relaxed">Sessions illimitées, chat actif, viewers count. Le créateur lance un live en un clic depuis son compte.</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Sessions illimitées, chat actif. Live en 1 clic depuis le compte créateur.</p>
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">OnlyFans</p>
             <p className="font-black text-2xl tracking-tight">Abonnement direct</p>
-            <p className="text-sm text-muted mt-2 leading-relaxed">Tu fixes ton prix. Tu gardes 80 %. Sans algorithme, sans pub, sans censure absurde.</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Tu fixes ton prix. Tu gardes 80 %. Sans algorithme.</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-widest font-black text-rose mb-2">Encyclopédie</p>
+            <p className="font-black text-2xl tracking-tight">Tous les exercices</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">Bibliothèque complète : machines, exercices, technique, démos. La référence francophone.</p>
           </div>
         </div>
       </section>

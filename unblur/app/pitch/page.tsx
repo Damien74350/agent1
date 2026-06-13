@@ -316,25 +316,47 @@ const SLIDES: ((key: number) => any)[] = [
   // 18 — Ce qu'on attend de la codeuse
   () => (
     <Slide>
-      <Eyebrow>Ce qu'on te demande</Eyebrow>
-      <Big>3 décisions à prendre ensemble lundi.</Big>
-      <ol className="mt-12 space-y-6 max-w-4xl text-xl">
-        <li className="flex gap-5 items-baseline"><span className="text-4xl font-black text-rose tabular-nums">01</span> <span>Faisabilité technique du MVP en 12 semaines avec 1 dev senior ?</span></li>
-        <li className="flex gap-5 items-baseline"><span className="text-4xl font-black text-rose tabular-nums">02</span> <span>Choix techno définitifs : Mux ou alternative ? Persistance ? Auth ?</span></li>
-        <li className="flex gap-5 items-baseline"><span className="text-4xl font-black text-rose tabular-nums">03</span> <span>Modalité de collaboration : co-fondatrice equity, salariée senior, ou freelance forfait ?</span></li>
-      </ol>
+      <Eyebrow>Notre partenariat</Eyebrow>
+      <Big>Moi la <Hl>vision</Hl>. Toi le <Hl>code</Hl>. Ensemble, la licorne.</Big>
+      <div className="mt-16 grid sm:grid-cols-2 gap-8 max-w-5xl">
+        <div className="p-8 rounded-3xl border border-border">
+          <p className="text-xs uppercase tracking-[0.3em] text-rose font-bold mb-4">Moi — Damien</p>
+          <p className="text-3xl font-black tracking-tighter mb-6">Le visionnaire</p>
+          <ul className="space-y-3 text-base text-muted">
+            <li>→ Concept, naming, branding, positionnement</li>
+            <li>→ Modèle économique brevetable</li>
+            <li>→ Recrutement des 30 premiers Unblurers</li>
+            <li>→ Levée de fonds, business, presse</li>
+            <li>→ Stratégie pays par pays</li>
+            <li>→ Deals sponsors</li>
+          </ul>
+        </div>
+        <div className="p-8 rounded-3xl bg-foreground text-surface">
+          <p className="text-xs uppercase tracking-[0.3em] text-rose font-bold mb-4">Toi — la codeuse</p>
+          <p className="text-3xl font-black tracking-tighter mb-6">L'exécution technique</p>
+          <ul className="space-y-3 text-base text-surface/70">
+            <li>→ MVP en 12 semaines</li>
+            <li>→ Stack technique solide</li>
+            <li>→ Architecture qui scale au monde</li>
+            <li>→ Sécurité paiements + RGPD</li>
+            <li>→ Tu construis ce que je vois</li>
+            <li>→ Tu m'aides à raffiner techniquement</li>
+          </ul>
+        </div>
+      </div>
     </Slide>
   ),
 
   // 19 — Options collaboration
   () => (
     <Slide>
-      <Eyebrow>3 options sur la table</Eyebrow>
+      <Eyebrow>Comment tu rejoins l'aventure</Eyebrow>
+      <Big>3 façons d'embarquer.<br />À toi de choisir ton niveau d'engagement.</Big>
       <div className="grid sm:grid-cols-3 gap-6 mt-12">
         {[
-          { t: "A · Co-fondatrice", s: "2-3 k CHF/mois", e: "12-20% equity vesting 4 ans", who: "Si tu crois fort au projet" },
-          { t: "B · Salariée senior", s: "8-10 k CHF/mois", e: "Stock options après 12 mois", who: "Si tu veux sécuriser" },
-          { t: "C · Freelance MVP", s: "60-100 k CHF forfait", e: "Pas d'engagement long-terme", who: "Si tu veux tester d'abord" },
+          { t: "A · Co-fondatrice technique", s: "2-3 k CHF/mois", e: "12-20% equity vesting 4 ans", who: "Tu crois fort au projet. Tu construis avec moi." },
+          { t: "B · Lead Dev salariée", s: "8-10 k CHF/mois", e: "Stock options après 12 mois", who: "Tu veux sécuriser, garder ton temps libre." },
+          { t: "C · Freelance MVP forfait", s: "60-100 k CHF forfait", e: "Pas d'engagement long-terme", who: "Tu veux livrer le MVP puis voir." },
         ].map((o, i) => (
           <div key={i} className={`p-6 rounded-3xl ${i === 0 ? "bg-foreground text-surface" : "border border-border"}`}>
             <p className="text-2xl font-black mb-4">{o.t}</p>
@@ -346,6 +368,9 @@ const SLIDES: ((key: number) => any)[] = [
           </div>
         ))}
       </div>
+      <p className="mt-10 text-base text-muted italic max-w-3xl">
+        Je suis ouvert. La vision reste la mienne, mais les options techniques se décident avec toi. C'est ton terrain.
+      </p>
     </Slide>
   ),
 
@@ -376,10 +401,11 @@ const SLIDES: ((key: number) => any)[] = [
       <div className="text-center max-w-5xl mx-auto">
         <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-12">Pour conclure</p>
         <h2 className="text-6xl sm:text-9xl font-black tracking-tightest leading-[0.9] text-surface">
-          On construit<br /><span className="text-rose">la licorne</span><br />ensemble<span className="text-rose">.</span>
+          Ma vision<span className="text-rose">.</span><br />Ton code<span className="text-rose">.</span><br />La licorne<span className="text-rose">.</span>
         </h2>
         <p className="mt-16 text-2xl text-surface/60 max-w-2xl mx-auto leading-snug">
-          La démo est en ligne. Le concept est verrouillé. Le brevet est prêt à déposer. Il manque juste ton code.
+          La démo est en ligne. Le concept est verrouillé. Le brevet est prêt à déposer.<br />
+          <span className="text-surface/90 font-bold">Il manque juste toi.</span>
         </p>
         <p className="mt-12 text-xs uppercase tracking-[0.5em] text-surface/30">
           unblur-app.vercel.app · Damien74350/agent1 · branche main

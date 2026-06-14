@@ -394,7 +394,30 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 17 — Closing
+  // 17 — Ce que tu retiens (3 takeaways)
+  () => (
+    <Slide>
+      <Eyebrow>3 choses à retenir</Eyebrow>
+      <Big>Si tu sors d'ici avec <Hl>seulement trois idées</Hl>.</Big>
+      <div className="mt-16 space-y-10 max-w-5xl">
+        {[
+          { n: "01", t: "Le concept", d: "TikTok + Twitch + OnlyFans + encyclopédie du sport. Un seul écran. 4 produits. Personne au monde ne l'a fait." },
+          { n: "02", t: "Le défi", d: "Faire tenir 4 produits sur un seul écran sans que ça rame. Lives, paywall, chat, replays — tout en temps réel. C'est ce qui rend le produit défendable." },
+          { n: "03", t: "La vision", d: "Devenir l'infrastructure du sport en ligne francophone. Pas une app. Une couche de base. Au niveau Apple, pas au niveau MVP." },
+        ].map((b) => (
+          <div key={b.n} className="grid grid-cols-12 gap-8 items-baseline">
+            <span className="col-span-2 text-6xl font-black text-rose tabular-nums tracking-tighter">{b.n}</span>
+            <div className="col-span-10">
+              <p className="text-2xl font-black mb-2">{b.t}</p>
+              <p className="text-base text-muted leading-relaxed">{b.d}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Slide>
+  ),
+
+  // 18 — Closing : Tes questions
   () => (
     <Slide bg="dark">
       <div className="text-center max-w-5xl mx-auto">
@@ -412,7 +435,7 @@ const SLIDES: ((key: number) => any)[] = [
     </Slide>
   ),
 
-  // 18 — Annexe : screenshots de la démo
+  // 19 — Annexe : screenshots de la démo
   () => (
     <Slide>
       <Eyebrow>Annexe — Démo cliquable</Eyebrow>
@@ -430,6 +453,27 @@ const SLIDES: ((key: number) => any)[] = [
         <Row l="Pitch deck VC complet" v="/pitch" />
       </div>
       <p className="mt-10 text-base text-muted italic">Tout est dans `unblur.ch`. Code source sur github.com/Damien74350/agent1, dossier `unblur`.</p>
+    </Slide>
+  ),
+
+  // 20 — Final dark closer (stays on screen during Q&A)
+  () => (
+    <Slide bg="dark">
+      <div className="text-center max-w-6xl mx-auto">
+        <p className="text-xs uppercase tracking-[0.5em] text-surface/40 mb-16">unblur</p>
+        <h1 className="text-[7rem] sm:text-[12rem] font-black tracking-tightest leading-[0.85] text-surface">
+          On en parle<span className="text-rose">.</span>
+        </h1>
+        <p className="mt-16 text-2xl sm:text-3xl text-surface/60 max-w-3xl mx-auto leading-snug">
+          Démo en ligne · code source · brevet en cours · marques déposées.
+        </p>
+        <p className="mt-20 text-sm uppercase tracking-[0.5em] text-surface/40">
+          unblur.ch
+        </p>
+        <p className="mt-3 text-sm uppercase tracking-[0.5em] text-surface/40">
+          damien@unblur.ch
+        </p>
+      </div>
     </Slide>
   ),
 ];

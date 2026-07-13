@@ -46,6 +46,75 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": "calo"}
 
 
+@app.get("/diag")
+def diag() -> dict[str, object]:
+    """Self-diagnostic — checks the env + does a live Anthropic + Airtable ping.
+    No secrets are returned, only booleans + error messages. Safe to open in a
+    browser to find out why Calo is failing without needing server logs."""
+    import os
+    import traceback
+
+    out: dict[str, object] = {}
+
+    # 1. Which env vars are present (never expose values).
+    def present(name: str) -> str:
+        v = os.environ.get(name, "")
+        return f"set (…{v[-4:]})" if v else "MISSING"
+
+    out["env"] = {
+        "ANTHROPIC_API_KEY": present("ANTHROPIC_API_KEY"),
+        "AIRTABLE_PAT": present("AIRTABLE_PAT"),
+        "OPENAI_API_KEY": present("OPENAI_API_KEY"),
+        "ELEVENLABS_API_KEY": present("ELEVENLABS_API_KEY"),
+        "TWILIO_ACCOUNT_SID": present("TWILIO_ACCOUNT_SID"),
+        "CALO_MODEL": os.environ.get("CALO_MODEL", "(default: claude-sonnet-4-6)"),
+    }
+    out["model_in_use"] = config.model
+
+    # 2. Live Anthropic call — the most likely culprit.
+    try:
+        msg = coach.client.messages.create(
+            model=config.model,
+            max_tokens=16,
+            messages=[{"role": "user", "content": "ping"}],
+        )
+        out["anthropic"] = {"ok": True, "reply_len": len(msg.content)}
+    except Exception as exc:  # noqa: BLE001
+        out["anthropic"] = {
+            "ok": False,
+            "error_type": type(exc).__name__,
+            "error": str(exc)[:400],
+        }
+
+    # 3. Live Airtable read.
+    try:
+        hits = coach.db.search_knowledge("plateau", max_results=1)
+        out["airtable"] = {"ok": True, "sample_found": len(hits)}
+    except Exception as exc:  # noqa: BLE001
+        out["airtable"] = {
+            "ok": False,
+            "error_type": type(exc).__name__,
+            "error": str(exc)[:400],
+        }
+
+    # 4. Full turn attempt (mirrors the real path) — capture the traceback tail.
+    try:
+        user = coach.db.get_or_create_user("whatsapp:+00000000000")
+        result = coach.handle_turn(
+            TurnInput(user_id=user["id"], text="dis juste bonjour en un mot")
+        )
+        out["full_turn"] = {"ok": True, "reply_preview": result.reply_text[:120]}
+    except Exception as exc:  # noqa: BLE001
+        out["full_turn"] = {
+            "ok": False,
+            "error_type": type(exc).__name__,
+            "error": str(exc)[:400],
+            "trace_tail": traceback.format_exc()[-600:],
+        }
+
+    return out
+
+
 @app.get("/chart/{token}")
 def get_chart(token: str):
     """Serves a generated chart PNG to Twilio (and the client). The token is a
